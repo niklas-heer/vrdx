@@ -1,5 +1,5 @@
 # vrdx
-CLI tool for capturing and managing decision records in your repo
+CLI tool for capturing and managing decision records in your repo. <br>
 Pronounced “verd-ex.” Derived from “verdict”.
 
 ## Why vrdx
