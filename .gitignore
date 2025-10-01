@@ -1,0 +1,6 @@
+*build/**
+*dist/**
+bin/**
+
+# Allow .gitkeep in this folder (and subfolders)
+!**/.gitkeep
