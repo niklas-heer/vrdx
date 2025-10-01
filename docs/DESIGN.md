@@ -114,6 +114,13 @@
 - The persistence layer preserves the host file’s newline convention when inserting scaffolds on Unix-like systems (macOS and Linux), which are the officially supported platforms; Windows carriage-return handling is currently out of scope.
 - Future configuration may allow custom marker strings, but the default behaviour assumes the canonical markers for maximum interoperability.
 
+### 4.8 Decision Parsing
+- Each decision entry is detected via the canonical `### <ID> <Title>` heading followed by the four bullet-labelled fields (`Status`, `Decision`, `Context`, `Consequences`). The parser tolerates additional blank lines but requires the canonical labels to guarantee a consistent round-trip format.
+- Parsed data is materialised into a structured `DecisionRecord` (powered by Pydantic) that retains ID, title, status, narrative fields, and the raw markdown snippet, enabling edits, reordering, and faithful re-serialization.
+- Multiline field bodies are preserved verbatim; when decisions are rendered back into the marker block, the serializer emits the canonical layout using the file’s prevailing newline sequence to reduce diff churn.
+- Parser utilities raise descriptive `DecisionParseError` exceptions when required fields are missing or malformed so the UI can surface actionable errors before any writes occur.
+- Helper functions compute the next decision identifier and integrate with the template/status helpers to seed new entries with curated status options and sensible defaults.
+
 ---
 
 ## 5. Data Structures
