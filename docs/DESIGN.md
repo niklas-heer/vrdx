@@ -134,6 +134,7 @@
 - Future `.vrdx.toml` or similar config for custom markers, templates, status values (including cross-link behavior), and ignore patterns.
 - CLI arguments for working directory overrides (`vrdx --dir path`), log verbosity, or read-only mode.
 - Logging subsystem for diagnostics (e.g., writing to a cache directory).
+- Optional Textual developer tooling (such as future `textual-devtools` builds) can be installed manually without expanding the default dependency set.
 
 ---
 

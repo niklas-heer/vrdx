@@ -50,7 +50,7 @@ Add with `uv add`:
 - `markdown-it-py` (preview rendering) and `mdurl`
 - `pydantic` for decision models and schema validation
 - `watchfiles` (optional refresh enhancement; consider later)
-- `pytest`, `pytest-asyncio`, `textual-devtools` (dev dependencies via `uv add --dev`)
+- `pytest`, `pytest-asyncio` (dev dependencies via `uv add --dev`). Optional UI tooling such as `textual-devtools` should be installed manually once a compatible distribution is published, ensuring developers can still inspect layouts without blocking the core dependency set.
 - `ruff` and `mypy` for linting/type checking (dev)
 
 The toolchain targets macOS and Linux; Windows support is currently out of scope.
