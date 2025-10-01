@@ -81,10 +81,10 @@ vrdx = "vrdx.main:main"
   triggered only when markers missing.
 
 ### Milestone 3 – Decision Parsing and Serialization
-- `decisions.py`: parse decisions from marker regions using regex/Markdown AST.
+- `decisions.py`: parse decisions from marker regions into structured `DecisionRecord` (Pydantic) models that retain IDs, titles, statuses, narrative fields, and the original markdown slice.
 - `template.py`: generate next ID, default status, and stub sections.
-- Round-trip serialization (insert new, reorder, delete) implemented centrally.
-- `status_links.py`: maintain supersedes/deprecated cross references.
+- Round-trip serialization (insert new, reorder, delete) implemented centrally, preserving the host file’s newline style when regenerating the decision block.
+- `status_links.py`: maintain supersedes/deprecated cross references and surface descriptive `DecisionParseError` messages when the canonical fields are missing or malformed.
 - Add documentation snippet describing marker block structure and parsing assumptions.
 - Unit tests with fixture files covering parsing edge cases and serialization.
 
