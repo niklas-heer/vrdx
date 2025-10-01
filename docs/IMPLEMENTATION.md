@@ -53,6 +53,8 @@ Add with `uv add`:
 - `pytest`, `pytest-asyncio`, `textual-devtools` (dev dependencies via `uv add --dev`)
 - `ruff` and `mypy` for linting/type checking (dev)
 
+The toolchain targets macOS and Linux; Windows support is currently out of scope.
+
 Update `pyproject.toml` to reflect main optional entry points and configure
 scripts:
 
@@ -74,6 +76,7 @@ vrdx = "vrdx.main:main"
 - `markers.py`: detect `<!-- vrdx start -->` / `<!-- vrdx end -->`, prompt logic
   (hook for UI).
 - `persistence.py`: function to insert marker scaffold with confirmation.
+- Document discovery expectations with a brief snippet illustrating how results feed the UI.
 - Tests ensuring discovery respects nested directories and prompt logic is
   triggered only when markers missing.
 
@@ -82,6 +85,7 @@ vrdx = "vrdx.main:main"
 - `template.py`: generate next ID, default status, and stub sections.
 - Round-trip serialization (insert new, reorder, delete) implemented centrally.
 - `status_links.py`: maintain supersedes/deprecated cross references.
+- Add documentation snippet describing marker block structure and parsing assumptions.
 - Unit tests with fixture files covering parsing edge cases and serialization.
 
 ### Milestone 4 – State Management and Commands
@@ -138,19 +142,7 @@ vrdx = "vrdx.main:main"
    - `docs/DESIGN.md` kept in sync with implementation changes.
    - This implementation guide updated as milestones complete.
 
-## 8. Timeline (Flexible)
-
-| Milestone | Duration | Notes |
-|-----------|----------|-------|
-| 1 & 2     | 2–3 days | Core plumbing, groundwork |
-| 3 & 4     | 3–4 days | Parsing + state, largest risk |
-| 5         | 2 days   | UI scaffolding |
-| 6         | 3 days   | Editor polish, interactions |
-| 7         | 1–2 days | Testing, packaging, docs |
-
-Total: ~2 weeks of focused effort; adjust as feedback emerges.
-
-## 9. Risks & Mitigations
+## 8. Risks & Mitigations
 
 - **Markdown parsing ambiguity**: rely on explicit markers and consistent
   H3 structure; add tests for malformed cases and fallback error messaging.
@@ -160,8 +152,3 @@ Total: ~2 weeks of focused effort; adjust as feedback emerges.
   job capturing output; add smoke test for binary execution.
 - **Cross-link data integrity**: enforce invariants in `status_links.py` and
   present UI feedback when references invalid.
-
----
-
-This plan should guide the implementation phase while remaining adaptable to
-feedback and discoveries during development.

@@ -107,6 +107,13 @@
 - Support deletion by removing the selected decision while leaving surrounding content intact.
 - Maintain blank line separation for readability.
 
+### 4.7 Marker Management
+- Marker blocks are defined by the canonical delimiters `<!-- vrdx start -->` and `<!-- vrdx end -->`; all decision content lives between them.
+- When no markers are present, the application prompts the user before appending an empty scaffold (start marker, blank line, end marker) at the end of the file.
+- If malformed or duplicate markers are detected, the parser surfaces a clear error message in the UI and logging output so users can resolve the issue before continuing.
+- The persistence layer preserves the host file’s newline convention when inserting scaffolds on Unix-like systems (macOS and Linux), which are the officially supported platforms; Windows carriage-return handling is currently out of scope.
+- Future configuration may allow custom marker strings, but the default behaviour assumes the canonical markers for maximum interoperability.
+
 ---
 
 ## 5. Data Structures
