@@ -1,3 +1,5 @@
+"""Logging utilities for the vrdx application."""
+
 from __future__ import annotations
 
 import logging
@@ -6,35 +8,29 @@ from pathlib import Path
 from typing import Optional
 
 DEFAULT_LOG_FORMAT = "%(levelname)s %(name)s - %(message)s"
-LOG_FILE_ENV = "VRDX_LOG_FILE"
 
 
 def configure_logging(
+    *,
     level: str = "INFO",
     log_file: Optional[Path] = None,
-    *,
     format_string: str = DEFAULT_LOG_FORMAT,
 ) -> None:
-    """Configure root logging for vrdx.
+    """Configure root logging for the vrdx application.
 
     Parameters
     ----------
     level:
-        Logging level name (e.g., ``"INFO"``, ``"DEBUG"``).
+        Logging level name (e.g., "INFO", "DEBUG"). Unknown values default to INFO.
     log_file:
-        Optional path to a log file; if absent, logs stay on stderr only.
+        Optional path to a log file. When provided, logs are duplicated to this file.
     format_string:
-        Format string for log messages.
-
-    Notes
-    -----
-    - The root logger is reset to ensure deterministic output when invoked
-      repeatedly (useful for tests).
-    - When ``log_file`` is provided, logs are duplicated to that file while
-      still showing up on stderr.
+        Formatter template applied to all handlers.
     """
     logging.shutdown()
     root_logger = logging.getLogger()
+
+    # Remove existing handlers to avoid duplicate logs when reconfiguring.
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
@@ -42,16 +38,16 @@ def configure_logging(
 
     if log_file:
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        handlers.append(file_handler)
+        handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
 
+    effective_level = getattr(logging, level.upper(), logging.INFO)
     logging.basicConfig(
-        level=getattr(logging, level.upper(), logging.INFO),
+        level=effective_level,
         format=format_string,
         handlers=handlers,
     )
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a module-level logger with the given name."""
+    """Return a module-level logger configured for the vrdx application."""
     return logging.getLogger(name)

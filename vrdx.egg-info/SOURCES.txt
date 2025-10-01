@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+vrdx/__init__.py
+vrdx/cli.py
+vrdx.egg-info/PKG-INFO
+vrdx.egg-info/SOURCES.txt
+vrdx.egg-info/dependency_links.txt
+vrdx.egg-info/requires.txt
+vrdx.egg-info/top_level.txt
+vrdx/app/__init__.py
+vrdx/app/discovery.py
+vrdx/app/logging.py
+vrdx/app/persistence.py
+vrdx/parser/__init__.py
+vrdx/parser/markers.py

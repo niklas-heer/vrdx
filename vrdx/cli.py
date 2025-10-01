@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import argparse
-import logging
 import os
 import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
-from . import __version__
+from vrdx import __version__
+from vrdx.app import discovery, logging as app_logging
 
 LOG_LEVEL_ENV = "VRDX_LOG_LEVEL"
 
@@ -36,13 +36,19 @@ def build_parser() -> argparse.ArgumentParser:
             f"Defaults to ${LOG_LEVEL_ENV} or INFO if unset."
         ),
     )
+    parser.add_argument(
+        "--log-file",
+        help="Optional file path to tee logs in addition to stderr.",
+    )
     return parser
 
 
-def configure_logging(level: str) -> None:
-    logging.basicConfig(
-        level=getattr(logging, level.upper(), logging.INFO),
-        format="%(levelname)s %(name)s - %(message)s",
+def configure_logging(level: str, log_file: Optional[str]) -> None:
+    file_path = Path(log_file).expanduser().resolve() if log_file else None
+    app_logging.configure_logging(
+        level=level,
+        log_file=file_path,
+        format_string=app_logging.DEFAULT_LOG_FORMAT,
     )
 
 
@@ -57,8 +63,14 @@ def resolve_directory(raw: str) -> Path:
 
 def launch_interface(base_dir: Path) -> int:
     # Placeholder until the Textual app is implemented in later milestones.
-    logging.getLogger(__name__).info("Launching vrdx in %s", base_dir)
+    markdown_files = discovery.find_markdown_files(base_dir)
     print(f"vrdx initialized for directory: {base_dir}")
+    if markdown_files:
+        print("Discovered Markdown files:")
+        for path in markdown_files:
+            print(f"  • {path.relative_to(base_dir)}")
+    else:
+        print("No Markdown files found.")
     return 0
 
 
@@ -70,12 +82,13 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         print(__version__)
         return 0
 
-    configure_logging(args.log_level)
+    configure_logging(args.log_level, args.log_file)
     try:
         directory = resolve_directory(args.directory)
     except (FileNotFoundError, NotADirectoryError) as exc:
         parser.error(str(exc))
         return 2  # pragma: no cover (argparse.error exits)
+
     return launch_interface(directory)
 
 

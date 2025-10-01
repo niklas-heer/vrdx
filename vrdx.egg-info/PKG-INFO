@@ -1,0 +1,29 @@
+Metadata-Version: 2.4
+Name: vrdx
+Version: 0.1.0
+Summary: CLI tool for capturing and managing decision records in your repo.
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: nuitka>=2.7.16
+
+# vrdx
+CLI tool for capturing and managing decision records in your repo. <br>
+Pronounced “verd-ex.” Derived from “verdict”.
+
+## Why vrdx
+
+-    Short, modern, and designed for everyday terminal use
+-    Helps you keep decisions consistent, searchable, and reviewable
+
+## Features
+
+-    Add decisions with status, context, and consequences
+-    List and search decision records
+-    Show a single decision by ID or title
+-    Append to a single log file or create per-record files
+-    Configurable templates and storage paths
+-    Zero-dependency text format (Markdown)
+
+## Install
+
+- 
