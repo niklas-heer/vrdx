@@ -27,8 +27,8 @@ except (FileNotFoundError, OSError, AttributeError):
     _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI */
 
 Screen {
-    background: $surface;
-    color: $text;
+    background: #111827;
+    color: #f9fafb;
 }
 
 #main-layout {
@@ -39,7 +39,7 @@ Screen {
 #left-column {
     width: 26%;
     min-width: 20rem;
-    border-right: solid 1px $surface-muted;
+    border-right: solid 1px #374151;
     padding: 1;
     gap: 1;
 }
@@ -52,8 +52,8 @@ Screen {
 
 #decision-list,
 #file-list {
-    border: solid 1px $surface-muted;
-    background: $surface;
+    border: solid 1px #374151;
+    background: #1f2937;
     height: 1fr;
     min-height: 8rem;
     padding: 0;
@@ -61,17 +61,17 @@ Screen {
 
 #decision-list ListItem--highlight,
 #file-list ListItem--highlight {
-    background: $accent;
-    color: $accent-darken-2;
+    background: #2563eb;
+    color: #0b1120;
 }
 
 #editor-pane,
 #preview-pane {
-    border: solid 1px $surface-muted;
+    border: solid 1px #374151;
     padding: 1 2;
     margin: 0 1;
     scrollbars: vertical;
-    background: $panel;
+    background: #0f172a;
 }
 
 #editor-pane {
@@ -85,9 +85,9 @@ Screen {
 }
 
 Footer {
-    background: $surface-muted;
-    color: $text;
-    border-top: solid 1px $surface-muted;
+    background: #1f2937;
+    color: #f9fafb;
+    border-top: solid 1px #374151;
 }
 """
 
