@@ -84,16 +84,16 @@ vrdx = "vrdx.main:main"
 - `decisions.py`: parse decisions from marker regions into structured `DecisionRecord` (Pydantic) models that retain IDs, titles, statuses, narrative fields, and the original markdown slice.
 - `template.py`: generate next ID, default status, and stub sections.
 - Round-trip serialization (insert new, reorder, delete) implemented centrally, preserving the host file’s newline style when regenerating the decision block.
-- `status_links.py`: maintain supersedes/deprecated cross references and surface descriptive `DecisionParseError` messages when the canonical fields are missing or malformed.
+- Expose descriptive `DecisionParseError` messages so later milestones can surface actionable UI feedback when canonical fields are missing or malformed.
 - Add documentation snippet describing marker block structure and parsing assumptions.
 - Unit tests with fixture files covering parsing edge cases and serialization.
 
 ### Milestone 4 – State Management and Commands
-- `state.py`: define `Decision`, `DecisionLink`, `AppState`.
-- `commands.py`: operations (new decision, edit existing, reorder, delete,
-  refresh).
-- Integrate parser/persistence calls with state updates.
-- Tests verifying state transitions and command side effects.
+- `state.py`: defines `DecisionState`, `FileState`, and `AppState`, capturing selection, modification, and pane focus (implemented).
+- `commands.py`: provides create/update/delete flows, ordering, linking, navigation helpers, and serialization hooks (implemented).
+- `status_links.py`: slated for a focused follow-up to encapsulate cross-link rules once UI workflows surface them.
+- Parser/persistence wiring is exercised through command paths to keep marker-backed bodies in sync.
+- Tests validate state transitions, linking reciprocity, navigation helpers, and error propagation.
 
 ### Milestone 5 – Textual UI Skeleton
 - `ui/app.py`: instantiate panes, handle pane focus, status bar updates.
@@ -151,4 +151,4 @@ vrdx = "vrdx.main:main"
 - **Binary size/compatibility**: verify Nuitka build on macOS, consider CI
   job capturing output; add smoke test for binary execution.
 - **Cross-link data integrity**: enforce invariants in `status_links.py` and
-  present UI feedback when references invalid.
+  present UI feedback when references are invalid or missing.
