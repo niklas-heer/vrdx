@@ -59,8 +59,8 @@ Screen {
     padding: 0;
 }
 
-#decision-list ListItem--highlight,
-#file-list ListItem--highlight {
+#decision-list .ListItem--highlight,
+#file-list .ListItem--highlight {
     background: #2563eb;
     color: #0b1120;
 }
