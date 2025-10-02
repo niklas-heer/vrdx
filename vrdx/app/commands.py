@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Iterable, Optional
+from typing import Iterable, Literal, Optional
 
 from vrdx.app.state import AppState, DecisionLink, DecisionState, FileState, PaneId
 from vrdx.parser import (
