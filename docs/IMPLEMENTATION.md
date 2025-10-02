@@ -50,7 +50,7 @@ Add with `uv add`:
 - `markdown-it-py` (preview rendering) and `mdurl`
 - `pydantic` for decision models and schema validation
 - `watchfiles` (optional refresh enhancement; consider later)
-- `pytest`, `pytest-asyncio` (dev dependencies via `uv add --dev`). Optional UI tooling such as `textual-devtools` should be installed manually once a compatible distribution is published, ensuring developers can still inspect layouts without blocking the core dependency set.
+- `pytest`, `pytest-asyncio` (dev dependencies via `uv add --dev`). Optional UI tooling—such as Textual-specific testing helpers or future `textual-devtools` builds—should be installed manually once compatible distributions are available so developers can inspect layouts without bloating the core dependency set.
 - `ruff` and `mypy` for linting/type checking (dev)
 
 The toolchain targets macOS and Linux; Windows support is currently out of scope.
@@ -96,10 +96,10 @@ vrdx = "vrdx.main:main"
 - Tests validate state transitions, linking reciprocity, navigation helpers, and error propagation.
 
 ### Milestone 5 – Textual UI Skeleton
-- `ui/app.py`: instantiate panes, handle pane focus, status bar updates.
-- `ui/panes/*.py`: basic widgets reflecting milestone 3 data.
-- Implement numeric focus (`1`–`4`), navigation keys, `space` actions.
-- Implement `?` overlay with key map.
+- `ui/app.py`: skeleton Textual shell wiring AppState to the live decision/file lists, pane focus, and dirty indicator (implemented).
+- `ui/panes.py`: lightweight pane descriptors to support upcoming richer widgets (implemented).
+- Numeric focus (`1`–`4`), navigation keys (`j/k` and arrows), `space` stubs, and the `?` help overlay are handled at the app layer (implemented; editor interactions deferred).
+- `ui/styles.tcss`: initial stylesheet to lay out the left column, editor, and preview panes (added).
 
 ### Milestone 6 – Editor and Preview Features
 - Editor pane with Textual `TextArea`/`Input` integration.

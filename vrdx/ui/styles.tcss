@@ -1,0 +1,65 @@
+/* Layout and styling for the vrdx Textual TUI */
+
+Screen {
+    background: $surface;
+    color: $text;
+}
+
+#main-layout {
+    height: 100%;
+    width: 100%;
+}
+
+#left-column {
+    width: 26%;
+    min-width: 20rem;
+    border-right: solid 1px $surface-muted;
+    padding: 1;
+    gap: 1;
+}
+
+#decisions-title,
+#files-title {
+    text-style: bold;
+    padding-bottom: 0;
+}
+
+#decision-list,
+#file-list {
+    border: solid 1px $surface-muted;
+    background: $surface;
+    height: 1fr;
+    min-height: 8rem;
+    padding: 0;
+}
+
+#decision-list ListItem--highlight,
+#file-list ListItem--highlight {
+    background: $accent;
+    color: $accent-darken-2;
+}
+
+#editor-pane,
+#preview-pane {
+    border: solid 1px $surface-muted;
+    padding: 1 2;
+    margin: 0 1;
+    scrollbars: vertical;
+    background: $panel;
+}
+
+#editor-pane {
+    width: 44%;
+    min-width: 32rem;
+}
+
+#preview-pane {
+    width: 34%;
+    min-width: 24rem;
+}
+
+Footer {
+    background: $surface-muted;
+    color: $text;
+    border-top: solid 1px $surface-muted;
+}

@@ -38,7 +38,7 @@ def test_main_errors_on_missing_directory(tmp_path: Path):
     assert excinfo.value.code == 2
 
 
-def test_launch_interface_lists_markdown_files(tmp_path: Path, capsys, monkeypatch):
+def test_launch_interface_lists_markdown_files(tmp_path: Path, monkeypatch):
     files = [
         tmp_path / "README.md",
         tmp_path / "docs" / "adr.md",
@@ -53,21 +53,47 @@ def test_launch_interface_lists_markdown_files(tmp_path: Path, capsys, monkeypat
         lambda base: [path.resolve() for path in files],
     )
 
+    captured: dict[str, object] = {}
+
+    class DummyApp:
+        def __init__(self, app_state):
+            captured["app_state"] = app_state
+
+        def run(self):
+            captured["ran"] = True
+
+    monkeypatch.setattr(cli, "VrdxApp", DummyApp)
+
     exit_code = cli.launch_interface(tmp_path)
-    captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "Discovered Markdown files:" in captured.out
-    assert "README.md" in captured.out
-    assert "docs/adr.md" in captured.out
+    assert captured.get("ran") is True
+    app_state = captured.get("app_state")
+    assert isinstance(app_state, cli.AppState)
+    assert app_state.base_directory == tmp_path
 
 
-def test_launch_interface_handles_empty_results(tmp_path: Path, capsys, monkeypatch):
+def test_launch_interface_handles_empty_results(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(cli.discovery, "find_markdown_files", lambda base: [])
+
+    captured: dict[str, object] = {}
+
+    class DummyApp:
+        def __init__(self, app_state):
+            captured["app_state"] = app_state
+
+        def run(self):
+            captured["ran"] = True
+
+    monkeypatch.setattr(cli, "VrdxApp", DummyApp)
+
     exit_code = cli.launch_interface(tmp_path)
-    output = capsys.readouterr().out
+
     assert exit_code == 0
-    assert "No Markdown files found." in output
+    assert captured.get("ran") is True
+    app_state = captured.get("app_state")
+    assert isinstance(app_state, cli.AppState)
+    assert app_state.base_directory == tmp_path
 
 
 def test_configure_logging_delegates_to_app_logging(tmp_path: Path, monkeypatch):
