@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from vrdx import __version__
-from vrdx.app import discovery, logging as app_logging
+from vrdx.app import logging as app_logging
 from vrdx.app.state import AppState
 from vrdx.ui import VrdxApp
 

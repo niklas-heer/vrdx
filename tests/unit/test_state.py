@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from vrdx.app import commands
-from vrdx.app.state import AppState, DecisionLink, DecisionState, FileState, PaneId
+from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError
 
 EXAMPLE_BODY = (
@@ -121,10 +121,12 @@ def test_link_decisions_are_reciprocal(tmp_path: Path):
     decision_two = file_state.find_decision(2)
     decision_one = file_state.find_decision(1)
     assert any(
-        l.relation == "supersedes" and l.target_id == 1 for l in decision_two.links
+        link.relation == "supersedes" and link.target_id == 1
+        for link in decision_two.links
     )
     assert any(
-        l.relation == "deprecated_by" and l.target_id == 2 for l in decision_one.links
+        link.relation == "deprecated_by" and link.target_id == 2
+        for link in decision_one.links
     )
 
     commands.unlink_decisions(

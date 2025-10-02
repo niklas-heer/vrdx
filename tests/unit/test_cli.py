@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
 import pytest
 
@@ -38,20 +39,6 @@ def test_main_errors_on_missing_directory(tmp_path: Path):
 
 
 def test_launch_interface_lists_markdown_files(tmp_path: Path, monkeypatch):
-    files = [
-        tmp_path / "README.md",
-        tmp_path / "docs" / "adr.md",
-    ]
-    for file in files:
-        file.parent.mkdir(parents=True, exist_ok=True)
-        file.write_text("# stub\n", encoding="utf-8")
-
-    monkeypatch.setattr(
-        cli.discovery,
-        "find_markdown_files",
-        lambda base: [path.resolve() for path in files],
-    )
-
     captured: dict[str, object] = {}
 
     class DummyApp:
@@ -73,8 +60,6 @@ def test_launch_interface_lists_markdown_files(tmp_path: Path, monkeypatch):
 
 
 def test_launch_interface_handles_empty_results(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(cli.discovery, "find_markdown_files", lambda base: [])
-
     captured: dict[str, object] = {}
 
     class DummyApp:
