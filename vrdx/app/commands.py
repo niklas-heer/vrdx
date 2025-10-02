@@ -61,7 +61,8 @@ def create_decision(
         context=context.strip(),
         consequences=consequences.strip(),
         raw="",
-    )
+    ).model_copy(update={"raw": ""})
+    record = record.model_copy(update={"raw": record.render()})
     decision_state = DecisionState(record=record)
     file_state.decisions.insert(0, decision_state)
     app_state.selected_decision_index = 0
@@ -97,6 +98,7 @@ def update_decision(
             consequences.strip() if consequences is not None else record.consequences
         ),
     )
+    updated = updated.model_copy(update={"raw": updated.render()})
     decision_state.record = updated
     app_state.mark_modified()
     return decision_state
