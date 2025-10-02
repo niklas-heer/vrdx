@@ -140,6 +140,10 @@ def parse_decisions(body: str) -> list[DecisionRecord]:
                 raw=section,
             )
         )
+    if not decisions and body.strip():
+        raise DecisionParseError(
+            "No valid decision entries were found in the provided marker block."
+        )
     return decisions
 
 

@@ -121,6 +121,11 @@
 - Parser utilities raise descriptive `DecisionParseError` exceptions when required fields are missing or malformed so the UI can surface actionable errors before any writes occur.
 - Helper functions compute the next decision identifier and integrate with the template/status helpers to seed new entries with curated status options and sensible defaults.
 
+### 4.9 State Management and Command Operations
+- The application tracks context in an `AppState` aggregate that records the discovered files, the currently selected file and decision, the active pane, and whether there are unsaved changes. Each markdown file is represented by a `FileState` that stores parsed `DecisionRecord` instances, marker metadata, and convenience helpers like “next decision ID”.
+- Individual decisions are wrapped by `DecisionState`, which also collects relationship metadata (supersedes/deprecated links) so cross-references remain consistent while the user navigates or edits records.
+- Command helpers manipulate these structures in one place: creating and updating decisions, reordering or deleting entries, managing reciprocal links, and moving selection between panes. Each mutating command uses the shared serialization routines to keep the marker block body ready for persistence and toggles the `is_modified` flag so the status bar can signal pending changes.
+
 ---
 
 ## 5. Data Structures
