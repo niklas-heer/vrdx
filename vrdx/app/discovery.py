@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
+from typing import Iterator, Sequence
 
 
 _DEFAULT_IGNORED_DIRS: tuple[str, ...] = (

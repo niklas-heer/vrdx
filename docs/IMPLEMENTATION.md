@@ -109,10 +109,10 @@ vrdx = "vrdx.main:main"
 - Visual polish: highlight active pane, ensure colors accessible.
 - Logging for errors (file write failures, parse issues).
 - Wire `main.py` to run the Textual app.
-- Update `justfile` targets to use `uv run`.
+- Update `justfile` targets to use `uv run`, exposing convenient `just lint`, `just test`, and `just build` recipes for local workflows.
 - Verify Nuitka emits the static standalone binary at `bin/vrdx`.
-- Add `just test`, `just lint`, `just typecheck`, `just build`.
 - Document usage in README and design doc references (link to help overlay).
+- Stand up a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs tests on every push/PR and packages the binary via the Justfile build target.
 
 ## 5. Testing Strategy
 
