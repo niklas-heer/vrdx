@@ -8,6 +8,8 @@ from typing import Iterable, Optional
 
 from vrdx import __version__
 from vrdx.app import discovery, logging as app_logging
+from vrdx.app.state import AppState
+from vrdx.ui import VrdxApp
 
 LOG_LEVEL_ENV = "VRDX_LOG_LEVEL"
 
@@ -62,15 +64,8 @@ def resolve_directory(raw: str) -> Path:
 
 
 def launch_interface(base_dir: Path) -> int:
-    # Placeholder until the Textual app is implemented in later milestones.
-    markdown_files = discovery.find_markdown_files(base_dir)
-    print(f"vrdx initialized for directory: {base_dir}")
-    if markdown_files:
-        print("Discovered Markdown files:")
-        for path in markdown_files:
-            print(f"  • {path.relative_to(base_dir)}")
-    else:
-        print("No Markdown files found.")
+    app_state = AppState(base_directory=base_dir)
+    VrdxApp(app_state).run()
     return 0
 
 
