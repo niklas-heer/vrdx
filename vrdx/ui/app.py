@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -17,6 +18,78 @@ from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError, list_status_options, parse_decisions
 from vrdx.parser.markers import ensure_marker_block
 from vrdx.parser.template import render_template
+
+try:
+    _CSS_TEXT = (
+        resources.files("vrdx.ui").joinpath("styles.tcss").read_text(encoding="utf-8")
+    )
+except (FileNotFoundError, OSError, AttributeError):
+    _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI */
+
+Screen {
+    background: $surface;
+    color: $text;
+}
+
+#main-layout {
+    height: 100%;
+    width: 100%;
+}
+
+#left-column {
+    width: 26%;
+    min-width: 20rem;
+    border-right: solid 1px $surface-muted;
+    padding: 1;
+    gap: 1;
+}
+
+#decisions-title,
+#files-title {
+    text-style: bold;
+    padding-bottom: 0;
+}
+
+#decision-list,
+#file-list {
+    border: solid 1px $surface-muted;
+    background: $surface;
+    height: 1fr;
+    min-height: 8rem;
+    padding: 0;
+}
+
+#decision-list ListItem--highlight,
+#file-list ListItem--highlight {
+    background: $accent;
+    color: $accent-darken-2;
+}
+
+#editor-pane,
+#preview-pane {
+    border: solid 1px $surface-muted;
+    padding: 1 2;
+    margin: 0 1;
+    scrollbars: vertical;
+    background: $panel;
+}
+
+#editor-pane {
+    width: 44%;
+    min-width: 32rem;
+}
+
+#preview-pane {
+    width: 34%;
+    min-width: 24rem;
+}
+
+Footer {
+    background: $surface-muted;
+    color: $text;
+    border-top: solid 1px $surface-muted;
+}
+"""
 
 
 @dataclass
@@ -74,7 +147,7 @@ class EditorPane(TextArea):
 class VrdxApp(App[None]):
     """Textual application shell for the vrdx decision manager."""
 
-    CSS_PATH = "styles.tcss"
+    CSS = _CSS_TEXT
 
     BINDINGS = [
         Binding("1", "focus_decisions", "Decisions", show=False),
