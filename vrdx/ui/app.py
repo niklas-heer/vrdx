@@ -9,8 +9,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widget import Widget
-from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
+
+from textual.widgets import Footer, Header, Label, ListItem, ListView, Static, TextArea
 
 from vrdx.app import commands
 from vrdx.app.state import AppState, FileState, PaneId
@@ -56,11 +56,17 @@ class PreviewPane(Static):
         self.update(markdown or "No decision selected.")
 
 
-class EditorPane(Static):
-    """Placeholder editor pane until the rich Textual editor is wired in."""
+class EditorPane(TextArea):
+    """Editable text area for composing or updating decisions."""
 
-    def set_content(self, content: str) -> None:
-        self.update(content or "Press [n] to draft a new decision.")
+    def __init__(self, *, id: str | None = None) -> None:
+        super().__init__(placeholder="Draft decision content…", id=id)
+        self.read_only = True
+
+    def set_content(self, content: str, editable: bool = False) -> None:
+        self.value = content or ""
+        self.cursor_position = len(self.value)
+        self.read_only = not editable
 
 
 class VrdxApp(App[None]):
@@ -111,7 +117,7 @@ class VrdxApp(App[None]):
 
     def on_mount(self) -> None:
         self.refresh_panes()
-        self.set_focus(PaneId.DECISIONS)
+        self.focus_pane(PaneId.DECISIONS)
 
     def refresh_panes(self) -> None:
         file_state = self.app_state.current_file()
@@ -135,43 +141,44 @@ class VrdxApp(App[None]):
     def refresh_editor(self) -> None:
         decision_state = self.app_state.current_decision()
         if self._editor:
+            editable = False
             if decision_state:
                 rendered = decision_state.record.render()
             else:
                 rendered = "Select a decision to edit."
-            self._editor.set_content(rendered)
+            self._editor.set_content(rendered, editable)
 
     def update_dirty_indicator(self) -> None:
         self.dirty_indicator = "● Unsaved" if self.app_state.is_modified else "● Saved"
 
-    def set_focus(self, pane: PaneId) -> None:
+    def focus_pane(self, pane: PaneId) -> None:
         self.app_state.focus_pane(pane)
         match pane:
             case PaneId.DECISIONS:
                 if self._decision_list:
-                    self.set_focus(self._decision_list)
+                    super().set_focus(self._decision_list)
             case PaneId.EDITOR:
                 if self._editor:
-                    self.set_focus(self._editor)
+                    super().set_focus(self._editor)
             case PaneId.PREVIEW:
                 if self._preview:
-                    self.set_focus(self._preview)
+                    super().set_focus(self._preview)
             case PaneId.FILES:
                 if self._file_list:
-                    self.set_focus(self._file_list)
+                    super().set_focus(self._file_list)
         self.post_message(PaneFocusChanged(pane))
 
     def action_focus_decisions(self) -> None:
-        self.set_focus(PaneId.DECISIONS)
+        self.focus_pane(PaneId.DECISIONS)
 
     def action_focus_editor(self) -> None:
-        self.set_focus(PaneId.EDITOR)
+        self.focus_pane(PaneId.EDITOR)
 
     def action_focus_preview(self) -> None:
-        self.set_focus(PaneId.PREVIEW)
+        self.focus_pane(PaneId.PREVIEW)
 
     def action_focus_files(self) -> None:
-        self.set_focus(PaneId.FILES)
+        self.focus_pane(PaneId.FILES)
 
     def action_next_decision(self) -> None:
         commands.focus_next_decision(self.app_state)
@@ -182,8 +189,18 @@ class VrdxApp(App[None]):
         self.refresh_panes()
 
     def action_select_decision(self) -> None:
-        # Placeholder for editor activation in later milestones.
-        pass
+        file_state = self.app_state.current_file()
+        if not self._editor or file_state is None:
+            return
+
+        decision_state = self.app_state.current_decision()
+        if decision_state:
+            content = decision_state.record.render()
+        else:
+            content = commands.apply_template_to_editor(file_state.next_decision_id())
+
+        self._editor.set_content(content, editable=True)
+        self.focus_pane(PaneId.EDITOR)
 
     def action_refresh(self) -> None:
         self.refresh_panes()

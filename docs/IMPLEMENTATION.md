@@ -102,12 +102,12 @@ vrdx = "vrdx.main:main"
 - `ui/styles.tcss`: initial stylesheet to lay out the left column, editor, and preview panes (added).
 
 ### Milestone 6 – Editor and Preview Features
-- Editor pane with Textual `TextArea`/`Input` integration.
-- Status picker interaction (modal or inline).
-- Markdown preview rendering using `markdown-it-py`.
-- Decision reorder (`J/K`) and delete (`d`) interactions.
-- Save (`s`) command with persistence flush and status bar updates.
-- New decision (`n`) flow hooking template.
+- Upgrade the editor pane to a Textual `TextArea`, toggling between read-only inspection and editable mode when the user drafts a new decision or opens an existing one.
+- Introduce status selection and validation (picker modal or inline palette) so curated icons stay in sync with cross-links.
+- Enhance the right-hand preview to render Markdown (via `markdown-it-py`) and reflect in-progress edits in real time.
+- Support interactive decision mutations: reorder with `J/K`, delete with `d`, and surface confirmations.
+- Implement persistence triggers (`s` for save, status bar feedback) that write the marker block back to disk through the command layer.
+- Extend the `n` flow to insert template content directly into the editor, positioning the cursor for immediate editing.
 
 ### Milestone 7 – Polish and Packaging
 - Visual polish: highlight active pane, ensure colors accessible.
