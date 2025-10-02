@@ -130,7 +130,7 @@
 - The first Textual iteration renders the four-pane layout described earlier: a narrow left column that stacks the decision list above the markdown file list, a dominant editor pane centered on the screen, and a preview pane to the right. Each pane is addressable by numeric shortcuts (`1`–`4`) and clearly labelled in the header bar.
 - Navigation bindings mirror the lazygit-inspired interaction model (`j/k` or arrow keys for movement, `space` to activate a selection, `?` for the key reference overlay), while the footer reflects the current save state indicator (`● Saved` / `● Unsaved`) and the most important actions (`[n]ew`, `[s]ave`, `[q]uit`, `[?]help`).
 - The editor pane now leverages Textual's `TextArea`, remaining read-only while browsing but switching to an editable buffer when a user activates `space` or drafts a new decision via `n`, seeding the template directly into the cursor.
-- The preview pane and state wiring continue to stay in sync so that moving between files or decisions immediately updates both editor and preview content; future milestones will layer in status pickers and mutation workflows.
+- The preview pane and state wiring continue to stay in sync so that moving between files or decisions immediately updates both editor and preview content; in this milestone the `p` binding simply cycles through the curated status set and `s` writes the updated decision back to the underlying markdown file. A richer status picker, Markdown-rendered preview, and in-app reordering/deletion flows remain on the roadmap for the next iteration.
 
 ---
 
