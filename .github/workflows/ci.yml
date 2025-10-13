@@ -47,7 +47,7 @@ jobs:
           brew link --overwrite python@3.13
           PYTHON_PREFIX="$(brew --prefix python@3.13)"
           echo "${PYTHON_PREFIX}/bin" >> "$GITHUB_PATH"
-          echo "PYTHONHOME=${PYTHON_PREFIX}/Frameworks/Python.framework/Versions/3.13" >> "$GITHUB_ENV"
+          echo "UV_PYTHON=${PYTHON_PREFIX}/bin/python3.13" >> "$GITHUB_ENV"
           python3.13 --version
 
       - name: Sync dependencies
