@@ -50,6 +50,9 @@ jobs:
           echo "UV_PYTHON=${PYTHON_PREFIX}/bin/python3.13" >> "$GITHUB_ENV"
           python3.13 --version
 
+      - name: Expose repository on PYTHONPATH
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}\${PYTHONPATH:+:\$PYTHONPATH}" >> "$GITHUB_ENV"
+
       - name: Sync dependencies
         run: uv sync
 
