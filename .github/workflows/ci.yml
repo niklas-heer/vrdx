@@ -17,9 +17,9 @@ jobs:
 
       - uses: astral-sh/setup-uv@v1
         with:
-          python-version: "3.13"
+          enable-cache: true
 
-      - name: Sync dependencies
+      - name: Install Python and sync dependencies
         run: uv sync
 
       - name: Run unit tests
