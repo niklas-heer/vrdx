@@ -19,7 +19,7 @@ jobs:
           version: latest
 
       - name: Run Earthly multi-distro tests
-        run: earthly +ubuntu +alpine +centos
+        run: earthly --ci +ci
 
   macos:
     name: macOS

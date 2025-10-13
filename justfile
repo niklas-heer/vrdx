@@ -28,7 +28,7 @@ test-watch:
 
 # Run CI tests across Linux distros with Earthly
 ci-linux:
-    earthly +ubuntu +alpine +centos
+    earthly +ci
 
 # Run linter
 lint:
