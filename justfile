@@ -26,6 +26,10 @@ test:
 test-watch:
     uv run ptw
 
+# Run CI tests across Linux distros with Earthly
+ci-linux:
+    earthly +ubuntu +alpine +centos
+
 # Run linter
 lint:
     uv run ruff check .
