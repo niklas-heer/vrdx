@@ -1,65 +1,81 @@
 /* Layout and styling for the vrdx Textual TUI */
 
 Screen {
-    background: $surface;
+    background: $background;
     color: $text;
+    layout: vertical;
 }
 
 #main-layout {
-    height: 100%;
+    height: 1fr;
     width: 100%;
 }
 
 #left-column {
     width: 26%;
-    min-width: 20rem;
-    border-right: solid 1px $surface-muted;
+    min-width: 20w;
+    border-right: solid $primary;
     padding: 1;
-    gap: 1;
 }
 
 #decisions-title,
 #files-title {
     text-style: bold;
     padding-bottom: 0;
+    margin-bottom: 1;
+}
+
+#pane-hints {
+    padding: 0 1;
+    color: $text-muted;
+    height: 1;
 }
 
 #decision-list,
 #file-list {
-    border: solid 1px $surface-muted;
+    border: solid $primary;
     background: $surface;
     height: 1fr;
-    min-height: 8rem;
+    min-height: 8;
     padding: 0;
+    margin-bottom: 1;
 }
 
-#decision-list ListItem--highlight,
-#file-list ListItem--highlight {
+#decision-list ListItem:hover,
+#file-list ListItem:hover {
     background: $accent;
-    color: $accent-darken-2;
+}
+
+#decision-list ListView:focus ListItem.--highlight,
+#file-list ListView:focus ListItem.--highlight {
+    background: $accent;
 }
 
 #editor-pane,
 #preview-pane {
-    border: solid 1px $surface-muted;
+    border: solid $primary;
     padding: 1 2;
     margin: 0 1;
-    scrollbars: vertical;
+    overflow-y: auto;
     background: $panel;
 }
 
 #editor-pane {
     width: 44%;
-    min-width: 32rem;
+    min-width: 32w;
 }
 
 #preview-pane {
-    width: 34%;
-    min-width: 24rem;
+    width: 30%;
+    min-width: 24w;
 }
 
-Footer {
-    background: $surface-muted;
+#status-bar {
+    background: $boost;
     color: $text;
-    border-top: solid 1px $surface-muted;
+    border-bottom: solid $primary;
+    padding: 0 1;
+    height: auto;
+    min-height: 1;
+    content-align: center middle;
 }

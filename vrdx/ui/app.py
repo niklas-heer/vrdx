@@ -10,13 +10,22 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Label, ListItem, ListView, Static, TextArea
+from textual.widgets import (
+    Header,
+    Label,
+    ListItem,
+    ListView,
+    Markdown,
+    Static,
+    TextArea,
+)
 
 from vrdx.app import commands
+from vrdx.app.discovery import find_markdown_files
 from vrdx.app.persistence import read_markdown, write_markdown
 from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError, list_status_options, parse_decisions
-from vrdx.parser.markers import ensure_marker_block
+from vrdx.parser.markers import detect_marker_block, ensure_marker_block, MarkerError
 from vrdx.parser.template import render_template
 
 try:
@@ -32,16 +41,14 @@ Screen {
 }
 
 #main-layout {
-    height: 100%;
     width: 100%;
+    height: 100%;
 }
 
 #left-column {
-    width: 26%;
-    min-width: 20rem;
-    border-right: solid 1px #374151;
+    width: 25%;
     padding: 1;
-    gap: 1;
+    border-right: solid #374151;
 }
 
 #decisions-title,
@@ -50,44 +57,38 @@ Screen {
     padding-bottom: 0;
 }
 
-#decision-list,
-#file-list {
-    border: solid 1px #374151;
-    background: #1f2937;
-    height: 1fr;
-    min-height: 8rem;
-    padding: 0;
+#pane-hints {
+    padding: 0 1;
+    color: #9ca3af;
 }
 
-#decision-list .ListItem--highlight,
-#file-list .ListItem--highlight {
-    background: #2563eb;
-    color: #0b1120;
+#decision-list,
+#file-list {
+    border: solid #374151;
+    background: #1f2937;
+    padding: 0;
 }
 
 #editor-pane,
 #preview-pane {
-    border: solid 1px #374151;
-    padding: 1 2;
-    margin: 0 1;
-    scrollbars: vertical;
+    border: solid #374151;
+    padding: 1;
     background: #0f172a;
 }
 
 #editor-pane {
-    width: 44%;
-    min-width: 32rem;
+    width: 45%;
 }
 
 #preview-pane {
-    width: 34%;
-    min-width: 24rem;
+    width: 30%;
 }
 
-Footer {
+#status-bar {
     background: #1f2937;
     color: #f9fafb;
-    border-top: solid 1px #374151;
+    border-top: solid #374151;
+    padding: 0 1;
 }
 """
 
@@ -100,6 +101,8 @@ class PaneFocusChanged(Message):
 class DecisionList(ListView):
     """Displays the list of decisions for the active file."""
 
+    can_focus = True
+
     def populate(self, file_state: Optional[FileState]) -> None:
         self.clear()
         if not file_state or not file_state.decisions:
@@ -109,30 +112,44 @@ class DecisionList(ListView):
             label = f"{decision.record.id}: {decision.record.title}"
             status = decision.record.status
             self.append(ListItem(Label(f"{label} ({status})")))
-        self.index = 0
+        if self.children:
+            self.index = 0
 
 
 class FileList(ListView):
     """Displays discovered markdown files."""
 
+    can_focus = True
+
     def populate(self, files: Iterable[FileState], selected: int) -> None:
         self.clear()
-        for file_state in files:
-            label = file_state.path.relative_to(file_state.path.parents[0])
+        files_list = list(files)
+        for file_state in files_list:
+            # Show just the filename for brevity
+            label = file_state.path.name
             self.append(ListItem(Label(str(label))))
         if self.children and 0 <= selected < len(self.children):
             self.index = selected
 
 
-class PreviewPane(Static):
-    """Renders the selected decision in read-only form."""
+class PreviewPane(Markdown):
+    """Renders the selected decision in read-only form as rendered Markdown."""
 
-    def show_decision(self, markdown: str) -> None:
-        self.update(markdown or "No decision selected.")
+    can_focus = True
+
+    def show_decision(self, markdown_text: str) -> None:
+        if markdown_text:
+            self.update(markdown_text)
+        else:
+            self.update(
+                "# No Decision Selected\n\nSelect a decision from the list to preview it here."
+            )
 
 
 class EditorPane(TextArea):
     """Editable text area used for drafting decisions."""
+
+    can_focus = True
 
     def __init__(self, *, id: str | None = None) -> None:
         super().__init__(placeholder="Draft decision content…", id=id)
@@ -140,7 +157,7 @@ class EditorPane(TextArea):
 
     def set_content(self, content: str, *, editable: bool = False) -> None:
         self.value = content or ""
-        self.cursor_position = len(self.value)
+        self.cursor_position = (0, 0)
         self.read_only = not editable
 
 
@@ -160,6 +177,7 @@ class VrdxApp(App[None]):
         Binding("n", "new_decision", "New", show=True),
         Binding("p", "pick_status", "Status", show=True),
         Binding("s", "save", "Save", show=True),
+        Binding("escape", "cancel", "Cancel", show=False),
         Binding("r", "refresh", "Refresh", show=False),
         Binding("?", "show_help", "Help", show=True),
         Binding("q", "quit", "Quit", show=True),
@@ -175,14 +193,22 @@ class VrdxApp(App[None]):
         self._file_list: Optional[FileList] = None
         self._preview: Optional[PreviewPane] = None
         self._editor: Optional[EditorPane] = None
+        self._pane_hints: Optional[Static] = None
+        self._status_bar: Optional[Static] = None
         self._editor_mode: str = "view"
         self._editing_decision_id: Optional[int] = None
         self._status_options = list(list_status_options())
-        self._status_message: str = ""
+        self._status_message: str = "Ready"
 
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Header()
+            self._status_bar = Static("", id="status-bar")
+            yield self._status_bar
+            self._pane_hints = Static(
+                "1·Decisions  2·Editor  3·Preview  4·Files", id="pane-hints"
+            )
+            yield self._pane_hints
             with Horizontal(id="main-layout"):
                 with Vertical(id="left-column"):
                     yield Label("Decisions", id="decisions-title")
@@ -195,18 +221,62 @@ class VrdxApp(App[None]):
                 yield self._editor
                 self._preview = PreviewPane(id="preview-pane")
                 yield self._preview
-            yield Footer()
 
     def on_mount(self) -> None:
+        self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()
 
+    def _initialize_files(self) -> None:
+        base_directory = self.app_state.base_directory
+        markdown_paths = find_markdown_files(base_directory)
+        file_states = []
+        for path in markdown_paths:
+            try:
+                text = read_markdown(path)
+            except FileNotFoundError:
+                continue
+            try:
+                block = detect_marker_block(text)
+            except MarkerError as exc:
+                self._show_message(f"{path.name}: {exc}")
+                block = None
+
+            marker_present = block is not None
+            inserted_marker = False
+
+            if block is None:
+                updated_text, block, inserted_marker = ensure_marker_block(text)
+                if inserted_marker:
+                    write_markdown(path, updated_text)
+                    text = updated_text
+                    self._show_message(f"Inserted decision markers into {path.name}.")
+                marker_present = block is not None
+
+            body = block.body(text) if block else ""
+            try:
+                file_state = commands.refresh_file_from_body(
+                    self.app_state,
+                    path=path,
+                    body=body,
+                    marker_present=marker_present,
+                    inserted_marker=inserted_marker,
+                )
+            except DecisionParseError as exc:
+                self._show_message(f"{path.name}: {exc}")
+                continue
+            file_states.append(file_state)
+        if file_states:
+            commands.load_files(self.app_state, file_states)
+        else:
+            self._show_message("No markdown files found in the current directory.")
+
     def refresh_panes(self) -> None:
         file_state = self.app_state.current_file()
-        if self._decision_list:
+        if self._decision_list is not None:
             self._decision_list.populate(file_state)
             self._decision_list.index = self.app_state.selected_decision_index
-        if self._file_list:
+        if self._file_list is not None:
             self._file_list.populate(
                 self.app_state.files, self.app_state.selected_file_index
             )
@@ -214,16 +284,16 @@ class VrdxApp(App[None]):
         if self._editor_mode == "view":
             self.refresh_editor()
         self.update_dirty_indicator()
-        self._update_footer()
+        self._update_status_bar()
 
     def refresh_preview(self) -> None:
         decision_state = self.app_state.current_decision()
-        if self._preview:
+        if self._preview is not None:
             content = decision_state.record.render() if decision_state else ""
             self._preview.show_decision(content)
 
     def refresh_editor(self) -> None:
-        if not self._editor:
+        if self._editor is None:
             return
         decision_state = self.app_state.current_decision()
         if decision_state:
@@ -237,19 +307,23 @@ class VrdxApp(App[None]):
 
     def focus_pane(self, pane: PaneId) -> None:
         self.app_state.focus_pane(pane)
+        widget_to_focus = None
         match pane:
             case PaneId.DECISIONS:
-                if self._decision_list:
-                    super().set_focus(self._decision_list)
+                widget_to_focus = self._decision_list
             case PaneId.EDITOR:
-                if self._editor:
-                    super().set_focus(self._editor)
+                widget_to_focus = self._editor
             case PaneId.PREVIEW:
-                if self._preview:
-                    super().set_focus(self._preview)
+                widget_to_focus = self._preview
             case PaneId.FILES:
-                if self._file_list:
-                    super().set_focus(self._file_list)
+                widget_to_focus = self._file_list
+
+        if widget_to_focus:
+            try:
+                self.set_focus(widget_to_focus)
+            except Exception:
+                # Widget might not be focusable, continue anyway
+                pass
         self.post_message(PaneFocusChanged(pane))
 
     def action_focus_decisions(self) -> None:
@@ -279,7 +353,7 @@ class VrdxApp(App[None]):
 
     def action_new_decision(self) -> None:
         file_state = self.app_state.current_file()
-        if not file_state or not self._editor:
+        if not file_state or self._editor is None:
             return
         template = render_template(file_state.next_decision_id())
         self._editor_mode = "edit-new"
@@ -287,10 +361,10 @@ class VrdxApp(App[None]):
         self._status_message = "Drafting new decision"
         self._editor.set_content(template, editable=True)
         self.focus_pane(PaneId.EDITOR)
-        self._update_footer()
+        self._update_status_bar()
 
     def action_pick_status(self) -> None:
-        if not self._editor or self._editor.read_only:
+        if self._editor is None or self._editor.read_only:
             return
         try:
             record = self._parse_editor_record()
@@ -312,7 +386,7 @@ class VrdxApp(App[None]):
         self._editor.set_content("\n".join(lines), editable=True)
 
     def action_save(self) -> None:
-        if not self._editor or self._editor.read_only:
+        if self._editor is None or self._editor.read_only:
             return
         try:
             record = self._parse_editor_record()
@@ -354,24 +428,23 @@ class VrdxApp(App[None]):
         self._reset_edit_state()
         self.refresh_panes()
 
+    def action_cancel(self) -> None:
+        """Cancel editing and return to view mode."""
+        if self._editor_mode in ("edit-new", "edit-existing"):
+            self._reset_edit_state()
+            self.focus_pane(PaneId.DECISIONS)
+            self._show_message("Editing cancelled")
+
     def action_show_help(self) -> None:
-        help_lines = [
-            "[space] edit",
-            "[n] new decision",
-            "[p] cycle status",
-            "[s] save",
-            "[q] quit",
-            "[?] help",
-        ]
-        self.push_screen(
-            Static("Key bindings:\n" + "\n".join(f"- {line}" for line in help_lines))
+        self._show_message(
+            "[space] edit  [n] new  [p] status  [s] save  [esc] cancel  [j/k or arrows] navigate"
         )
 
     def watch_dirty_indicator(self, dirty_indicator: str) -> None:
-        self._update_footer()
+        self._update_status_bar()
 
     def _begin_edit_existing(self) -> None:
-        if not self._editor:
+        if self._editor is None:
             return
         decision_state = self.app_state.current_decision()
         if not decision_state:
@@ -381,10 +454,10 @@ class VrdxApp(App[None]):
         self._status_message = f"Editing decision #{decision_state.record.id}"
         self._editor.set_content(decision_state.record.render(), editable=True)
         self.focus_pane(PaneId.EDITOR)
-        self._update_footer()
+        self._update_status_bar()
 
     def _parse_editor_record(self):
-        if not self._editor:
+        if self._editor is None:
             raise DecisionParseError("Editor unavailable.")
         content = self._editor.value
         records = parse_decisions(content)
@@ -412,19 +485,53 @@ class VrdxApp(App[None]):
         self._editor_mode = "view"
         self._editing_decision_id = None
         self._status_message = ""
-        self.refresh_editor()
-        self._update_footer()
+        if self._editor is not None:
+            self.refresh_editor()
+        self._update_status_bar()
 
     def _show_message(self, message: str) -> None:
         self._status_message = message
         self.log(message)
-        self._update_footer()
+        self._update_status_bar()
 
-    def _update_footer(self) -> None:
-        if footer := self.query_one(Footer):
-            hint_text = (
-                "[space] edit  [n] new  [p] status  [s] save  [q] quit  [?] help"
-            )
-            footer.update(
-                f"{self.dirty_indicator}  {self._status_message or hint_text}"
-            )
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Handle selection changes in both decision and file lists."""
+        if event.list_view == self._decision_list:
+            # Decision list selection changed
+            if event.list_view.index is not None:
+                self.app_state.selected_decision_index = event.list_view.index
+                self._reset_edit_state()
+                self.refresh_panes()
+        elif event.list_view == self._file_list:
+            # File list selection changed
+            if event.list_view.index is not None and 0 <= event.list_view.index < len(
+                self.app_state.files
+            ):
+                self.app_state.select_file(event.list_view.index)
+                self._reset_edit_state()
+                self.refresh_panes()
+
+    def _update_status_bar(self) -> None:
+        if self._status_bar is not None:
+            # Build mode indicator (vim-style)
+            mode_indicator = ""
+            if self._editor_mode == "edit-new":
+                mode_indicator = "-- INSERT (New) --"
+            elif self._editor_mode == "edit-existing":
+                mode_indicator = "-- EDIT --"
+            elif self._editor_mode == "view":
+                mode_indicator = "-- NORMAL --"
+
+            # Build hint text
+            if self._editor_mode in ("edit-new", "edit-existing"):
+                hint_text = "[s] save  [esc] cancel  [p] cycle status"
+            else:
+                hint_text = (
+                    "[space] edit  [n] new  [1-4] focus panes  [?] help  [q] quit"
+                )
+
+            # Combine status message or hint with mode
+            status_text = self._status_message or hint_text
+            full_status = f"{self.dirty_indicator}  {mode_indicator}  {status_text}"
+
+            self._status_bar.update(full_status)
