@@ -73,7 +73,7 @@ vrdx = "vrdx.main:main"
 
 ### Milestone 2 – File Discovery and Marker Management
 - `discovery.py`: find Markdown files from working directory.
-- `markers.py`: detect `<!-- vrdx start -->` / `<!-- vrdx end -->`, prompt logic
+- `markers.py`: detect `&lt;!-- vrdx start -->` / `&lt;!-- vrdx end -->`, prompt logic
   (hook for UI).
 - `persistence.py`: function to insert marker scaffold with confirmation.
 - Document discovery expectations with a brief snippet illustrating how results feed the UI.
@@ -109,10 +109,32 @@ vrdx = "vrdx.main:main"
 - Visual polish: highlight active pane, ensure colors accessible.
 - Logging for errors (file write failures, parse issues).
 - Wire `main.py` to run the Textual app.
-- Update `justfile` targets to use `uv run`, exposing convenient `just lint`, `just test`, and `just build` recipes for local workflows.
-- Verify Nuitka emits the static standalone binary at `bin/vrdx`.
+- Update `justfile` targets to use `uv run`, exposing convenient `just lint` and `just test` recipes for local workflows.
 - Document usage in README and design doc references (link to help overlay).
-- Stand up a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs tests on every push/PR and packages the binary via the Justfile build target.
+- Stand up a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs tests on every push/PR.
+</text>
+
+<old_text line=131>
+## 7. Deliverables
+
+1. Functional CLI application supporting the specified TUI interactions, distributed exclusively via `uv tool install`.
+2. Automated tests passing locally (`just test`) and during CI.
+3. Updated documentation:
+   - README quick-start with `uv tool install` commands.
+   - `docs/DESIGN.md` kept in sync with implementation changes.
+   - This implementation guide updated as milestones complete.
+
+## 8. Risks & Mitigations
+
+- **Markdown parsing ambiguity**: rely on explicit markers and consistent
+  H3 structure; add tests for malformed cases and fallback error messaging.
+- **Textual API changes**: pin version in `pyproject.toml` and monitor release
+  notes.
+- **Python distribution**: primary distribution via `uv tool install` requires
+  users to have Python installed; this is acceptable for the target audience
+  (developers on Unix-like systems).
+- **Cross-link data integrity**: enforce invariants in `status_links.py` and
+  present UI feedback when references are invalid or missing.
 
 ## 5. Testing Strategy
 
@@ -131,10 +153,10 @@ vrdx = "vrdx.main:main"
 
 ## 7. Deliverables
 
-1. Functional CLI binary supporting the specified TUI interactions, packaged as a static standalone binary at `bin/vrdx`.
+1. Functional CLI application supporting the specified TUI interactions, distributed exclusively via `uv tool install`.
 2. Automated tests passing locally (`just test`) and during CI.
 3. Updated documentation:
-   - README quick-start with `uv` commands and Nuitka build note.
+   - README quick-start with `uv tool install` commands.
    - `docs/DESIGN.md` kept in sync with implementation changes.
    - This implementation guide updated as milestones complete.
 
@@ -144,7 +166,13 @@ vrdx = "vrdx.main:main"
   H3 structure; add tests for malformed cases and fallback error messaging.
 - **Textual API changes**: pin version in `pyproject.toml` and monitor release
   notes.
-- **Binary size/compatibility**: verify Nuitka build on macOS, consider CI
-  job capturing output; add smoke test for binary execution.
+- **Python distribution**: primary distribution via `uv tool install` requires
+  users to have Python installed; this is acceptable for the target audience
+  (developers on Unix-like systems).
 - **Cross-link data integrity**: enforce invariants in `status_links.py` and
   present UI feedback when references are invalid or missing.
+</text>
+
+<!-- vrdx start -->
+
+<!-- vrdx end -->
