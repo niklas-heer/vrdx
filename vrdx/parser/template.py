@@ -29,11 +29,11 @@ class DecisionTemplate:
     """Callable container for producing new decision Markdown blocks."""
 
     next_id: int
-    title_placeholder: str = ""
+    title_placeholder: str = "Decision Title (e.g., 'Use PostgreSQL for data storage')"
     status: str = DEFAULT_STATUS
-    decision_placeholder: str = ""
-    context_placeholder: str = ""
-    consequences_placeholder: str = ""
+    decision_placeholder: str = "What decision was made? (e.g., 'We will use PostgreSQL as our primary database')"
+    context_placeholder: str = "What is the context? Why is this decision needed? (e.g., 'We need a reliable, ACID-compliant database for our application')"
+    consequences_placeholder: str = "What are the consequences? Pros and cons? (e.g., 'Pros: ACID compliance, mature ecosystem. Cons: Requires separate hosting')"
 
     def render(self, *, newline: str = "\n") -> str:
         """Render the decision template using the specified newline."""
@@ -60,11 +60,11 @@ def normalise_status(status: str) -> str:
 def render_template(
     next_id: int,
     *,
-    title: str = "",
+    title: str = "Decision Title (e.g., 'Use PostgreSQL for data storage')",
     status: str = DEFAULT_STATUS,
-    decision: str = "",
-    context: str = "",
-    consequences: str = "",
+    decision: str = "What decision was made? (e.g., 'We will use PostgreSQL as our primary database')",
+    context: str = "What is the context? Why is this decision needed? (e.g., 'We need a reliable, ACID-compliant database for our application')",
+    consequences: str = "What are the consequences? Pros and cons? (e.g., 'Pros: ACID compliance, mature ecosystem. Cons: Requires separate hosting')",
     newline: str = "\n",
 ) -> str:
     """Convenience function to create and render a decision template."""
