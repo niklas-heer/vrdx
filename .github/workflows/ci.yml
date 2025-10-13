@@ -31,14 +31,20 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Setup Homebrew with cache
-        uses: Homebrew/actions/setup-homebrew@v2
+      - name: Cache Homebrew downloads
+        uses: actions/cache@v4
         with:
-          cache: true
+          path: |
+            ~/Library/Caches/Homebrew
+          key: homebrew-${{ runner.os }}-v1
+          restore-keys: |
+            homebrew-${{ runner.os }}-
 
       - name: Install Python 3.13 via Homebrew
         run: |
+          brew update
           brew install python@3.13
+          brew link --overwrite python@3.13
           PYTHON_PREFIX="$(brew --prefix python@3.13)"
           echo "${PYTHON_PREFIX}/bin" >> "$GITHUB_PATH"
           echo "PYTHONHOME=${PYTHON_PREFIX}/Frameworks/Python.framework/Versions/3.13" >> "$GITHUB_ENV"
