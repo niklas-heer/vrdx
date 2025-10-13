@@ -27,8 +27,20 @@ _DEFAULT_IGNORED_DIRS: tuple[str, ...] = (
     ".hg",
     ".svn",
     ".venv",
+    "venv",
+    "env",
     "__pycache__",
     "node_modules",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    ".tox",
+    ".eggs",
+    "dist",
+    "build",
+    ".idea",
+    ".vscode",
+    ".DS_Store",
 )
 
 
@@ -94,9 +106,13 @@ def iter_markdown_files(
     ignored = set(cfg.ignored_directories)
 
     for root, dirs, files in os.walk(base_directory):
-        dirs[:] = [d for d in dirs if d not in ignored]
+        # Filter out ignored directories and dotfiles/hidden directories
+        dirs[:] = [d for d in dirs if d not in ignored and not d.startswith(".")]
         root_path = Path(root)
         for filename in files:
+            # Skip hidden files (dotfiles)
+            if filename.startswith("."):
+                continue
             if Path(filename).suffix.lower() in normalized_exts:
                 yield (root_path / filename).resolve()
 
