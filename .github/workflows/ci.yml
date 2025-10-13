@@ -31,8 +31,18 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Python 3.13
-        run: uv python install 3.13
+      - name: Setup Homebrew with cache
+        uses: Homebrew/actions/setup-homebrew@v2
+        with:
+          cache: true
+
+      - name: Install Python 3.13 via Homebrew
+        run: |
+          brew install python@3.13
+          PYTHON_PREFIX="$(brew --prefix python@3.13)"
+          echo "${PYTHON_PREFIX}/bin" >> "$GITHUB_PATH"
+          echo "PYTHONHOME=${PYTHON_PREFIX}/Frameworks/Python.framework/Versions/3.13" >> "$GITHUB_ENV"
+          python3.13 --version
 
       - name: Sync dependencies
         run: uv sync
