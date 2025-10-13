@@ -8,7 +8,7 @@ base:
     RUN apk add --no-cache curl git
     RUN curl -LsSf https://astral.sh/uv/install.sh | sh
     ENV PATH="/root/.local/bin:$PATH"
-    RUN uv python install 3.13.7
+    RUN uv python install 3.13
     COPY . .
     RUN uv sync
 
@@ -18,7 +18,7 @@ ubuntu:
     RUN apt-get update && apt-get install -y curl git ca-certificates
     RUN curl -LsSf https://astral.sh/uv/install.sh | sh
     ENV PATH="/root/.local/bin:$PATH"
-    RUN uv python install 3.13.7
+    RUN uv python install 3.13
     COPY . .
     RUN uv sync
     RUN uv run --with pytest pytest
@@ -29,7 +29,7 @@ alpine:
     RUN apk add --no-cache curl git ca-certificates
     RUN curl -LsSf https://astral.sh/uv/install.sh | sh
     ENV PATH="/root/.local/bin:$PATH"
-    RUN uv python install 3.13.7
+    RUN uv python install 3.13
     COPY . .
     RUN uv sync
     RUN uv run --with pytest pytest
@@ -40,7 +40,7 @@ centos:
     RUN yum install -y curl git ca-certificates
     RUN curl -LsSf https://astral.sh/uv/install.sh | sh
     ENV PATH="/root/.local/bin:$PATH"
-    RUN uv python install 3.13.7
+    RUN uv python install 3.13
     COPY . .
     RUN uv sync
     RUN uv run --with pytest pytest

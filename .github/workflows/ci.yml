@@ -7,11 +7,23 @@ on:
   pull_request:
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  linux:
+    name: Linux (Earthly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Earthly
+        uses: earthly/actions/setup-earthly@v1
+        with:
+          version: latest
+
+      - name: Run Earthly multi-distro tests
+        run: earthly +ubuntu +alpine +centos
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +32,7 @@ jobs:
           enable-cache: true
 
       - name: Install Python 3.13
-        run: uv python install 3.13.7
+        run: uv python install 3.13
 
       - name: Sync dependencies
         run: uv sync
