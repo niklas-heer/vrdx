@@ -92,6 +92,32 @@ def test_iter_markdown_files_errors_when_path_is_file(tmp_path: Path):
         list(iter_markdown_files(file_path))
 
 
+def test_iter_markdown_files_skips_dotfiles_and_hidden_directories(tmp_path: Path):
+    create_files(
+        tmp_path,
+        {
+            "README.md": "# Main README\n",
+            ".hidden.md": "hidden file",
+            ".hidden_dir": {
+                "doc.md": "should not appear",
+            },
+            "docs": {
+                "visible.md": "Decision",
+                ".dotfile.md": "hidden in docs",
+            },
+        },
+    )
+
+    results = list(iter_markdown_files(tmp_path))
+    # Should only find visible files, not dotfiles or files in hidden directories
+    assert results == sorted(
+        [
+            (tmp_path / "README.md").resolve(),
+            (tmp_path / "docs" / "visible.md").resolve(),
+        ]
+    )
+
+
 def test_discovery_config_normalizes_extensions():
     config = DiscoveryConfig(extensions=(".MD", ".Markdown"))
     assert config.normalized_extensions() == (".md", ".markdown")

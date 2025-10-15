@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  linux:
+    name: Linux (Earthly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Earthly
+        uses: earthly/actions/setup-earthly@v1
+        with:
+          version: latest
+
+      - name: Run Earthly multi-distro tests
+        run: earthly --ci +ci
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install Python 3.13
+        run: uv python install 3.13
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Run unit tests
+        run: uv run --with pytest pytest

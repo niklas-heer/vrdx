@@ -5,9 +5,9 @@
 ### Goals
 - Deliver a standalone CLI/TUI experience reminiscent of lazygit for managing decision records.
 - Discover Markdown files (`*.md`) in the current working directory.
-- Parse decision content delimited by `<!-- vrdx start -->` and `<!-- vrdx end -->`.
+- Parse decision content delimited by `&lt;!-- vrdx start -->` and `&lt;!-- vrdx end -->`.
 - Provide an interface to browse files, inspect decisions, and compose new ones.
-- Leverage `uv` for dependency management and Nuitka for building a static standalone binary.
+- Leverage `uv` for dependency management and modern Python distribution via `uv tool install`.
 
 ### Non-Goals (Initial Iteration)
 - Automatic Git operations such as committing or staging.
@@ -38,7 +38,7 @@
 | Markdown Parsing | Targeted parsing around markers plus light-weight Markdown parsing (e.g., markdown-it-py) | Ensures reliable extraction while keeping dependencies manageable. |
 | Data Modeling | Optional dataclasses or pydantic models | Enforces consistent decision schema, simplifies validation. |
 | Dependency Management | uv | Matches the project’s existing workflow and provides reproducible environments. |
-| Packaging | Nuitka | Generates a static standalone binary per requirements. |
+| Packaging | uv + hatchling | Modern Python distribution exclusively via `uv tool install`. |
 
 ---
 
@@ -46,12 +46,14 @@
 
 ### 4.1 File Discovery
 - Recursively locate `*.md` files starting from the current working directory.
+- Automatically skip hidden files and directories (those starting with `.`).
+- Ignore common development directories (`.git`, `.venv`, `venv`, `env`, `__pycache__`, `node_modules`, `.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `.tox`, `.eggs`, `dist`, `build`, `.idea`, `.vscode`).
 - Support manual refresh via key binding.
-- Optionally respect ignore rules in a future iteration.
+- Filtering behavior can be customized via `DiscoveryConfig` in future iterations.
 
 ### 4.2 Decision Extraction
-- Identify decision blocks by locating `<!-- vrdx start -->` and `<!-- vrdx end -->` markers in each Markdown file.
-- When a file lacks markers, prompt the user before inserting the canonical block; with confirmation, append a scaffold that includes the start marker, a blank line, and the end marker so subsequent decisions are captured between `<!-- vrdx start -->` and `<!-- vrdx end -->`.
+- Identify decision blocks by locating `&lt;!-- vrdx start -->` and `&lt;!-- vrdx end -->` markers in each Markdown file.
+- When a file lacks markers, prompt the user before inserting the canonical block; with confirmation, append a scaffold that includes the start marker, a blank line, and the end marker so subsequent decisions are captured between `&lt;!-- vrdx start -->` and `&lt;!-- vrdx end -->`.
 - Within the block, treat each `###` heading as the start of a decision.
 - Capture metadata (ID, title, status, decision, context, consequences) for indexing and editing.
 
@@ -108,7 +110,7 @@
 - Maintain blank line separation for readability.
 
 ### 4.7 Marker Management
-- Marker blocks are defined by the canonical delimiters `<!-- vrdx start -->` and `<!-- vrdx end -->`; all decision content lives between them.
+- Marker blocks are defined by the canonical delimiters `&lt;!-- vrdx start -->` and `&lt;!-- vrdx end -->`; all decision content lives between them.
 - When no markers are present, the application prompts the user before appending an empty scaffold (start marker, blank line, end marker) at the end of the file.
 - If malformed or duplicate markers are detected, the parser surfaces a clear error message in the UI and logging output so users can resolve the issue before continuing.
 - The persistence layer preserves the host file’s newline convention when inserting scaffolds on Unix-like systems (macOS and Linux), which are the officially supported platforms; Windows carriage-return handling is currently out of scope.
@@ -161,9 +163,11 @@
 1. Use `uv` to sync dependencies (`uv sync`).
 2. Provide `just` recipes:
    - `just install` to run `uv sync`.
-   - `just run` for `uv run python -m vrdx`.
-   - `just build` invoking Nuitka to emit a static binary into `bin/`.
-3. Ensure Nuitka configuration aligns with `uv`’s virtual environment.
+   - `just run` for `uv run vrdx`.
+   - `just dev` for development mode with Textual hot-reload (`textual run --dev`).
+   - `just test` for running pytest.
+   - `just install-tool` for installing as a user tool (`uv tool install .`).
+3. Distribution is exclusively via `uv tool install` for seamless installation without compilation overhead.
 
 ---
 
@@ -193,3 +197,6 @@
 3. Define the key bindings and navigation schema in detail.
 4. Outline the module structure (`vrdx/ui`, `vrdx/parser`, `vrdx/state`, etc.).
 5. Prepare sample Markdown fixtures to guide implementation and testing.
+<!-- vrdx start -->
+
+<!-- vrdx end -->

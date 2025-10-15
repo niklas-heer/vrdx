@@ -24,7 +24,7 @@ from typing import Iterable, Iterator, List, Optional, Sequence
 
 from pydantic import BaseModel, Field, field_validator
 
-HEADING_PATTERN = re.compile(r"^###\s+(?P<id>\d+)\s+(?P<title>.+)$", re.MULTILINE)
+HEADING_PATTERN = re.compile(r"^###\s+(?P<id>\d+)\.?\s+(?P<title>.+)$", re.MULTILINE)
 FIELD_PATTERN = re.compile(
     r"^\*\s+\*\*(?P<label>Status|Decision|Context|Consequences)\*\*:\s*(?P<value>.*)$"
 )
