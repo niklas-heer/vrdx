@@ -36,3 +36,16 @@ Keep this managed block so 'openspec update' can refresh the instructions.
   - `fix: resolve memory leak in data processor`
   - `docs: update installation instructions`
   - `feat!: remove deprecated API endpoints`
+
+## Using Context7
+- Before starting any task, check if you have access to [Context7](https://context7.com/) MCP tools.
+- ALWAYS use Context7 automatically for:
+  - Code generation and scaffolding
+  - Setup and configuration steps
+  - Library and API documentation lookups
+- Use Context7 MCP tools to resolve library IDs and fetch docs without waiting for explicit requests.
+- Context7 provides up-to-date documentation and examples—prefer it over outdated knowledge.
+- If Context7 is unavailable, fall back to standard methods and mention it in your response.
+<!-- vrdx start -->
+
+<!-- vrdx end -->
