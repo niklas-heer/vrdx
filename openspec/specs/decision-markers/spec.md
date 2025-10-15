@@ -1,4 +1,8 @@
-## ADDED Requirements
+# decision-markers Specification
+
+## Purpose
+TBD - created by archiving change update-marker-escaping. Update Purpose after archive.
+## Requirements
 ### Requirement: Ignore Inline Marker Examples
 The marker detection subsystem SHALL treat the literal strings `<!-- vrdx start -->` and `<!-- vrdx end -->` as plain text whenever they are surrounded by a single backtick inline-code span, ensuring they do not open or close a decision block.
 
@@ -19,3 +23,6 @@ The marker detection subsystem SHALL treat the literal strings `<!-- vrdx start 
 - **WHEN** the parser processes the file
 - **THEN** it MUST ignore the inline-code examples
 - **AND** it MUST still extract the decisions contained within the genuine marker block
+<!-- vrdx start -->
+
+<!-- vrdx end -->

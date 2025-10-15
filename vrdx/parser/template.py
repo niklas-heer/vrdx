@@ -4,7 +4,7 @@ This module centralises the canonical template content used when creating new
 decision records. It also exposes the curated set of status labels surfaced in
 the UI so both the renderer and the interface share a single source of truth.
 
-The template output mirrors the structure documented in `docs/DESIGN.md`.
+The template output mirrors the structure documented in the OpenSpec design foundations specification.
 """
 
 from __future__ import annotations
