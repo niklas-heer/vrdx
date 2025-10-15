@@ -73,7 +73,7 @@ vrdx = "vrdx.main:main"
 
 ### Milestone 2 – File Discovery and Marker Management
 - `discovery.py`: find Markdown files from working directory.
-- `markers.py`: detect `&lt;!-- vrdx start -->` / `&lt;!-- vrdx end -->`, prompt logic
+- `markers.py`: detect `<!-- vrdx start -->` / `<!-- vrdx end -->`, prompt logic, and ignore inline-code examples wrapped in single backticks so documentation references remain inert.
   (hook for UI).
 - `persistence.py`: function to insert marker scaffold with confirmation.
 - Document discovery expectations with a brief snippet illustrating how results feed the UI.

@@ -85,17 +85,17 @@ The status bar shows the current mode (vim-style):
 Decisions are stored in markdown with the following format:
 
 ```markdown
-&lt;!-- vrdx start -->
-
+`<!-- vrdx start -->`
 ### 1. Decision Title
 
 * **Status**: ✅ Accepted
 * **Decision**: What was decided
 * **Context**: Why this decision was needed
 * **Consequences**: What are the implications
-
-&lt;!-- vrdx end -->
+`<!-- vrdx end -->`
 ```
+Inline marker examples can be safely written with single backticks; the parser ignores `<!-- vrdx start -->` and `<!-- vrdx end -->` when they appear inside inline code spans, so documentation can reference the delimiters without disrupting indexing.
+
 
 ## Install
 
@@ -134,9 +134,9 @@ just run
   - **Development friction**: Compilation breaks Textual's hot-reload workflow (`textual run --dev`), making iteration painfully slow
   - **Maintenance burden**: Supporting multiple binary targets (macOS, Linux) adds CI/CD complexity without meaningful benefit
   - **No real standalone**: All compilation tools bundle a Python runtime anyway
-  
+
   Modern Python distribution via `uv` is elegant, fast, and increasingly standard. Tools like `ruff`, `uv` itself, and many CLI tools successfully ship this way. The `uv tool install` command handles virtual environments, dependencies, and PATH setup automatically—providing an excellent user experience without any compilation overhead.
-  
+
   For vrdx specifically:
   - Application is I/O-bound (Markdown parsing, file operations) where Python excels
   - Fast startup is critical for interactive TUI responsiveness
