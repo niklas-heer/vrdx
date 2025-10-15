@@ -13,6 +13,21 @@ _START_RE = re.compile(re.escape(MARKER_START))
 _END_RE = re.compile(re.escape(MARKER_END))
 
 
+def _is_inline_code_wrapped(text: str, start: int, end: int) -> bool:
+    """Return True when the marker span sits inside a single-backtick inline code fence."""
+    before = start - 1
+    after = end
+    if before < 0 or after >= len(text):
+        return False
+    if text[before] != "`" or text[after] != "`":
+        return False
+    if before - 1 >= 0 and text[before - 1] == "`":
+        return False
+    if after + 1 < len(text) and text[after + 1] == "`":
+        return False
+    return True
+
+
 class MarkerError(ValueError):
     """Base exception for marker related issues."""
 
@@ -82,8 +97,22 @@ def detect_marker_block(text: str) -> Optional[MarkerBlock]:
     MarkerOrderError
         Raised when the end marker precedes the start marker.
     """
-    start_matches = list(_START_RE.finditer(text))
-    end_matches = list(_END_RE.finditer(text))
+    raw_start_matches = list(_START_RE.finditer(text))
+    raw_end_matches = list(_END_RE.finditer(text))
+
+    if not raw_start_matches and not raw_end_matches:
+        return None
+
+    start_matches = [
+        match
+        for match in raw_start_matches
+        if not _is_inline_code_wrapped(text, match.start(), match.end())
+    ]
+    end_matches = [
+        match
+        for match in raw_end_matches
+        if not _is_inline_code_wrapped(text, match.start(), match.end())
+    ]
 
     if not start_matches and not end_matches:
         return None

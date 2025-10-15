@@ -57,6 +57,36 @@ def test_detect_marker_block_errors_when_end_precedes_start():
         markers.detect_marker_block(text)
 
 
+def test_detect_marker_block_ignores_inline_code_markers():
+    text = "\n".join(
+        [
+            "# Documentation",
+            "`<!-- vrdx start -->`",
+            "`<!-- vrdx end -->`",
+            "",
+        ]
+    )
+    assert markers.detect_marker_block(text) is None
+
+
+def test_detect_marker_block_handles_real_markers_amid_inline_examples():
+    text = "\n".join(
+        [
+            "# Guide",
+            "`<!-- vrdx start -->`",
+            markers.MARKER_START,
+            "### 1 Decision",
+            markers.MARKER_END,
+            "`<!-- vrdx end -->`",
+            "",
+        ]
+    )
+    block = markers.detect_marker_block(text)
+    assert block is not None
+    body = block.body(text)
+    assert "### 1 Decision" in body
+
+
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
