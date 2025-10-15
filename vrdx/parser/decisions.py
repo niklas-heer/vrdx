@@ -3,7 +3,7 @@
 This module focuses on Milestone 3 responsibilities: extracting structured
 decision data from Markdown and rendering it back while preserving a consistent
 format. Decisions are expected to follow the canonical template documented in
-``docs/DESIGN.md``:
+the OpenSpec design foundations specification:
 
     ### 13 Sticking with Amethyst
     * **Status**: ✅ Adopted
