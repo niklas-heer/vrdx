@@ -12,3 +12,6 @@ The detailed implementation roadmap for vrdx still lives in the legacy `docs/IMP
 - Affected specs: adds a new capability covering the implementation roadmap (initial addition).
 - Affected code: none immediately—this migration codifies historical plan details to guide upcoming proposals and implementations.
 - Follow-up: later changes can refine or supersede individual milestones by referencing this archived specification.
+<!-- vrdx start -->
+
+<!-- vrdx end -->

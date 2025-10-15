@@ -12,3 +12,6 @@ vrdx’s initial design guidance lives in legacy `docs/DESIGN.md`, which mixes g
 - Affected specs: new “design-foundations” capability (initial addition).
 - Affected code: None yet—this proposal documents existing behavior to guide future specification and implementation work.
 - Follow-up: Subsequent OpenSpec proposals may refine or extend individual areas (e.g., state management, UI interactions) using this document as the baseline.
+<!-- vrdx start -->
+
+<!-- vrdx end -->

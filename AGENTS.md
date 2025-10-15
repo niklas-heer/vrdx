@@ -60,3 +60,6 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - Always keep the OpenSpec specs and implementation in sync.
 - Don't commit the implementation before the spec change is reviewed and approved.
 - Each package change should have its own descriptive conventional commit.
+<!-- vrdx start -->
+
+<!-- vrdx end -->

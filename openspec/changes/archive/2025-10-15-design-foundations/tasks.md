@@ -13,3 +13,6 @@
 
 ## 4. Follow-Up (Post-Approval)
 - [ ] 4.1 After approval and implementation, use the OpenSpec tooling to archive the change (e.g., `openspec archive design-foundations --strict` when appropriate).
+<!-- vrdx start -->
+
+<!-- vrdx end -->

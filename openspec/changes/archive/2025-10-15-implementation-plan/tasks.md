@@ -14,3 +14,6 @@
 
 ## 4. Follow-Up (Post-Approval)
 - [ ] 4.1 After approval, use the OpenSpec CLI to archive the change (e.g., `openspec archive implementation-plan --strict`) to preserve the roadmap.
+<!-- vrdx start -->
+
+<!-- vrdx end -->

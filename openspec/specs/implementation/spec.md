@@ -81,3 +81,6 @@ The team SHALL maintain linting (`ruff`), optional static typing (`mypy`), and f
 - **WHEN** developers iterate on UI changes
 - **THEN** they SHALL be able to run `just dev-watch` or `just console` to obtain immediate feedback, aligning with the roadmap’s focus on rapid TUI iteration
 
+<!-- vrdx start -->
+
+<!-- vrdx end -->
