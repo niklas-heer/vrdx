@@ -3,6 +3,7 @@ The detailed implementation roadmap for vrdx still lives in the legacy `docs/IMP
 
 ## What Changes
 - Capture the original implementation milestones—package structure, dependency strategy, state/command wiring, Textual UI phases, and polish tasks—as an OpenSpec change.
+- Note that the legacy `docs/IMPLEMENTATION.md` file has been retired and contributors should reference this specification instead.
 - Document the recommended tooling setup (pytest, ruff, mypy, uv workflows) and quality gates inside the spec so they can inform future changes.
 - Preserve risks and mitigations identified in the legacy document, including parsing ambiguity, Textual API drift, distribution concerns, and cross-link integrity.
 - Prepare supporting spec deltas (milestones, risks, testing strategy, tooling) that can be archived for long-term reference.

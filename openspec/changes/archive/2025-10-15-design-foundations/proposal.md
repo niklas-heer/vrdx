@@ -3,6 +3,7 @@ vrdx’s initial design guidance lives in legacy `docs/DESIGN.md`, which mixes g
 
 ## What Changes
 - Capture foundational design goals and non-goals for vrdx within an OpenSpec proposal.
+- Inform contributors that the design guide now lives in OpenSpec and the legacy Markdown file has been retired.
 - Summarize the current high-level architecture (CLI entrypoint, state/command layers, Textual UI, persistence).
 - Outline the UI pane layout, interaction model, and marker management rules to preserve decision record workflows.
 - Enumerate longer-term milestones and considerations that should remain referenceable for future proposals.
