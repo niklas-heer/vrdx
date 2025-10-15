@@ -27,31 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v1
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
-      - name: Cache Homebrew downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-          key: homebrew-${{ runner.os }}-v1
-          restore-keys: |
-            homebrew-${{ runner.os }}-
-
-      - name: Install Python 3.13 via Homebrew
-        run: |
-          brew update
-          brew install python@3.13
-          brew link --overwrite python@3.13
-          PYTHON_PREFIX="$(brew --prefix python@3.13)"
-          echo "${PYTHON_PREFIX}/bin" >> "$GITHUB_PATH"
-          echo "UV_PYTHON=${PYTHON_PREFIX}/bin/python3.13" >> "$GITHUB_ENV"
-          python3.13 --version
-
-      - name: Expose repository on PYTHONPATH
-        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}${PYTHONPATH:+:$PYTHONPATH}" >> "$GITHUB_ENV"
+      - name: Install Python 3.13
+        run: uv python install 3.13
 
       - name: Sync dependencies
         run: uv sync
