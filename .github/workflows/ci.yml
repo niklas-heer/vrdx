@@ -51,10 +51,13 @@ jobs:
           python3.13 --version
 
       - name: Expose repository on PYTHONPATH
-        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}\${PYTHONPATH:+:\$PYTHONPATH}" >> "$GITHUB_ENV"
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}${PYTHONPATH:+:$PYTHONPATH}" >> "$GITHUB_ENV"
 
       - name: Sync dependencies
         run: uv sync
+
+      - name: Install project package
+        run: uv pip install --editable .
 
       - name: Run unit tests
         run: uv run --with pytest pytest
