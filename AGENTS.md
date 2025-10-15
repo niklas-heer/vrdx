@@ -46,6 +46,17 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - Use Context7 MCP tools to resolve library IDs and fetch docs without waiting for explicit requests.
 - Context7 provides up-to-date documentation and examples—prefer it over outdated knowledge.
 - If Context7 is unavailable, fall back to standard methods and mention it in your response.
-<!-- vrdx start -->
 
-<!-- vrdx end -->
+## Development workflow
+- Follow this standard workflow for all feature and fix work:
+  1. **Create and switch to a new branch**: `git checkout -b <branch-name>`
+  2. **Make OpenSpec change**: Create a change proposal with `/openspec` or `openspec` command
+  3. **Review the change**: Validate the proposal, tasks, and spec updates using `openspec show <change>`
+  4. **Implement the changes**: Execute the tasks and write the code
+  5. **Commit with conventional commits**: Use proper format (e.g., `feat(api): add new endpoint`)
+     - Commit packages separately if needed: `git add packages/<package_name> && git commit`
+  6. **Push the branch**: `git push origin <branch-name>`
+  7. **Archive the OpenSpec change**: Run `openspec archive <change>` to merge approved updates into specs
+- Always keep the OpenSpec specs and implementation in sync.
+- Don't commit the implementation before the spec change is reviewed and approved.
+- Each package change should have its own descriptive conventional commit.
