@@ -15,10 +15,16 @@ Screen {
 #left-column {
     width: 25%;
     min-width: 20w;
-    border: solid $primary;
-    border-right: none;
-    padding: 1;
-    background: $panel;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+#right-column {
+    width: 1fr;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 #decisions-title,
@@ -35,14 +41,22 @@ Screen {
     height: auto;
 }
 
-#decision-list,
+#decision-list {
+    border: solid $primary;
+    background: $surface;
+    height: 2fr;
+    min-height: 6;
+    padding: 0;
+    margin: 0;
+}
+
 #file-list {
     border: solid $primary;
     background: $surface;
     height: 1fr;
     min-height: 6;
     padding: 0;
-    margin-bottom: 0;
+    margin: 0;
 }
 
 #decision-list ListItem:hover,
@@ -64,22 +78,23 @@ Screen {
     color: $text-muted;
 }
 
-#editor-pane,
+#editor-pane {
+    border: solid $primary;
+    padding: 1 2;
+    margin: 0 1;
+    overflow-y: auto;
+    background: $panel;
+    width: 1fr;
+    height: 2fr;
+    min-height: 16;
+}
+
 #preview-pane {
     border: solid $primary;
     padding: 1 2;
     margin: 0 1;
     overflow-y: auto;
     background: $panel;
-}
-
-#editor-pane {
-    width: 1fr;
-    height: 50%;
-    min-height: 16;
-}
-
-#preview-pane {
     width: 1fr;
     height: 1fr;
     min-height: 8;

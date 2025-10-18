@@ -283,10 +283,10 @@ class VrdxApp(App[None]):
         self.theme = "vrdx_neon"
 
         # Set pane headers using border_title
-        self._decision_list.border_title = "Decisions"
-        self._file_list.border_title = "Files"
-        self._editor.border_title = "Editor"
-        self._preview.border_title = "Preview"
+        self._decision_list.border_title = "[1] Decisions"
+        self._file_list.border_title = "[2] Files"
+        self._editor.border_title = "[3] Editor"
+        self._preview.border_title = "[4] Preview"
 
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
