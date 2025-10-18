@@ -488,15 +488,28 @@ class VrdxApp(App[None]):
         try:
             original_text = read_markdown(file_state.path)
         except FileNotFoundError:
-            original_text = ""
+            return
 
-        from vrdx.parser.markers import ensure_marker_block
+        from vrdx.parser.markers import detect_marker_block
 
-        updated_text, block, _ = ensure_marker_block(original_text)
+        try:
+            block = detect_marker_block(original_text)
+        except MarkerError:
+            self._show_message(
+                f"Cannot save: {file_state.path.name} has invalid markers"
+            )
+            return
+
+        if block is None:
+            self._show_message(
+                f"Cannot save: {file_state.path.name} has no decision marker block"
+            )
+            return
+
         body = commands.serialize_current_file(self.app_state)
         if body and not body.endswith("\n"):
             body += "\n"
-        new_text = block.replace_body(updated_text, body)
+        new_text = block.replace_body(original_text, body)
         write_markdown(file_state.path, new_text)
         self.app_state.mark_saved()
 
