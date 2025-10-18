@@ -27,6 +27,7 @@ from vrdx.app.persistence import read_markdown, write_markdown
 from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError, list_status_options, parse_decisions
 from vrdx.parser.markers import detect_marker_block, MarkerError
+from vrdx.ui.modals import StatusSelectionModal
 
 
 try:
@@ -217,6 +218,7 @@ class VrdxApp(App[None]):
         self._status_bar: Optional[Static] = None
         self._editor_mode: str = "view"
         self._editing_decision_id: Optional[int] = None
+        self._pending_new_decision_id: Optional[int] = None
         self._status_options = list(list_status_options())
         self._status_message: str = "Ready"
 
@@ -380,13 +382,36 @@ class VrdxApp(App[None]):
         file_state = self.app_state.current_file()
         if not file_state or self._editor is None:
             return
-        template = apply_template_to_editor(file_state.next_decision_id())
+        # Store the next decision ID for use in the modal callback
+        self._pending_new_decision_id = file_state.next_decision_id()
+        # Show the status selection modal
+        self.push_screen(StatusSelectionModal(), callback=self._on_status_selected)
+
+    def _on_status_selected(self, status: Optional[str]) -> None:
+        """Handle the result from the status selection modal.
+
+        Args:
+            status: The selected status, or None if the selection was cancelled.
+        """
+        if (
+            status is None
+            or self._pending_new_decision_id is None
+            or self._editor is None
+        ):
+            self._pending_new_decision_id = None
+            return
+
+        # Create the template with the selected status
+        template = apply_template_to_editor(
+            self._pending_new_decision_id, status=status
+        )
         self._editor_mode = "edit-new"
         self._editing_decision_id = None
         self._status_message = "Drafting new decision"
         self._editor.set_content(template, editable=True)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()
+        self._pending_new_decision_id = None
 
     def action_pick_status(self) -> None:
         if self._editor is None or self._editor.read_only:
@@ -462,7 +487,7 @@ class VrdxApp(App[None]):
 
     def action_show_help(self) -> None:
         self._show_message(
-            "[space] edit  [n] new  [p] status  [s] save  [esc] cancel  [j/k or arrows] navigate"
+            "[space] edit  [n] new (select status)  [p] cycle status  [s] save  [esc] cancel  [j/k or arrows] navigate"
         )
 
     def watch_dirty_indicator(self, dirty_indicator: str) -> None:

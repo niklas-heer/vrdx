@@ -126,36 +126,8 @@ just run
 ### 1. Distribution Strategy: Use uv for Python-based Distribution Only
 
 * **Status**: ✅ Accepted
-* **Decision**: Distribute vrdx exclusively as a Python application via `uv tool install`. No binary compilation will be provided or supported.
-* **Context**: Binary compilation (Nuitka, PyInstaller) was evaluated but rejected for multiple reasons:
-  - **Startup time penalty**: Compiled binaries have noticeable startup overhead (200-500ms+) compared to native Python (~80-120ms), which degrades the interactive TUI experience
-  - **Compilation overhead**: Build times range from 10-45 minutes depending on tooling and dependencies
-  - **Binary bloat**: Executables range from 30-800 MB vs ~10 MB for the Python application with dependencies
-  - **Development friction**: Compilation breaks Textual's hot-reload workflow (`textual run --dev`), making iteration painfully slow
-  - **Maintenance burden**: Supporting multiple binary targets (macOS, Linux) adds CI/CD complexity without meaningful benefit
-  - **No real standalone**: All compilation tools bundle a Python runtime anyway
-
-  Modern Python distribution via `uv` is elegant, fast, and increasingly standard. Tools like `ruff`, `uv` itself, and many CLI tools successfully ship this way. The `uv tool install` command handles virtual environments, dependencies, and PATH setup automatically—providing an excellent user experience without any compilation overhead.
-
-  For vrdx specifically:
-  - Application is I/O-bound (Markdown parsing, file operations) where Python excels
-  - Fast startup is critical for interactive TUI responsiveness
-  - Development velocity matters more than theoretical "standalone" benefits
-  - Target audience (developers) already has Python installed
-  - Python's text processing ecosystem is a strength, not a weakness
-* **Consequences**:
-  - **Positive**:
-    - Zero compilation time (instant `uv tool install` from source)
-    - Small installation footprint (~10 MB with dependencies)
-    - Fast startup (~80-120 ms, adequate for interactive TUI)
-    - Preserves Textual hot-reload for rapid development
-    - Users with Python installed get seamless updates
-    - Standard Python packaging workflow (easier CI/CD)
-  - **Negative**:
-    - Users must have Python installed (acceptable tradeoff—Python is ubiquitous on Unix-like systems and required by our target audience)
-  - **Mitigation**:
-    - Provide clear installation instructions for `uv tool install`
-    - Document that macOS and Linux are officially supported platforms
-    - Maintain fast startup times and excellent developer experience
+* **Decision**: Distribute vrdx exclusively via `uv tool install`. No binary compilation.
+* **Context**: Binary compilation adds unnecessary overhead—slow builds (10-45 min), bloated executables (30-800MB), and startup penalty (200-500ms+)—without real benefit. For an I/O-bound TUI app, Python's fast startup (~80-120ms) and `uv`'s seamless distribution better serve both users and development velocity. Target audience (developers) already has Python installed.
+* **Consequences**: Zero compilation time, small footprint (~10MB), fast startup, seamless updates—requires Python installed (acceptable tradeoff for target audience).
 
 <!-- vrdx end -->

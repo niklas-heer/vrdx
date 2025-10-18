@@ -102,8 +102,13 @@ def update_decision(
     return decision_state
 
 
-def apply_template_to_editor(next_id: int) -> str:
-    template = DecisionTemplate(next_id=next_id)
+def apply_template_to_editor(next_id: int, status: Optional[str] = None) -> str:
+    from vrdx.parser.template import normalise_status, DEFAULT_STATUS
+
+    template = DecisionTemplate(
+        next_id=next_id,
+        status=normalise_status(status) if status else DEFAULT_STATUS,
+    )
     return template.render()
 
 
