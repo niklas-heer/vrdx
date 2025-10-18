@@ -421,7 +421,7 @@ class VrdxApp(App[None]):
 
     def action_show_help(self) -> None:
         self._show_message(
-            "[space] edit  [n] new (select status)  [p] cycle status  [s] save  [esc] cancel  [j/k or arrows] navigate"
+            "[space] select decision  [n] new (select status)  [s] save  [esc] cancel  [j/k↓↑] navigate  Form: status dropdown, [Ctrl+S] save, [Esc] cancel"
         )
 
     def watch_dirty_indicator(self, dirty_indicator: str) -> None:
@@ -599,7 +599,7 @@ class VrdxApp(App[None]):
                 hint_text = "[s] save  [esc] cancel  [p] cycle status"
             else:
                 hint_text = (
-                    "[space] edit  [n] new  [1-4] focus panes  [?] help  [q] quit"
+                    "[space] select  [n] new  [s] save  [1-4] panes  [?] help  [q] quit"
                 )
 
             # Combine status message or hint with mode

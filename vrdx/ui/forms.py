@@ -32,9 +32,30 @@ class FormData:
 class FormBasedDecisionEditor(Static):
     """A structured form-based editor for creating and editing decisions.
 
-    This widget displays a form with dedicated sections for each decision field:
-    Title, Status, Decision, Context, and Consequences. It supports both creating
-    new decisions and editing existing ones.
+    This widget provides a comprehensive form interface for decision management with:
+    - Title input field (required, validated)
+    - Status dropdown selector with all available options
+    - Decision textarea for the decision statement
+    - Context textarea for decision context
+    - Consequences textarea for decision consequences
+    - Save and Cancel buttons with keyboard shortcuts (Ctrl+S and Esc)
+
+    Features:
+    - Form-based editing without modal disruption
+    - Inline validation with error messages
+    - Auto-population when editing existing decisions
+    - Proper focus management between fields
+    - Supports both creating new decisions and editing existing ones
+
+    Usage:
+    - For new decisions: decision_id should be the next available ID, current_status
+      should be the initial status
+    - For existing decisions: call set_existing_decision_data() after mounting to
+      populate all fields
+
+    Events:
+    - Saved(FormData): Posted when form is successfully saved
+    - Cancelled: Posted when form is cancelled
     """
 
     CSS = """
@@ -181,7 +202,16 @@ class FormBasedDecisionEditor(Static):
         self._error_label: Optional[Label] = None
 
     def compose(self) -> ComposeResult:
-        """Compose the form layout."""
+        """Compose the form layout.
+
+        Creates a vertical layout with:
+        1. Header showing decision ID (updated when editing)
+        2. Scrollable form content with all input fields
+        3. Button row with Save and Cancel actions
+
+        The form uses a scrollable container to handle content that exceeds
+        available screen height.
+        """
         # Header with decision ID
         yield Label(
             f"Create New Decision #{self.decision_id}",
@@ -251,24 +281,54 @@ class FormBasedDecisionEditor(Static):
             yield Button("Cancel", id="cancel-btn", variant="default")
 
     def on_mount(self) -> None:
-        """Set up the form when mounted."""
+        """Set up the form when mounted.
+
+        Initializes the form by focusing on the title input field,
+        making it ready for immediate user interaction.
+        """
         if self._title_input:
             self._title_input.focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button presses."""
+        """Handle button presses.
+
+        Routes Save and Cancel button clicks to their respective action handlers.
+
+        Args:
+            event: The button pressed event containing button information.
+        """
         if event.button.id == "save-btn":
             self.action_save()
         elif event.button.id == "cancel-btn":
             self.action_cancel()
 
     def on_select_changed(self, event: Select.Changed) -> None:
-        """Handle status selection changes."""
+        """Handle status selection changes.
+
+        Updates the current_status when the user selects a different status
+        from the dropdown. This keeps the form state synchronized with the
+        Select widget value.
+
+        Args:
+            event: The Select widget change event with the new value.
+        """
         if event.select.id == "status-select":
             self.current_status = event.value
 
     def action_save(self) -> None:
-        """Validate and save the form data."""
+        """Validate and save the form data.
+
+        Performs the following steps:
+        1. Extracts and strips whitespace from all form fields
+        2. Validates the title field (required, not placeholder text)
+        3. Displays error message if validation fails
+        4. Creates FormData object with validated fields
+        5. Posts Saved message to trigger parent app to persist the decision
+
+        The title is required and cannot be empty or contain placeholder text.
+        Other fields (decision, context, consequences) can be empty and are
+        optional.
+        """
         # Get form data
         title = (self._title_input.value if self._title_input else "").strip()
         decision = (self._decision_area.text if self._decision_area else "").strip()
@@ -297,15 +357,27 @@ class FormBasedDecisionEditor(Static):
         self.post_message(self.Saved(form_data))
 
     def action_cancel(self) -> None:
-        """Cancel editing and post cancellation message."""
+        """Cancel editing and post cancellation message.
+
+        Abandons any changes made to the form and posts a Cancelled message.
+        The parent app will handle cleaning up the edit state and returning
+        to the previous view.
+        """
         self.post_message(self.Cancelled())
 
     def reset_for_new_decision(self, decision_id: int, status: str) -> None:
         """Reset the form for creating a new decision.
 
+        Prepares the form to create a new decision by:
+        1. Clearing all form fields
+        2. Updating the header with the new decision ID
+        3. Setting the status to the provided value
+        4. Clearing any error messages
+        5. Setting is_new_decision flag to True
+
         Args:
-            decision_id: The ID for the new decision.
-            status: The status for the new decision.
+            decision_id: The next available decision ID to be displayed in the header.
+            status: The initial status for the new decision (from status selection modal).
         """
         self.decision_id = decision_id
         self.current_status = status
@@ -333,7 +405,13 @@ class FormBasedDecisionEditor(Static):
         self,
         record: DecisionRecord,
     ) -> None:
-        """Populate the form with existing decision data.
+        """Populate the form with existing decision data for editing.
+
+        Loads all decision fields from the DecisionRecord into the form fields:
+        - Copies title, decision, context, and consequences text
+        - Updates status dropdown to show current decision status
+        - Updates header to show "Edit" mode instead of "Create New"
+        - Sets is_new_decision flag to False
 
         Args:
             record: The DecisionRecord to populate the form from.
@@ -360,8 +438,12 @@ class FormBasedDecisionEditor(Static):
     def set_status(self, status: str) -> None:
         """Update the status display.
 
+        Updates the current_status and synchronizes the status Select widget
+        to show the new status value. Used when status changes are made
+        programmatically.
+
         Args:
-            status: The new status value.
+            status: The new status value to display.
         """
         self.current_status = status
         if self._status_select:
@@ -370,8 +452,12 @@ class FormBasedDecisionEditor(Static):
     def get_form_data(self) -> FormData:
         """Get the current form data.
 
+        Extracts all form field values and returns them as a FormData object.
+        All text fields are trimmed of leading/trailing whitespace.
+
         Returns:
-            FormData object with current field values.
+            FormData object with current field values (title, status, decision,
+            context, consequences).
         """
         return FormData(
             title=(self._title_input.value if self._title_input else "").strip(),
@@ -386,6 +472,9 @@ class FormBasedDecisionEditor(Static):
     def _show_error(self, message: str) -> None:
         """Display an error message in the form.
 
+        Shows an error message to the user in the error label at the bottom
+        of the form. Used for validation errors and other user-facing messages.
+
         Args:
             message: The error message to display.
         """
@@ -393,6 +482,9 @@ class FormBasedDecisionEditor(Static):
             self._error_label.update(message)
 
     def clear_error(self) -> None:
-        """Clear any error messages."""
+        """Clear any error messages.
+
+        Removes any previously displayed error messages from the form.
+        """
         if self._error_label:
             self._error_label.update("")
