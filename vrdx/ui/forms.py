@@ -30,6 +30,56 @@ class FormData:
     consequences: str
 
 
+class SaveButton(Button):
+    """Primary action button for saving decisions."""
+
+    DEFAULT_CSS = """
+    SaveButton {
+        background: $success;
+        color: $text;
+        text-style: b;
+        width: auto;
+        margin: 0 1 0 0;
+    }
+
+    SaveButton:hover {
+        background-tint: white 10%;
+    }
+
+    SaveButton:focus {
+        border: solid $primary;
+    }
+    """
+
+    def __init__(self) -> None:
+        super().__init__("Save", id="save-btn", variant="default")
+
+
+class CancelButton(Button):
+    """Secondary action button for canceling edits."""
+
+    DEFAULT_CSS = """
+    CancelButton {
+        background: $error;
+        color: $text;
+        text-style: b;
+        width: auto;
+        margin: 0;
+    }
+
+    CancelButton:hover {
+        background-tint: white 10%;
+    }
+
+    CancelButton:focus {
+        border: solid $primary;
+    }
+    """
+
+    def __init__(self) -> None:
+        super().__init__("Cancel", id="cancel-btn", variant="default")
+
+
 class FormBasedDecisionEditor(Static):
     """A structured form-based editor for creating and editing decisions.
 
@@ -202,46 +252,7 @@ class FormBasedDecisionEditor(Static):
         text-opacity: 100%;
     }
 
-    #save-btn {
-        margin-right: 0;
-        margin-bottom: 0;
-        padding: 0;
-        height: auto;
-        border: solid $success;
-        background: $success 40%;
-        color: $text;
-    }
 
-    #save-btn:hover {
-        background: $success 60%;
-        border: solid $success;
-    }
-
-    #save-btn:focus {
-        border: solid $primary;
-        color: $text;
-        background: $success 60%;
-    }
-
-    #cancel-btn {
-        margin-bottom: 0;
-        padding: 0;
-        height: auto;
-        border: solid $error;
-        background: $error 40%;
-        color: $text;
-    }
-
-    #cancel-btn:hover {
-        background: $error 60%;
-        border: solid $error;
-    }
-
-    #cancel-btn:focus {
-        border: solid $primary;
-        color: $text;
-        background: $error 60%;
-    }
 
     .validation-error {
         color: $error;
@@ -416,8 +427,8 @@ class FormBasedDecisionEditor(Static):
 
         # Button row
         with Horizontal(id="button-row"):
-            yield Button("Save", id="save-btn", variant="primary")
-            yield Button("Cancel", id="cancel-btn", variant="default")
+            yield SaveButton()
+            yield CancelButton()
 
     def _calculate_textarea_height(
         self, textarea: TextArea, min_height: int, max_height: int

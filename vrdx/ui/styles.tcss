@@ -238,46 +238,7 @@ FormBasedDecisionEditor {
     text-opacity: 100%;
 }
 
-#save-btn {
-    margin-right: 0;
-    margin-bottom: 0;
-    padding: 0;
-    height: auto;
-    border: solid $success;
-    background: $success 40%;
-    color: $text;
-}
 
-#save-btn:hover {
-    background: $success 60%;
-    border: solid $success;
-}
-
-#save-btn:focus {
-    border: solid $primary;
-    color: $text;
-    background: $success 60%;
-}
-
-#cancel-btn {
-    margin-bottom: 0;
-    padding: 0;
-    height: auto;
-    border: solid $error;
-    background: $error 40%;
-    color: $text;
-}
-
-#cancel-btn:hover {
-    background: $error 60%;
-    border: solid $error;
-}
-
-#cancel-btn:focus {
-    border: solid $primary;
-    color: $text;
-    background: $error 60%;
-}
 
 .validation-error {
     color: $error;

@@ -29,6 +29,7 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - **Do NOT modify**: Never create, edit, delete, or alter any files in the references folder.
 - **Research purposes only**: Use files in this folder to understand concepts, APIs, specifications, and project context.
 - **Preserve as-is**: This folder should remain untouched and serve solely as a knowledge base for reference during development.
+- **Read this folder before implementation**: Read the contents of this folder before you implement any feature. (`references/`)
 
 
 ## LLM Repository Hygiene
