@@ -11,7 +11,7 @@ from typing import Optional
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Grid, Horizontal, Vertical
 from textual.reactive import reactive
 from textual.widgets import Button, Label, Static, TextArea, OptionList
 from textual.message import Message
@@ -322,8 +322,9 @@ class FormBasedDecisionEditor(Static):
 
         # Scrollable form content
         with Vertical(id="form-scroll"):
-            # Title section
-            with Horizontal(classes="form-section"):
+            # Use Grid for consistent label/input alignment
+            with Grid(id="form-grid"):
+                # Title row
                 yield Label("Title:", classes="form-section-title")
                 self._title_area = TextArea(
                     id="title-area",
@@ -331,11 +332,7 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._title_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Status section
-            with Horizontal(classes="form-section"):
+                # Status row
                 yield Label("Status:", classes="form-section-title")
                 # Create OptionList with status options
                 status_options = list_status_options()
@@ -345,11 +342,7 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._status_select
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Decision section
-            with Horizontal(classes="form-section"):
+                # Decision row
                 yield Label("Decision:", classes="form-section-title")
                 self._decision_area = TextArea(
                     id="decision-area",
@@ -358,11 +351,7 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._decision_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Context section
-            with Horizontal(classes="form-section"):
+                # Context row
                 yield Label("Context:", classes="form-section-title")
                 self._context_area = TextArea(
                     id="context-area",
@@ -371,11 +360,7 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._context_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Consequences section
-            with Horizontal(classes="form-section"):
+                # Consequences row
                 yield Label("Consequences:", classes="form-section-title")
                 self._consequences_area = TextArea(
                     id="consequences-area",
