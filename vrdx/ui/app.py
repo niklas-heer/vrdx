@@ -226,14 +226,16 @@ class VrdxApp(App[None]):
             error="#FF0000",  # Red
             success="#00FF00",  # Lime green
             accent="#00FFFF",  # Cyan for accents
-            dark=True,
+            foreground="#E0E0E0",  # Light gray text
             background="#0a0e27",  # Very dark navy
             surface="#1a1f3a",  # Dark surface
             panel="#0f1420",  # Dark panel
             boost="#1f2a3f",  # Boost color for status bar
-            text="#E0E0E0",  # Light gray
-            text_muted="#999999",  # Muted gray
-            text_disabled="#666666",  # Disabled gray
+            dark=True,
+            variables={
+                "text-muted": "#999999",  # Muted gray
+                "text-disabled": "#666666",  # Disabled gray
+            },
         )
     }
 
