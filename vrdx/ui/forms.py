@@ -173,7 +173,7 @@ class FormBasedDecisionEditor(Static):
     }
 
     #button-row {
-        width: 100%;
+        width: auto;
         height: auto;
         layout: horizontal;
         align-horizontal: left;
@@ -217,7 +217,9 @@ class FormBasedDecisionEditor(Static):
     Button {
         width: auto;
         padding: 0;
-        height: auto;
+        height: 1;
+        margin: 0;
+        border: none;
     }
 
     #save-btn {
@@ -227,6 +229,7 @@ class FormBasedDecisionEditor(Static):
 
     #save-btn:hover {
         background-tint: white 20%;
+        text-style: b;
     }
 
     #save-btn:focus {
@@ -240,6 +243,7 @@ class FormBasedDecisionEditor(Static):
 
     #cancel-btn:hover {
         background-tint: white 20%;
+        text-style: b;
     }
 
     #cancel-btn:focus {

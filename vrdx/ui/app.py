@@ -53,8 +53,6 @@ Screen {
 #left-column {
     width: 26%;
     min-width: 20w;
-    border: solid $primary;
-    padding: 1;
 }
 
 #right-column {
