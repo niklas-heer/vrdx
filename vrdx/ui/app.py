@@ -243,6 +243,7 @@ class VrdxApp(App[None]):
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()
+        self._load_most_recent_decision()
 
     def _initialize_files(self) -> None:
         base_directory = self.app_state.base_directory
@@ -556,6 +557,18 @@ class VrdxApp(App[None]):
             self.refresh_editor()
         self._update_status_bar()
 
+    def _load_most_recent_decision(self) -> None:
+        """Load the most recent decision into the editing pane.
+
+        The most recent decision is the first one in the list since
+        decisions are ordered by ID in descending order.
+        """
+        file_state = self.app_state.current_file()
+        if file_state and file_state.decisions:
+            # Set the selection to the first decision (most recent)
+            self.app_state.selected_decision_index = 0
+            self._begin_edit_existing()
+
     def _show_message(self, message: str) -> None:
         self._status_message = message
         self.log(message)
@@ -585,8 +598,9 @@ class VrdxApp(App[None]):
             # Decision list selection changed
             if event.list_view.index is not None:
                 self.app_state.selected_decision_index = event.list_view.index
-                self._reset_edit_state()
                 self.refresh_panes()
+                # Load the selected decision into the editing pane
+                self._begin_edit_existing()
         elif event.list_view == self._file_list:
             # File list selection changed
             if event.list_view.index is not None and 0 <= event.list_view.index < len(
