@@ -107,6 +107,3 @@ The specification SHALL document outstanding design milestones (status picker en
 - **GIVEN** maintainers need to confirm historical design intent
 - **WHEN** they consult the archived spec
 - **THEN** it SHALL reflect the original goals and architecture described in the legacy design document
-<!-- vrdx start -->
-
-<!-- vrdx end -->

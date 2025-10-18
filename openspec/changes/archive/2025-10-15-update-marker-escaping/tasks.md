@@ -13,6 +13,3 @@
 - [x] 3.1 Run the full unit test suite (`uv run pytest -v`) and ensure all tests pass.
 - [x] 3.2 Execute lint and formatting checks (`uv run ruff check .`) to verify code quality.
 - [x] 3.3 Perform a manual run of vrdx against documentation containing inline-code markers to confirm decision indexing remains stable.
-<!-- vrdx start -->
-
-<!-- vrdx end -->

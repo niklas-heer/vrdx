@@ -475,6 +475,3 @@ openspec archive [change] [--yes|-y]  # Mark complete (add --yes for automation)
 ```
 
 Remember: Specs are truth. Changes are proposals. Keep them in sync.
-<!-- vrdx start -->
-
-<!-- vrdx end -->

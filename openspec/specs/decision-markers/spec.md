@@ -23,6 +23,3 @@ The marker detection subsystem SHALL treat the literal strings `<!-- vrdx start 
 - **WHEN** the parser processes the file
 - **THEN** it MUST ignore the inline-code examples
 - **AND** it MUST still extract the decisions contained within the genuine marker block
-<!-- vrdx start -->
-
-<!-- vrdx end -->

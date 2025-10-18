@@ -69,6 +69,10 @@ class FileState:
     inserted_marker: bool = False
 
     @property
+    def has_marker_block(self) -> bool:
+        return self.marker_present
+
+    @property
     def decision_records(self) -> list[DecisionRecord]:
         return [decision.record for decision in self.decisions]
 
