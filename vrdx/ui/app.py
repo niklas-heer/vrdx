@@ -487,7 +487,7 @@ class VrdxApp(App[None]):
 
     def action_show_help(self) -> None:
         self._show_message(
-            "[space] edit  [n] new  [p] status  [s] save  [esc] cancel  [j/k or arrows] navigate"
+            "[space] edit  [n] new (select status)  [p] cycle status  [s] save  [esc] cancel  [j/k or arrows] navigate"
         )
 
     def watch_dirty_indicator(self, dirty_indicator: str) -> None:
