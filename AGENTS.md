@@ -18,6 +18,26 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 <!-- OPENSPEC:END -->
 # General conventions
 
+## Documentation Folder Guidelines
+- **`docs/` is for end-user documentation**: The docs folder is reserved for user-facing specifications, guides, and API documentation.
+- **LLM content is not welcome**: Do NOT use the docs folder to store LLM-generated notes, temporary files, or work-in-progress content.
+- **Use OpenSpec instead**: For internal development documentation, specifications, and change tracking, use OpenSpec.
+- **Keep docs clean**: The docs folder should only contain polished, finalized content intended for end users and maintainers.
+
+## References Folder
+- **Read-only reference**: The `references/` folder is provided as documentation and context for the LLM only.
+- **Do NOT modify**: Never create, edit, delete, or alter any files in the references folder.
+- **Research purposes only**: Use files in this folder to understand concepts, APIs, specifications, and project context.
+- **Preserve as-is**: This folder should remain untouched and serve solely as a knowledge base for reference during development.
+
+
+## LLM Repository Hygiene
+- **Minimize Markdown files**: Do NOT scatter Markdown files throughout the repository.
+- **Keep it bare minimum**: Only create Markdown files if absolutely necessary.
+- **Single temporary file only**: If needed, maintain at most ONE temporary `.md` file (e.g., `_llm_notes.md`) for tracking tasks, notes, and work-in-progress items.
+- **Prefer OpenSpec**: Use OpenSpec for change proposals, specifications, and documentation instead of creating ad-hoc Markdown files.
+- **No pollution**: Resist the urge to create explanatory `.md` files, TODO lists, or documentation snippets scattered across the repo.
+
 ## Commit message format
 - All commits MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 - Format: `<type>[optional scope]: <description>`
