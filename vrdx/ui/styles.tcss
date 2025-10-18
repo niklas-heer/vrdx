@@ -182,14 +182,16 @@ FormBasedDecisionEditor {
     width: 100%;
     height: auto;
     margin-bottom: 0;
+    padding: 0;
 }
 
 #status-select {
-    width: 100%;
-    height: auto;
+    width: auto;
+    height: 1;
     border: solid $accent;
     background: $surface;
-    margin-bottom: 0;
+    margin: 0;
+    padding: 0;
 }
 
 #status-select:focus {
@@ -251,6 +253,40 @@ FormBasedDecisionEditor {
     margin-top: 0;
     border-top: none;
     text-opacity: 100%;
+}
+
+#save-btn {
+    width: auto;
+    height: 1;
+    padding: 0 1;
+    margin: 0 1 0 0;
+    background: $success;
+    color: #000000;
+    text-style: bold;
+    border: none;
+}
+
+#save-btn:hover {
+    background: $success;
+    text-style: bold;
+    opacity: 80%;
+}
+
+#cancel-btn {
+    width: auto;
+    height: 1;
+    padding: 0 1;
+    margin: 0;
+    background: $error;
+    color: #ffffff;
+    text-style: bold;
+    border: none;
+}
+
+#cancel-btn:hover {
+    background: $error;
+    text-style: bold;
+    opacity: 80%;
 }
 
 
