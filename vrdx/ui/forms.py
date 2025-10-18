@@ -348,6 +348,11 @@ class FormBasedDecisionEditor(Static):
         if self._consequences_area:
             self._consequences_area.text = record.consequences
 
+        # Update status
+        self.current_status = record.status
+        if self._status_select:
+            self._status_select.value = record.status
+
         # Update header to show "Edit" instead of "Create New"
         header = self.query_one("#editor-header", Label)
         header.update(f"Edit Decision #{self.decision_id}")

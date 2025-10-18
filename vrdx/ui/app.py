@@ -520,8 +520,10 @@ class VrdxApp(App[None]):
             return
 
         body = commands.serialize_current_file(self.app_state)
-        if body and not body.endswith("\n"):
-            body += "\n"
+        if body:
+            body = "\n" + body
+            if not body.endswith("\n"):
+                body += "\n"
         new_text = block.replace_body(original_text, body)
         write_markdown(file_state.path, new_text)
         self.app_state.mark_saved()
