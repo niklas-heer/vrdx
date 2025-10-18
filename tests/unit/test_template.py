@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from vrdx.app.commands import apply_template_to_editor
 from vrdx.parser import (
     DEFAULT_STATUS,
     DecisionTemplate,
@@ -73,3 +74,24 @@ def test_list_status_options_contains_default():
 )
 def test_normalise_status(input_status: str, expected: str):
     assert normalise_status(input_status) == expected
+
+
+def test_apply_template_to_editor_uses_default_status():
+    """Test that apply_template_to_editor uses default status when none provided."""
+    template = apply_template_to_editor(5)
+    assert "### 5" in template
+    assert f"* **Status**: {DEFAULT_STATUS}" in template
+
+
+def test_apply_template_to_editor_uses_provided_status():
+    """Test that apply_template_to_editor uses the provided status."""
+    template = apply_template_to_editor(10, status="✅ Accepted")
+    assert "### 10" in template
+    assert "* **Status**: ✅ Accepted" in template
+
+
+def test_apply_template_to_editor_normalises_invalid_status():
+    """Test that apply_template_to_editor normalises invalid status values."""
+    template = apply_template_to_editor(7, status="Invalid Status")
+    assert "### 7" in template
+    assert f"* **Status**: {DEFAULT_STATUS}" in template
