@@ -63,20 +63,9 @@ Screen {
     layout: vertical;
 }
 
-#decisions-title,
-#files-title {
-    text-style: bold;
-    color: $accent;
-    padding: 0 1;
-    margin-bottom: 1;
-    height: auto;
-}
 
-#pane-hints {
-    padding: 0 1;
-    color: $text-muted;
-    height: 1;
-}
+
+
 
 #decision-list,
 #file-list {
@@ -85,7 +74,7 @@ Screen {
     height: 1fr;
     min-height: 8;
     padding: 1;
-    margin-bottom: 1;
+    margin: 0;
 }
 
 #decision-list ListItem:hover,
@@ -276,16 +265,10 @@ class VrdxApp(App[None]):
             yield Header()
             self._status_bar = Static("", id="status-bar")
             yield self._status_bar
-            self._pane_hints = Static(
-                "1·Decisions  2·Files  3·Editor  4·Preview", id="pane-hints"
-            )
-            yield self._pane_hints
             with Horizontal(id="main-layout"):
                 with Vertical(id="left-column"):
-                    yield Label("Decisions", id="decisions-title")
                     self._decision_list = DecisionList(id="decision-list")
                     yield self._decision_list
-                    yield Label("Files", id="files-title")
                     self._file_list = FileList(id="file-list")
                     yield self._file_list
                 with Vertical(id="right-column"):
@@ -301,6 +284,13 @@ class VrdxApp(App[None]):
     def on_mount(self) -> None:
         # Apply the neon theme after mounting
         self.theme = "vrdx_neon"
+
+        # Set pane headers using border_title
+        self._decision_list.border_title = "Decisions"
+        self._file_list.border_title = "Files"
+        self._editor.border_title = "Editor"
+        self._preview.border_title = "Preview"
+
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()

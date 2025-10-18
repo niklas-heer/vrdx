@@ -30,56 +30,6 @@ class FormData:
     consequences: str
 
 
-class SaveButton(Button):
-    """Primary action button for saving decisions."""
-
-    DEFAULT_CSS = """
-    SaveButton {
-        background: $success;
-        color: $text;
-        width: auto;
-        padding: 0 1;
-        margin: 0 1 0 0;
-    }
-
-    SaveButton:hover {
-        background-tint: white 20%;
-    }
-
-    SaveButton:focus {
-        border: solid $primary;
-    }
-    """
-
-    def __init__(self) -> None:
-        super().__init__("Save", id="save-btn", variant="default")
-
-
-class CancelButton(Button):
-    """Secondary action button for canceling edits."""
-
-    DEFAULT_CSS = """
-    CancelButton {
-        background: $error;
-        color: $text;
-        width: auto;
-        padding: 0 1;
-        margin: 0 1 0 0;
-    }
-
-    CancelButton:hover {
-        background-tint: white 20%;
-    }
-
-    CancelButton:focus {
-        border: solid $primary;
-    }
-    """
-
-    def __init__(self) -> None:
-        super().__init__("Cancel", id="cancel-btn", variant="default")
-
-
 class FormBasedDecisionEditor(Static):
     """A structured form-based editor for creating and editing decisions.
 
@@ -249,7 +199,7 @@ class FormBasedDecisionEditor(Static):
     Input:focus,
     TextArea:focus,
     Select:focus {
-        border: solid $accent;
+        border: solid $primary;
     }
 
     Input {
@@ -262,6 +212,38 @@ class FormBasedDecisionEditor(Static):
 
     Select {
         background: $surface;
+    }
+
+    Button {
+        width: auto;
+        padding: 0;
+        height: auto;
+    }
+
+    #save-btn {
+        background: $success;
+        color: $text;
+    }
+
+    #save-btn:hover {
+        background-tint: white 20%;
+    }
+
+    #save-btn:focus {
+        border: solid $primary;
+    }
+
+    #cancel-btn {
+        background: $error;
+        color: $text;
+    }
+
+    #cancel-btn:hover {
+        background-tint: white 20%;
+    }
+
+    #cancel-btn:focus {
+        border: solid $primary;
     }
     """
 
@@ -408,8 +390,8 @@ class FormBasedDecisionEditor(Static):
 
         # Button row
         with Horizontal(id="button-row"):
-            yield SaveButton()
-            yield CancelButton()
+            yield Button("Save", id="save-btn", variant="default")
+            yield Button("Cancel", id="cancel-btn", variant="default")
 
     def _calculate_textarea_height(
         self, textarea: TextArea, min_height: int, max_height: int

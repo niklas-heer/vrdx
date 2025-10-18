@@ -6,11 +6,12 @@ A comprehensive guide to building professional TUI applications with Textual, ba
 
 1. [Introduction](#introduction)
 2. [Architecture & Layout](#architecture--layout)
-3. [Dynamic Pane Headers](#dynamic-pane-headers)
-4. [Color Theming System](#color-theming-system)
-5. [Button Styling & Implementation](#button-styling--implementation)
-6. [Practical Examples](#practical-examples)
-7. [Best Practices](#best-practices)
+3. [Widgets & Components](#widgets--components)
+4. [Dynamic Pane Headers](#dynamic-pane-headers)
+5. [Color Theming System](#color-theming-system)
+6. [Button Styling & Implementation](#button-styling--implementation)
+7. [Practical Examples](#practical-examples)
+8. [Best Practices](#best-practices)
 
 ---
 
@@ -160,6 +161,466 @@ class ResponsiveApp(App):
 # In TCSS:
 # #app-body.layout-horizontal { layout: horizontal; }
 # #app-body.layout-vertical { layout: vertical; }
+```
+
+---
+
+## Widgets & Components
+
+### Understanding Textual Widgets
+
+Widgets are the building blocks of Textual applications. They handle rendering, events, and user interaction. Textual provides both built-in widgets and allows you to create custom ones.
+
+#### Widget Hierarchy
+
+```
+Widget (Base class)
+├── Static              - Display static or dynamic content
+├── Input               - Text input field
+├── Button              - Clickable button
+├── Select              - Dropdown selection
+├── Checkbox            - Boolean toggle
+├── Tree                - Hierarchical navigation
+├── DataTable           - Tabular data display
+├── RichLog             - Scrollable text output
+├── TextArea            - Multi-line code/text editor
+├── TabbedContent       - Tab interface
+└── Custom Widgets      - Extend any widget
+```
+
+### Essential Built-in Widgets
+
+#### Static
+
+The `Static` widget displays content and is the base for custom components:
+
+```python
+from textual.widgets import Static
+from textual.app import ComposeResult
+
+class ContentDisplay(Static):
+    """Display content with optional border and styling."""
+    
+    def render(self) -> str:
+        """Render the content."""
+        return "Hello, TUI World!"
+
+# Usage:
+yield Static("Simple text content")
+yield Static("Content", id="my-content", classes="panel")
+```
+
+Update content dynamically:
+
+```python
+class DynamicDisplay(Static):
+    def update_content(self, content: str) -> None:
+        """Update displayed content."""
+        self.update(content)
+
+# From another component:
+display = self.query_one("#content", DynamicDisplay)
+display.update_content("New content here")
+```
+
+#### Input
+
+Text input for user input:
+
+```python
+from textual.widgets import Input
+from textual import on
+
+class FormSection(Static):
+    """Form with text inputs."""
+    
+    def compose(self) -> ComposeResult:
+        yield Input(placeholder="Enter name", id="name-input")
+        yield Input(placeholder="Enter email", id="email-input")
+    
+    @on(Input.Changed)
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle input changes."""
+        if event.input.id == "name-input":
+            # Handle name change
+            pass
+    
+    @on(Input.Submitted)
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle when user presses Enter."""
+        pass
+
+# Access input values:
+name_input = self.query_one("#name-input", Input)
+name_value = name_input.value
+```
+
+Create a custom input with specific behavior:
+
+```python
+class PostingInput(Input):
+    """Custom input with theme-aware cursor."""
+    
+    def on_mount(self) -> None:
+        # Customize based on settings
+        self.cursor_blink = True
+        self.cursor_style = "block"
+```
+
+#### DataTable
+
+Display tabular data:
+
+```python
+from textual.widgets import DataTable
+
+class TableDisplay(Static):
+    """Display data in table format."""
+    
+    def compose(self) -> ComposeResult:
+        table = DataTable()
+        table.add_columns("Name", "Email", "Status")
+        table.add_row("Alice", "alice@example.com", "Active")
+        table.add_row("Bob", "bob@example.com", "Inactive")
+        yield table
+    
+    def on_mount(self) -> None:
+        table = self.query_one(DataTable)
+        table.focus()
+```
+
+Custom DataTable with checkboxes:
+
+```python
+from textual.widgets import DataTable
+
+class CheckableDataTable(DataTable):
+    """DataTable with checkbox support."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.checked_rows = set()
+    
+    def on_key(self, event) -> None:
+        """Handle space bar to toggle checkbox."""
+        if event.key == "space":
+            row_key = self.cursor_row
+            self.checked_rows.toggle(row_key)
+            self.refresh()
+```
+
+#### Tree
+
+Hierarchical navigation:
+
+```python
+from textual.widgets import Tree, Static
+
+class DirectoryBrowser(Static):
+    """Browse directory structure."""
+    
+    def compose(self) -> ComposeResult:
+        tree = Tree("root")
+        root = tree.root
+        root.expand()
+        
+        projects = root.add("projects/")
+        projects.add("project1/")
+        projects.add("project2/")
+        
+        files = root.add("files/")
+        files.add("README.md")
+        files.add("LICENSE")
+        
+        yield tree
+```
+
+Custom Tree with keyboard shortcuts:
+
+```python
+from textual.widgets import Tree
+from textual.binding import Binding
+
+class PostingTree(Tree):
+    """Tree with vim-like keybindings."""
+    
+    BINDINGS = [
+        Binding("k", "cursor_up", "Up"),
+        Binding("j", "cursor_down", "Down"),
+        Binding("h", "collapse", "Collapse"),
+        Binding("l", "expand", "Expand"),
+    ]
+```
+
+#### Select/Dropdown
+
+Selection dropdown:
+
+```python
+from textual.widgets import Select
+
+class MethodSelector(Static):
+    """Select HTTP method."""
+    
+    def compose(self) -> ComposeResult:
+        yield Select([
+            ("GET", "GET"),
+            ("POST", "POST"),
+            ("PUT", "PUT"),
+            ("DELETE", "DELETE"),
+            ("PATCH", "PATCH"),
+        ], id="method-select")
+    
+    def on_mount(self) -> None:
+        select = self.query_one("#method-select", Select)
+        select.value = "GET"
+```
+
+#### TextArea
+
+Multi-line code editor:
+
+```python
+from textual.widgets import TextArea
+
+class CodeEditor(Static):
+    """Edit code with syntax highlighting."""
+    
+    def compose(self) -> ComposeResult:
+        editor = TextArea(language="json")
+        yield editor
+    
+    def on_mount(self) -> None:
+        editor = self.query_one(TextArea)
+        editor.text = '{"key": "value"}'
+```
+
+#### RichLog
+
+Scrollable log output:
+
+```python
+from textual.widgets import RichLog
+
+class OutputLog(Static):
+    """Display execution output."""
+    
+    def compose(self) -> ComposeResult:
+        log = RichLog(markup=True)
+        yield log
+    
+    def on_mount(self) -> None:
+        log = self.query_one(RichLog)
+        log.write("[green]✓[/green] Operation successful")
+        log.write("[red]✗[/red] Operation failed")
+```
+
+#### TabbedContent
+
+Tab interface:
+
+```python
+from textual.widgets import TabbedContent, TabPane, Static
+
+class RequestEditor(Static):
+    """Request editor with multiple tabs."""
+    
+    def compose(self) -> ComposeResult:
+        with TabbedContent():
+            with TabPane("Body", id="body-tab"):
+                yield Static("Request body goes here")
+            with TabPane("Headers", id="headers-tab"):
+                yield Static("Headers go here")
+            with TabPane("Params", id="params-tab"):
+                yield Static("Query parameters go here")
+```
+
+### Creating Custom Widgets
+
+Extend widgets to create specialized components:
+
+```python
+class KeyValuePair(Static):
+    """A key-value input pair."""
+    
+    DEFAULT_CSS = """
+    KeyValuePair {
+        height: 1;
+        layout: horizontal;
+    }
+    
+    KeyValuePair #key {
+        width: 20%;
+    }
+    
+    KeyValuePair #value {
+        width: 1fr;
+    }
+    """
+    
+    def __init__(self, key: str = "", value: str = "", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.key = key
+        self.value = value
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Input
+        yield Input(value=self.key, id="key")
+        yield Input(value=self.value, id="value")
+    
+    def get_pair(self) -> tuple[str, str]:
+        """Get current key and value."""
+        key_input = self.query_one("#key", Input)
+        value_input = self.query_one("#value", Input)
+        return (key_input.value, value_input.value)
+```
+
+Message-based communication:
+
+```python
+from textual.message import Message
+
+class KeyValueInput(Static):
+    """Key-value input that sends messages."""
+    
+    class Submitted(Message):
+        """Posted when the user submits the pair."""
+        def __init__(self, key: str, value: str):
+            super().__init__()
+            self.key = key
+            self.value = value
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Input, Button
+        yield Input(id="key")
+        yield Input(id="value")
+        yield Button("Add", id="add-btn")
+    
+    @on(Button.Pressed, "#add-btn")
+    def submit(self) -> None:
+        key_input = self.query_one("#key", Input)
+        value_input = self.query_one("#value", Input)
+        self.post_message(self.Submitted(key_input.value, value_input.value))
+```
+
+### Widget State Management
+
+Use reactive properties for widget state:
+
+```python
+from textual.reactive import reactive
+
+class FilterableList(Static):
+    """List with filter capability."""
+    
+    items: reactive[list] = reactive([])
+    filter_text: reactive[str] = reactive("")
+    
+    def watch_items(self, items: list) -> None:
+        """Update display when items change."""
+        self.refresh()
+    
+    def watch_filter_text(self, text: str) -> None:
+        """Update display when filter changes."""
+        self.refresh()
+    
+    def render(self) -> str:
+        """Render filtered items."""
+        filtered = [
+            item for item in self.items
+            if self.filter_text.lower() in item.lower()
+        ]
+        return "\n".join(filtered)
+```
+
+### Widget Composition Patterns
+
+Compose complex UIs from simpler widgets:
+
+```python
+class HeaderWithIcon(Static):
+    """Header with icon and title."""
+    
+    def __init__(self, icon: str, title: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.icon = icon
+        self.title = title
+    
+    def render(self) -> str:
+        return f"{self.icon} {self.title}"
+
+class RequestForm(Static):
+    """Complete form for HTTP request."""
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Input, Select, Button
+        from textual.containers import Vertical, Horizontal
+        
+        with Vertical():
+            yield HeaderWithIcon("📝", "Request Details")
+            
+            with Horizontal():
+                yield Select([("GET", "GET"), ("POST", "POST")], id="method")
+                yield Input(placeholder="URL", id="url")
+            
+            yield Input(placeholder="Body", id="body")
+            
+            with Horizontal():
+                yield Button("Send", id="send")
+                yield Button("Clear", id="clear")
+```
+
+### Modal Dialogs
+
+Create modal dialogs with custom widgets:
+
+```python
+from textual.screen import ModalScreen
+from textual.containers import Vertical, Horizontal
+from textual.widgets import Button, Static, Input
+
+class ConfirmDialog(ModalScreen[bool]):
+    """Confirmation dialog widget."""
+    
+    DEFAULT_CSS = """
+    ConfirmDialog {
+        align: center middle;
+    }
+    
+    ConfirmDialog #content {
+        border: solid $accent;
+        width: 50;
+        height: 10;
+    }
+    """
+    
+    def __init__(self, message: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = message
+    
+    def compose(self) -> ComposeResult:
+        with Vertical(id="content"):
+            yield Static(self.message)
+            with Horizontal():
+                yield Button("Yes", id="yes")
+                yield Button("No", id="no")
+    
+    @on(Button.Pressed, "#yes")
+    def confirm(self) -> None:
+        self.dismiss(True)
+    
+    @on(Button.Pressed, "#no")
+    def cancel(self) -> None:
+        self.dismiss(False)
+```
+
+Use the modal:
+
+```python
+async def show_confirmation(self, message: str) -> bool:
+    """Show confirmation dialog and wait for result."""
+    result = await self.app.push_screen_wait(ConfirmDialog(message))
+    return result
 ```
 
 ---
@@ -875,6 +1336,224 @@ class ResponseDisplay(Vertical):
 
 ---
 
+## Widget Patterns from Posting
+
+### Pattern 1: Custom DataTable with Extended Functionality
+
+Posting extends DataTable with checkboxes and custom keybindings:
+
+```python
+from textual.widgets import DataTable
+
+class PostingDataTable(DataTable):
+    """DataTable with checkbox and vim keybindings."""
+    
+    BINDINGS = [
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("h", "cursor_left", "Left", show=False),
+        Binding("l", "cursor_right", "Right", show=False),
+        Binding("f", "toggle_fixed_columns", "Toggle Fixed", show=False),
+    ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cursor_vertical_escape = True
+        self.row_disable = False
+
+class Checkbox:
+    """Checkbox for table rows."""
+    checked: bool = True
+    
+    def toggle(self) -> bool:
+        self.checked = not self.checked
+        return self.checked
+```
+
+### Pattern 2: Custom Input with Theme Awareness
+
+Posting creates a themed input field:
+
+```python
+class PostingInput(Input):
+    """Input with theme-aware styling."""
+    
+    def on_mount(self) -> None:
+        self.cursor_blink = SETTINGS.get().text_input.blinking_cursor
+        self.app.theme_changed_signal.subscribe(self, self.on_theme_change)
+    
+    @property
+    def cursor_style(self) -> Style:
+        return self.get_component_rich_style("input--cursor")
+    
+    def on_theme_change(self, theme) -> None:
+        self.refresh()
+```
+
+### Pattern 3: Key-Value Input Pairs
+
+Posting uses specialized key-value widgets for headers/query params:
+
+```python
+class KeyValueInput(Horizontal):
+    """Input pair for key-value data."""
+    
+    class Change(Message):
+        key: str
+        value: str
+    
+    edit_mode: Reactive[bool] = reactive(False)
+    
+    def compose(self) -> ComposeResult:
+        yield Input(id="key-input")
+        yield Input(id="value-input")
+        yield Button("Add", id="add-button")
+    
+    @property
+    def submit_allowed(self) -> bool:
+        key_input = self.query_one("#key-input", Input)
+        value_input = self.query_one("#value-input", Input)
+        return bool(key_input.value and value_input.value)
+```
+
+### Pattern 4: TextArea with Custom Footer
+
+Posting adds a footer to TextArea for language and options:
+
+```python
+class TextAreaFooter(Horizontal):
+    """Footer for TextArea with language selection."""
+    
+    class LanguageChanged(Message):
+        language: str | None
+    
+    language: Reactive[str | None] = reactive("json")
+    soft_wrap: Reactive[bool] = reactive(True)
+    
+    def compose(self) -> ComposeResult:
+        yield Select([
+            ("JSON", "json"),
+            ("Python", "python"),
+            ("XML", "xml"),
+        ], id="language-select")
+        yield Checkbox("Soft Wrap", id="soft-wrap")
+    
+    def watch_language(self, language: str) -> None:
+        self.post_message(self.LanguageChanged(language))
+```
+
+### Pattern 5: Tree with Vim Keybindings
+
+Posting extends Tree with vim-like navigation:
+
+```python
+class PostingTree(Tree):
+    """Tree with vim-style keybindings."""
+    
+    BINDINGS = [
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("K", "cursor_up_parent", "Parent", show=False),
+        Binding("J", "cursor_down_parent", "Child", show=False),
+        Binding("g", "scroll_home", "Home", show=False),
+        Binding("G", "scroll_end", "End", show=False),
+        Binding("space,r", "toggle_node", "Toggle", show=False),
+    ]
+    
+    def action_cursor_up_parent(self) -> None:
+        """Move to previous collapsible node."""
+        for line in range(self.cursor_line - 1, -1, -1):
+            node = self.get_node_at_line(line)
+            if node and node.allow_expand:
+                self.cursor_line = line
+                return
+```
+
+### Pattern 6: RichLog for Styled Output
+
+Posting uses RichLog to display script output:
+
+```python
+class RichLogIO(StringIO):
+    """Redirect stdout/stderr to RichLog."""
+    
+    def write(self, s: str) -> int:
+        lines = s.splitlines(True)
+        for line in lines:
+            if line.endswith("\n"):
+                self._flush_line(line.rstrip("\n"))
+        return len(s)
+    
+    def _flush_line(self, line: str) -> None:
+        if self.stream_type == "stdout":
+            self.rich_log.write(f" [green]out[/green] {line}")
+        else:
+            self.rich_log.write(f" [red]err[/red] {line}")
+```
+
+### Pattern 7: Select with Vim Keybindings
+
+Posting customizes Select widget:
+
+```python
+class PostingSelect(Select):
+    """Select with vim keybindings."""
+    
+    BINDINGS = [
+        Binding("enter,space,l", "show_overlay", "Show", show=False),
+        Binding("up,k", "cursor_up", "Up", show=False),
+        Binding("down,j", "cursor_down", "Down", show=False),
+    ]
+    
+    def action_cursor_up(self):
+        if self.expanded:
+            self.select_overlay.action_cursor_up()
+        else:
+            self.screen.focus_previous()
+    
+    def action_cursor_down(self):
+        if self.expanded:
+            self.select_overlay.action_cursor_down()
+        else:
+            self.screen.focus_next()
+```
+
+### Pattern 8: Modal Confirmation Dialog
+
+Posting uses modal screens for confirmations:
+
+```python
+class ConfirmationModal(ModalScreen[bool]):
+    """Confirmation dialog."""
+    
+    def __init__(
+        self,
+        message: str,
+        confirm_text: str = "Yes [y]",
+        cancel_text: str = "No [n]",
+        auto_focus: Literal["confirm", "cancel"] = "confirm",
+    ):
+        super().__init__()
+        self.message = message
+        self.confirm_text = confirm_text
+        self.cancel_text = cancel_text
+        self.auto_focus = auto_focus
+    
+    def on_mount(self) -> None:
+        self._bindings.bind("y", "screen.dismiss(True)")
+        self._bindings.bind("n", "screen.dismiss(False)")
+        self._bindings.bind("escape", "screen.dismiss(False)")
+    
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield Static(self.message)
+            with Horizontal():
+                yield Button(self.confirm_text, id="confirm-button")
+                yield Button(self.cancel_text, id="cancel-button")
+```
+
+---
+
 ## Best Practices
 
 ### 1. Use Reactive Properties for State
@@ -1096,6 +1775,95 @@ from textual.lazy import Lazy
 
 with TabPane("Heavy", id="heavy"):
     yield Lazy(ExpensiveComponent())  # Only renders when active
+```
+
+### 11. Widget-Specific Tips
+
+#### DataTable Tips
+
+✅ **Good**: Extend DataTable for specialized behavior
+
+```python
+class CustomTable(DataTable):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cursor_vertical_escape = True  # Allow up-arrow to focus previous widget
+```
+
+#### Input Tips
+
+✅ **Good**: Handle Input events for validation
+
+```python
+@on(Input.Changed)
+def validate_input(self, event: Input.Changed) -> None:
+    if not is_valid(event.value):
+        event.input.add_class("error")
+    else:
+        event.input.remove_class("error")
+```
+
+#### TreeView Tips
+
+✅ **Good**: Extend Tree for custom navigation
+
+```python
+class NavigationTree(Tree):
+    BINDINGS = [
+        Binding("k", "cursor_up"),
+        Binding("j", "cursor_down"),
+        Binding("enter,l", "select_cursor"),
+        Binding("space,r", "toggle_node"),
+    ]
+```
+
+#### TextArea Tips
+
+✅ **Good**: Provide language selection for proper highlighting
+
+```python
+text_area = TextArea(language="json")
+text_area.language = "python"  # Change language dynamically
+```
+
+#### Modal Dialog Tips
+
+✅ **Good**: Use ModalScreen for focused interactions
+
+```python
+async def confirm_action(self, message: str) -> bool:
+    result = await self.app.push_screen_wait(
+        ConfirmDialog(message)
+    )
+    return result
+```
+
+#### Custom Widget Tips
+
+✅ **Good**: Use Message classes for inter-widget communication
+
+```python
+class CustomWidget(Static):
+    class Submitted(Message):
+        def __init__(self, value: str):
+            super().__init__()
+            self.value = value
+    
+    def submit(self, value: str) -> None:
+        self.post_message(self.Submitted(value))
+```
+
+✅ **Good**: Define DEFAULT_CSS for widget styling
+
+```python
+class MyWidget(Static):
+    DEFAULT_CSS = """
+    MyWidget {
+        width: 100%;
+        border: solid $accent;
+        padding: 1 2;
+    }
+    """
 ```
 
 ---
