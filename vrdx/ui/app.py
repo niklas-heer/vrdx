@@ -370,20 +370,40 @@ class VrdxApp(App[None]):
         self._begin_edit_existing()
 
     def action_new_decision(self) -> None:
+        """Initiate the new decision creation workflow.
+
+        This implements a guided workflow for creating new decisions:
+        1. Calculate the next available decision ID based on existing decisions
+        2. Display a status selection modal to let the user choose the initial status
+        3. Pass control to _on_status_selected when user confirms the status
+
+        This approach improves UX by presenting status selection upfront,
+        reducing cognitive load and making the creation process more discoverable.
+        """
         file_state = self.app_state.current_file()
         if not file_state or self._editor is None:
             return
-        # Store the next decision ID for use in the modal callback
+
+        # Calculate next ID based on existing decisions in the file
         self._pending_new_decision_id = file_state.next_decision_id()
-        # Show the status selection modal
+
+        # Show status selection modal - user selects status before entering editor
+        # When user confirms, _on_status_selected callback will be invoked with selected status
         self.push_screen(StatusSelectionModal(), callback=self._on_status_selected)
 
     def _on_status_selected(self, status: Optional[str]) -> None:
         """Handle the result from the status selection modal.
 
+        After user selects a status in the modal, this callback:
+        1. Validates that a valid status was selected
+        2. Resets the form for new decision creation with the selected status
+        3. Switches to edit mode and focuses on the editor pane
+        4. Updates the status bar to reflect the new mode
+
         Args:
             status: The selected status, or None if the selection was cancelled.
         """
+        # If user cancelled, or if IDs/editor are not available, abort
         if (
             status is None
             or self._pending_new_decision_id is None
@@ -392,13 +412,20 @@ class VrdxApp(App[None]):
             self._pending_new_decision_id = None
             return
 
-        # Configure the form for new decision
+        # Reset the form with the calculated ID and user-selected status
+        # This clears any previous form state and initializes new decision fields
         self._editor.reset_for_new_decision(self._pending_new_decision_id, status)
+
+        # Set editor mode to edit-new for proper behavior tracking
         self._editor_mode = "edit-new"
         self._editing_decision_id = None
+
+        # Update UI state and focus
         self._status_message = "Creating new decision"
-        self.focus_pane(PaneId.EDITOR)
-        self._update_status_bar()
+        self.focus_pane(PaneId.EDITOR)  # Move focus to editor pane
+        self._update_status_bar()  # Update mode indicator in status bar
+
+        # Clean up temporary state
         self._pending_new_decision_id = None
         self._pending_new_status = status
 
