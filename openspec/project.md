@@ -58,6 +58,3 @@ The project targets engineering teams that prefer Markdown-based documentation a
 - GitHub Actions with Earthly orchestrate CI across macOS and Linux.
 - uv provides runtime management, tool installation, and upgrade flows for end users.
 - Textual and related libraries (Rich, markdown-it-py, mdurl, Pydantic) are bundled as part of the Python distribution—no external web services are required at runtime.
-<!-- vrdx start -->
-
-<!-- vrdx end -->

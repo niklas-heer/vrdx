@@ -16,6 +16,3 @@ The current TUI pane ordering surfaces the files list last and focuses the decis
 ## Open Questions
 - Do we need configuration flags to restore the legacy pane ordering for existing users?
 - Should grayed-out files remain selectable for creating new decision blocks, or should they be temporarily non-focusable?
-<!-- vrdx start -->
-
-<!-- vrdx end -->

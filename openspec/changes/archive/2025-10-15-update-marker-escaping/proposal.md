@@ -10,6 +10,3 @@ Documentation authors frequently need to mention the literal marker strings `<!-
 ## Impact
 - Affected specs: decision parsing, discovery, and documentation authoring guidelines (new or modified requirements to capture inline-code handling).
 - Affected code: `vrdx/parser/markers.py`, related parsing utilities, plus accompanying tests under `tests/unit/test_markers.py` (and any discovery tests that inspect marker detection).
-<!-- vrdx start -->
-
-<!-- vrdx end -->

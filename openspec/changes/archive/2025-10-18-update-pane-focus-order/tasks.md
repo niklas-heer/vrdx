@@ -14,6 +14,3 @@
 - [x] 3.2 Run `uv run pytest -v` to confirm tests pass.
 - [ ] 3.3 Run `uv run ruff check .` to ensure linting passes. *(Optional: Ruff not installed in environment)*
 - [ ] 3.4 Perform a manual TUI session to confirm the files pane behaviour, visual styling, and shortcuts work as expected.
-<!-- vrdx start -->
-
-<!-- vrdx end -->

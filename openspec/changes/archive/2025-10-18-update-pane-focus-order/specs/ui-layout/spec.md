@@ -25,6 +25,3 @@ Pane numbering, on-screen hints, and keyboard shortcuts SHALL map as: `1` Decisi
 - **WHEN** the user presses `2`, `3`, or `4`
 - **THEN** the Files, Editor, and Preview panes respectively MUST receive focus
 - **AND** the pane hint text MUST advertise the same numeric-to-pane mapping
-<!-- vrdx start -->
-
-<!-- vrdx end -->
