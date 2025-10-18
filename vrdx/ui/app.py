@@ -45,10 +45,7 @@ Screen {
     layout: vertical;
 }
 
-#main-layout {
-    height: 1fr;
-    width: 100%;
-}
+
 
 #left-column {
     width: 26%;
@@ -57,44 +54,13 @@ Screen {
     padding: 1;
 }
 
-#right-column {
-    width: 1fr;
-    height: 1fr;
-    layout: vertical;
-}
 
 
 
 
 
-#decision-list,
-#file-list {
-    border: solid $primary;
-    background: $surface;
-    height: 1fr;
-    min-height: 8;
-    padding: 1;
-    margin: 0;
-}
 
-#decision-list ListItem:hover,
-#file-list ListItem:hover {
-    background: $accent;
-}
 
-#decision-list ListView:focus ListItem.--highlight,
-#file-list ListView:focus ListItem.--highlight {
-    background: $primary;
-}
-
-#file-list ListItem.file-no-markers {
-    color: $text-muted;
-    text-style: dim;
-}
-
-#file-list ListItem.file-no-markers Label {
-    color: $text-muted;
-}
 
 #editor-pane {
     width: 100%;
@@ -265,34 +231,26 @@ class VrdxApp(App[None]):
             yield Header()
             self._status_bar = Static("", id="status-bar")
             yield self._status_bar
-            with Horizontal(id="main-layout"):
-                with Vertical(id="left-column"):
-                    self._decision_list = DecisionList(id="decision-list")
-                    yield self._decision_list
-                    self._file_list = FileList(id="file-list")
-                    yield self._file_list
-                with Vertical(id="right-column"):
-                    self._editor = FormBasedDecisionEditor(
-                        decision_id=0,
-                        current_status="📝 Draft",
-                        id="editor-pane",
-                    )
-                    yield self._editor
-                    self._preview = PreviewPane(id="preview-pane")
-                    yield self._preview
+            with Vertical():
+                self._editor = FormBasedDecisionEditor(
+                    decision_id=0,
+                    current_status="📝 Draft",
+                    id="editor-pane",
+                )
+                yield self._editor
+                self._preview = PreviewPane(id="preview-pane")
+                yield self._preview
 
     def on_mount(self) -> None:
         # Apply the neon theme after mounting
         self.theme = "vrdx_neon"
 
         # Set pane headers using border_title
-        self._decision_list.border_title = "Decisions"
-        self._file_list.border_title = "Files"
         self._editor.border_title = "Editor"
         self._preview.border_title = "Preview"
 
         self._initialize_files()
-        self.focus_pane(PaneId.DECISIONS)
+        self.focus_pane(PaneId.EDITOR)
         self.refresh_panes()
         self._load_most_recent_decision()
 
