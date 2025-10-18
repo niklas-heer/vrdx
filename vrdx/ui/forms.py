@@ -13,7 +13,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Grid, Horizontal, Vertical
 from textual.reactive import reactive
-from textual.widgets import Button, Label, Static, TextArea, OptionList
+from textual.widgets import Button, Label, Static, TextArea, Select
 from textual.message import Message
 
 from vrdx.parser import DecisionRecord, list_status_options
@@ -334,10 +334,11 @@ class FormBasedDecisionEditor(Static):
 
                 # Status row
                 yield Label("Status:", classes="form-section-title")
-                # Create OptionList with status options
-                status_options = list_status_options()
-                self._status_select = OptionList(
-                    *status_options,
+                # Create Select with status options
+                status_options = [(status, status) for status in list_status_options()]
+                self._status_select = Select(
+                    status_options,
+                    value=self.current_status,
                     id="status-select",
                 )
                 yield self._status_select
@@ -528,24 +529,18 @@ class FormBasedDecisionEditor(Static):
         elif textarea.id == "consequences-area":
             self._consequences_height = self._calculate_textarea_height(textarea, 1, 3)
 
-    def on_option_list_selected_changed(
-        self, event: OptionList.SelectedChanged
-    ) -> None:
+    def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.
 
         Updates the current_status when the user selects a different status
-        from the option list. This keeps the form state synchronized with the
-        OptionList widget selection.
+        from the dropdown. This keeps the form state synchronized with the
+        Select widget value.
 
         Args:
-            event: The OptionList selection change event with the selected index.
+            event: The Select widget change event with the new value.
         """
-        if event.option_list.id == "status-select":
-            status_options = list_status_options()
-            if event.option_index is not None and 0 <= event.option_index < len(
-                status_options
-            ):
-                self.current_status = status_options[event.option_index]
+        if event.select.id == "status-select":
+            self.current_status = event.value
 
     def action_save(self) -> None:
         """Validate and save the form data.
@@ -670,7 +665,7 @@ class FormBasedDecisionEditor(Static):
     def set_status(self, status: str) -> None:
         """Update the status display.
 
-        Updates the current_status and synchronizes the status OptionList widget
+        Updates the current_status and synchronizes the status Select widget
         to show the new status value. Used when status changes are made
         programmatically.
 
@@ -679,12 +674,7 @@ class FormBasedDecisionEditor(Static):
         """
         self.current_status = status
         if self._status_select:
-            status_options = list_status_options()
-            try:
-                index = status_options.index(status)
-                self._status_select.highlighted = index
-            except ValueError:
-                pass
+            self._status_select.value = status
 
     def get_form_data(self) -> FormData:
         """Get the current form data.
