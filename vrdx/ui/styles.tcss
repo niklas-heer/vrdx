@@ -199,8 +199,7 @@ FormBasedDecisionEditor {
 
 #status-select {
     width: 1fr;
-    height: auto;
-    max-height: 1;
+    height: 1;
     border: solid $accent;
     background: $surface;
     margin: 0;
