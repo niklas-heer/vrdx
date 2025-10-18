@@ -43,27 +43,31 @@ class FormBasedDecisionEditor(Static):
         height: 100%;
         layout: vertical;
         background: $surface;
+        padding: 0 1;
     }
 
     #editor-header {
         width: 100%;
         height: auto;
-        padding: 1;
+        padding: 1 1 2 1;
         background: $panel;
         text-style: bold;
         border-bottom: solid $accent;
+        margin-bottom: 1;
     }
 
     #form-scroll {
         width: 100%;
         height: 1fr;
         overflow: auto;
+        padding: 1 0;
     }
 
     .form-section {
         width: 100%;
         height: auto;
-        padding: 1;
+        padding: 2;
+        margin-bottom: 1;
         border-bottom: solid $boost;
     }
 
@@ -77,7 +81,7 @@ class FormBasedDecisionEditor(Static):
     #title-input {
         width: 100%;
         height: auto;
-        margin-bottom: 2;
+        margin-bottom: 3;
     }
 
     .status-section {
@@ -86,6 +90,7 @@ class FormBasedDecisionEditor(Static):
         layout: horizontal;
         align-horizontal: left;
         align-vertical: middle;
+        padding-top: 1;
     }
 
     .status-label {
@@ -102,20 +107,20 @@ class FormBasedDecisionEditor(Static):
 
     #decision-area {
         width: 100%;
-        height: 10;
-        margin-bottom: 1;
+        height: 12;
+        margin-bottom: 2;
     }
 
     #context-area {
         width: 100%;
-        height: 10;
-        margin-bottom: 1;
+        height: 12;
+        margin-bottom: 2;
     }
 
     #consequences-area {
         width: 100%;
-        height: 10;
-        margin-bottom: 1;
+        height: 12;
+        margin-bottom: 2;
     }
 
     #button-row {
@@ -123,10 +128,16 @@ class FormBasedDecisionEditor(Static):
         height: auto;
         layout: horizontal;
         align-horizontal: left;
+        padding: 1 0 1 0;
+        border-top: solid $boost;
     }
 
     #save-btn {
-        margin-right: 2;
+        margin: 0 3 0 0;
+    }
+
+    #cancel-btn {
+        margin: 0;
     }
 
     .validation-error {
