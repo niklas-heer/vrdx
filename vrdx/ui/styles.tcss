@@ -183,12 +183,12 @@ FormBasedDecisionEditor {
     height: auto;
     margin-bottom: 0;
     padding: 0;
+    display: none;
 }
 
 #status-select {
-    width: auto;
+    width: 100%;
     height: auto;
-    max-height: 3;
     border: solid $accent;
     background: $surface;
     margin: 0;
@@ -198,6 +198,10 @@ FormBasedDecisionEditor {
 #status-select:focus {
     border: solid $primary;
     background: $surface;
+}
+
+#status-select > Option {
+    padding: 0 1;
 }
 
 #decision-area {
