@@ -308,7 +308,7 @@ class FormBasedDecisionEditor(Static):
 
         Creates a vertical layout with:
         1. Header showing decision ID (updated when editing)
-        2. Scrollable form content with all input fields separated by visual lines
+        2. Scrollable form content with all input fields on same line as labels
         3. Button row with Save and Cancel actions
 
         The form uses a scrollable container to handle content that exceeds
@@ -323,8 +323,8 @@ class FormBasedDecisionEditor(Static):
         # Scrollable form content
         with Vertical(id="form-scroll"):
             # Title section
-            with Vertical(classes="form-section"):
-                yield Label("Title", classes="form-section-title")
+            with Horizontal(classes="form-section"):
+                yield Label("Title:", classes="form-section-title")
                 self._title_area = TextArea(
                     id="title-area",
                     read_only=False,
@@ -335,8 +335,8 @@ class FormBasedDecisionEditor(Static):
             yield Static(classes="form-separator")
 
             # Status section
-            with Vertical(classes="form-section"):
-                yield Label("Status", classes="form-section-title")
+            with Horizontal(classes="form-section"):
+                yield Label("Status:", classes="form-section-title")
                 # Create OptionList with status options
                 status_options = list_status_options()
                 self._status_select = OptionList(
@@ -349,8 +349,8 @@ class FormBasedDecisionEditor(Static):
             yield Static(classes="form-separator")
 
             # Decision section
-            with Vertical(classes="form-section"):
-                yield Label("Decision", classes="form-section-title")
+            with Horizontal(classes="form-section"):
+                yield Label("Decision:", classes="form-section-title")
                 self._decision_area = TextArea(
                     id="decision-area",
                     read_only=False,
@@ -362,8 +362,8 @@ class FormBasedDecisionEditor(Static):
             yield Static(classes="form-separator")
 
             # Context section
-            with Vertical(classes="form-section"):
-                yield Label("Context", classes="form-section-title")
+            with Horizontal(classes="form-section"):
+                yield Label("Context:", classes="form-section-title")
                 self._context_area = TextArea(
                     id="context-area",
                     read_only=False,
@@ -375,8 +375,8 @@ class FormBasedDecisionEditor(Static):
             yield Static(classes="form-separator")
 
             # Consequences section
-            with Vertical(classes="form-section"):
-                yield Label("Consequences", classes="form-section-title")
+            with Horizontal(classes="form-section"):
+                yield Label("Consequences:", classes="form-section-title")
                 self._consequences_area = TextArea(
                     id="consequences-area",
                     read_only=False,
