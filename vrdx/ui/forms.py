@@ -12,10 +12,10 @@ from typing import Optional
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Input, Label, Static, TextArea
+from textual.widgets import Button, Input, Label, Static, TextArea, Select
 from textual.message import Message
 
-from vrdx.parser import DecisionRecord
+from vrdx.parser import DecisionRecord, list_status_options
 
 
 @dataclass
@@ -87,22 +87,12 @@ class FormBasedDecisionEditor(Static):
     .status-section {
         width: 100%;
         height: auto;
-        layout: horizontal;
-        align-horizontal: left;
-        align-vertical: middle;
         padding-top: 1;
     }
 
-    .status-label {
-        width: 1fr;
+    #status-select {
+        width: 100%;
         height: auto;
-        padding-right: 1;
-    }
-
-    #change-status-btn {
-        width: auto;
-        height: auto;
-        margin-left: 1;
     }
 
     #decision-area {
@@ -163,11 +153,6 @@ class FormBasedDecisionEditor(Static):
 
         pass
 
-    class StatusChangeRequested(Message):
-        """Posted when the user clicks the Change Status button."""
-
-        pass
-
     def __init__(
         self,
         decision_id: int,
@@ -194,7 +179,7 @@ class FormBasedDecisionEditor(Static):
         self._decision_area: Optional[TextArea] = None
         self._context_area: Optional[TextArea] = None
         self._consequences_area: Optional[TextArea] = None
-        self._status_label: Optional[Label] = None
+        self._status_select: Optional[Select] = None
         self._error_label: Optional[Label] = None
 
     def compose(self) -> ComposeResult:
@@ -219,17 +204,17 @@ class FormBasedDecisionEditor(Static):
             # Status section
             with Vertical(classes="form-section"):
                 yield Label("Status", classes="form-section-title")
-                with Horizontal(classes="status-section"):
-                    self._status_label = Label(
-                        self.current_status,
-                        classes="status-label",
+                with Vertical(classes="status-section"):
+                    # Create Select with status options
+                    status_options = [
+                        (status, status) for status in list_status_options()
+                    ]
+                    self._status_select = Select(
+                        status_options,
+                        value=self.current_status,
+                        id="status-select",
                     )
-                    yield self._status_label
-                    yield Button(
-                        "[Change]",
-                        id="change-status-btn",
-                        variant="default",
-                    )
+                    yield self._status_select
 
             # Decision section
             with Vertical(classes="form-section"):
@@ -278,8 +263,11 @@ class FormBasedDecisionEditor(Static):
             self.action_save()
         elif event.button.id == "cancel-btn":
             self.action_cancel()
-        elif event.button.id == "change-status-btn":
-            self.post_message(self.StatusChangeRequested())
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Handle status selection changes."""
+        if event.select.id == "status-select":
+            self.current_status = event.value
 
     def action_save(self) -> None:
         """Validate and save the form data."""
@@ -338,8 +326,8 @@ class FormBasedDecisionEditor(Static):
             self._context_area.text = ""
         if self._consequences_area:
             self._consequences_area.text = ""
-        if self._status_label:
-            self._status_label.update(status)
+        if self._status_select:
+            self._status_select.value = status
         if self._error_label:
             self._error_label.update("")
 
@@ -373,8 +361,8 @@ class FormBasedDecisionEditor(Static):
             status: The new status value.
         """
         self.current_status = status
-        if self._status_label:
-            self._status_label.update(status)
+        if self._status_select:
+            self._status_select.value = status
 
     def get_form_data(self) -> FormData:
         """Get the current form data.

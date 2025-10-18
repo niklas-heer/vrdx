@@ -186,7 +186,6 @@ class VrdxApp(App[None]):
         Binding("k,up", "previous_decision", "Previous decision", show=False),
         Binding("space", "select_decision", "Edit", show=True),
         Binding("n", "new_decision", "New", show=True),
-        Binding("p", "pick_status", "Status", show=True),
         Binding("s", "save", "Save", show=True),
         Binding("escape", "cancel", "Cancel", show=False),
         Binding("r", "refresh", "Refresh", show=False),
@@ -403,24 +402,6 @@ class VrdxApp(App[None]):
         self._pending_new_decision_id = None
         self._pending_new_status = status
 
-    def action_pick_status(self) -> None:
-        if self._editor is None or self._editor_mode == "view":
-            return
-        # Show status selection modal
-        self.push_screen(StatusSelectionModal(), callback=self._on_status_changed)
-
-    def _on_status_changed(self, status: Optional[str]) -> None:
-        """Handle status change from modal while editing.
-
-        Args:
-            status: The selected status, or None if cancelled.
-        """
-        if status is None or self._editor is None:
-            return
-        self._editor.set_status(status)
-        self._status_message = f"Status changed to {status}"
-        self._update_status_bar()
-
     def action_save(self) -> None:
         if self._editor is None:
             return
@@ -513,10 +494,6 @@ class VrdxApp(App[None]):
         self.focus_pane(PaneId.DECISIONS)
         self._show_message("Editing cancelled")
 
-    def _handle_status_change_requested(self) -> None:
-        """Handle status change request from form."""
-        self.push_screen(StatusSelectionModal(), callback=self._on_status_changed)
-
     def _persist_current_file(self) -> None:
         file_state = self.app_state.current_file()
         if not file_state:
@@ -585,12 +562,6 @@ class VrdxApp(App[None]):
     ) -> None:
         """Handle form cancelled event."""
         self._handle_form_cancelled()
-
-    def on_form_based_decision_editor_status_change_requested(
-        self, event: FormBasedDecisionEditor.StatusChangeRequested
-    ) -> None:
-        """Handle status change request from form."""
-        self._handle_status_change_requested()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in both decision and file lists."""
