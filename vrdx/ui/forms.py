@@ -117,7 +117,7 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: auto;
         min-height: 1;
-        max-height: 3;
+        max-height: 2;
         margin-bottom: 0;
         border: solid $accent;
         background: $surface;
@@ -149,8 +149,8 @@ class FormBasedDecisionEditor(Static):
     #decision-area {
         width: 100%;
         height: auto;
-        min-height: 2;
-        max-height: 8;
+        min-height: 1;
+        max-height: 4;
         margin-bottom: 0;
         border: solid $accent;
         background: $surface;
@@ -164,8 +164,8 @@ class FormBasedDecisionEditor(Static):
     #context-area {
         width: 100%;
         height: auto;
-        min-height: 2;
-        max-height: 8;
+        min-height: 1;
+        max-height: 4;
         margin-bottom: 0;
         border: solid $accent;
         background: $surface;
@@ -179,8 +179,8 @@ class FormBasedDecisionEditor(Static):
     #consequences-area {
         width: 100%;
         height: auto;
-        min-height: 2;
-        max-height: 8;
+        min-height: 1;
+        max-height: 4;
         margin-bottom: 0;
         border: solid $accent;
         background: $surface;
@@ -203,14 +203,13 @@ class FormBasedDecisionEditor(Static):
     }
 
     #save-btn {
-        margin-right: 1;
+        margin-right: 0;
         margin-bottom: 0;
-        padding: 0 1;
+        padding: 0;
         height: auto;
         border: solid $success;
         background: $success 40%;
         color: $text;
-        text-style: bold;
     }
 
     #save-btn:hover {
@@ -226,12 +225,11 @@ class FormBasedDecisionEditor(Static):
 
     #cancel-btn {
         margin-bottom: 0;
-        padding: 0 1;
+        padding: 0;
         height: auto;
         border: solid $error;
         background: $error 40%;
         color: $text;
-        text-style: bold;
     }
 
     #cancel-btn:hover {
@@ -323,9 +321,9 @@ class FormBasedDecisionEditor(Static):
 
         # Dynamic textarea sizing
         self._title_height = reactive(1, init=False)
-        self._decision_height = reactive(2, init=False)
-        self._context_height = reactive(2, init=False)
-        self._consequences_height = reactive(2, init=False)
+        self._decision_height = reactive(1, init=False)
+        self._context_height = reactive(1, init=False)
+        self._consequences_height = reactive(1, init=False)
 
     def compose(self) -> ComposeResult:
         """Compose the form layout.
@@ -563,13 +561,13 @@ class FormBasedDecisionEditor(Static):
         textarea = event.text_area
 
         if textarea.id == "title-area":
-            self._title_height = self._calculate_textarea_height(textarea, 1, 3)
+            self._title_height = self._calculate_textarea_height(textarea, 1, 2)
         elif textarea.id == "decision-area":
-            self._decision_height = self._calculate_textarea_height(textarea, 2, 8)
+            self._decision_height = self._calculate_textarea_height(textarea, 1, 4)
         elif textarea.id == "context-area":
-            self._context_height = self._calculate_textarea_height(textarea, 2, 8)
+            self._context_height = self._calculate_textarea_height(textarea, 1, 4)
         elif textarea.id == "consequences-area":
-            self._consequences_height = self._calculate_textarea_height(textarea, 2, 8)
+            self._consequences_height = self._calculate_textarea_height(textarea, 1, 4)
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.

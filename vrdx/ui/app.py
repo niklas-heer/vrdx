@@ -110,7 +110,7 @@ Screen {
 #editor-pane {
     width: 100%;
     height: 2fr;
-    min-height: 10;
+    min-height: 6;
     border: solid $primary;
     padding: 1 1;
     margin: 0 1;
@@ -121,7 +121,7 @@ Screen {
 #preview-pane {
     width: 100%;
     height: 1fr;
-    min-height: 5;
+    min-height: 3;
     border: solid $accent;
     padding: 1 1;
     margin: 0 1;

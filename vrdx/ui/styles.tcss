@@ -152,7 +152,7 @@ FormBasedDecisionEditor {
     width: 100%;
     height: auto;
     min-height: 1;
-    max-height: 3;
+    max-height: 2;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -185,8 +185,8 @@ FormBasedDecisionEditor {
 #decision-area {
     width: 100%;
     height: auto;
-    min-height: 2;
-    max-height: 8;
+    min-height: 1;
+    max-height: 4;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -200,8 +200,8 @@ FormBasedDecisionEditor {
 #context-area {
     width: 100%;
     height: auto;
-    min-height: 2;
-    max-height: 8;
+    min-height: 1;
+    max-height: 4;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -215,8 +215,8 @@ FormBasedDecisionEditor {
 #consequences-area {
     width: 100%;
     height: auto;
-    min-height: 2;
-    max-height: 8;
+    min-height: 1;
+    max-height: 4;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -239,14 +239,13 @@ FormBasedDecisionEditor {
 }
 
 #save-btn {
-    margin-right: 1;
+    margin-right: 0;
     margin-bottom: 0;
-    padding: 0 1;
+    padding: 0;
     height: auto;
     border: solid $success;
     background: $success 40%;
     color: $text;
-    text-style: bold;
 }
 
 #save-btn:hover {
@@ -262,12 +261,11 @@ FormBasedDecisionEditor {
 
 #cancel-btn {
     margin-bottom: 0;
-    padding: 0 1;
+    padding: 0;
     height: auto;
     border: solid $error;
     background: $error 40%;
     color: $text;
-    text-style: bold;
 }
 
 #cancel-btn:hover {
