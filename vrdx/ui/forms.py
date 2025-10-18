@@ -77,7 +77,7 @@ class FormBasedDecisionEditor(Static):
     #title-input {
         width: 100%;
         height: auto;
-        margin-bottom: 1;
+        margin-bottom: 2;
     }
 
     .status-section {
@@ -102,19 +102,19 @@ class FormBasedDecisionEditor(Static):
 
     #decision-area {
         width: 100%;
-        height: 5;
+        height: 10;
         margin-bottom: 1;
     }
 
     #context-area {
         width: 100%;
-        height: 5;
+        height: 10;
         margin-bottom: 1;
     }
 
     #consequences-area {
         width: 100%;
-        height: 5;
+        height: 10;
         margin-bottom: 1;
     }
 
@@ -126,7 +126,7 @@ class FormBasedDecisionEditor(Static):
     }
 
     #save-btn {
-        margin-right: 1;
+        margin-right: 2;
     }
 
     .validation-error {
