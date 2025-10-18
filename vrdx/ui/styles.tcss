@@ -1,4 +1,5 @@
 /* Layout and styling for the vrdx Textual TUI */
+/* Neon/Cyberpunk Design System with Dynamic Form Sizing */
 
 Screen {
     background: $background;
@@ -12,17 +13,20 @@ Screen {
 }
 
 #left-column {
-    width: 26%;
+    width: 25%;
     min-width: 20w;
-    border-right: solid $primary;
+    border: solid $primary;
+    border-right: none;
     padding: 1;
+    background: $panel;
 }
 
 #decisions-title,
 #files-title {
     text-style: bold;
-    padding-bottom: 0;
-    margin-bottom: 1;
+    color: $primary;
+    padding: 0 0 1 0;
+    margin: 0;
 }
 
 #pane-hints {
@@ -48,7 +52,7 @@ Screen {
 
 #decision-list ListView:focus ListItem.--highlight,
 #file-list ListView:focus ListItem.--highlight {
-    background: $accent;
+    background: $primary;
 }
 
 #file-list ListItem.file-no-markers {
@@ -70,21 +74,233 @@ Screen {
 }
 
 #editor-pane {
-    width: 44%;
-    min-width: 32w;
+    width: 1fr;
+    height: 50%;
+    min-height: 16;
 }
 
 #preview-pane {
-    width: 30%;
-    min-width: 24w;
+    width: 1fr;
+    height: 1fr;
+    min-height: 8;
 }
 
 #status-bar {
     background: $boost;
     color: $text;
-    border-bottom: solid $primary;
+    border-top: solid $primary;
     padding: 0 1;
     height: auto;
     min-height: 1;
     content-align: center middle;
+}
+
+/* Form-based Decision Editor Styling */
+
+FormBasedDecisionEditor {
+    width: 100%;
+    height: 100%;
+    layout: vertical;
+    background: $panel;
+}
+
+#editor-header {
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    background: $panel;
+    text-style: bold;
+    color: $primary;
+    border-bottom: solid $primary;
+    opacity: 1.0;
+}
+
+#form-scroll {
+    width: 100%;
+    height: 1fr;
+    overflow: auto;
+    padding: 1 2;
+}
+
+.form-section {
+    width: 100%;
+    height: auto;
+    padding: 1 0;
+    margin-bottom: 0;
+    border: none;
+    opacity: 1.0;
+}
+
+.form-section-title {
+    text-style: bold;
+    color: $accent;
+    padding: 0 0 1 0;
+    margin: 0;
+    height: auto;
+}
+
+.form-separator {
+    width: 100%;
+    height: 1;
+    background: $boost;
+    margin: 1 0;
+    opacity: 1.0;
+}
+
+#title-area {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 5;
+    margin-bottom: 0;
+    border: solid $accent;
+    background: $surface;
+}
+
+#title-area:focus {
+    border: solid $primary;
+    background: $surface;
+}
+
+.status-section {
+    width: 100%;
+    height: auto;
+    margin-bottom: 0;
+}
+
+#status-select {
+    width: 100%;
+    height: auto;
+    border: solid $accent;
+    background: $surface;
+}
+
+#status-select:focus {
+    border: solid $primary;
+    background: $surface;
+}
+
+#decision-area {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 15;
+    margin-bottom: 0;
+    border: solid $accent;
+    background: $surface;
+}
+
+#decision-area:focus {
+    border: solid $primary;
+    background: $surface;
+}
+
+#context-area {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 15;
+    margin-bottom: 0;
+    border: solid $accent;
+    background: $surface;
+}
+
+#context-area:focus {
+    border: solid $primary;
+    background: $surface;
+}
+
+#consequences-area {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    max-height: 15;
+    margin-bottom: 0;
+    border: solid $accent;
+    background: $surface;
+}
+
+#consequences-area:focus {
+    border: solid $primary;
+    background: $surface;
+}
+
+#button-row {
+    width: 100%;
+    height: auto;
+    layout: horizontal;
+    align-horizontal: left;
+    padding: 1 0;
+    margin-top: 1;
+    border-top: solid $boost;
+    opacity: 1.0;
+}
+
+#save-btn {
+    margin-right: 2;
+    margin-bottom: 0;
+    padding: 0 2;
+    height: 1;
+    border: solid $success;
+    color: $success;
+}
+
+#save-btn:hover {
+    background: $success 20%;
+    border: solid $success;
+}
+
+#save-btn:focus {
+    border: solid $primary;
+    color: $text;
+    background: $success 30%;
+}
+
+#cancel-btn {
+    margin-bottom: 0;
+    padding: 0 2;
+    height: 1;
+    border: solid $error;
+    color: $error;
+}
+
+#cancel-btn:hover {
+    background: $error 20%;
+    border: solid $error;
+}
+
+#cancel-btn:focus {
+    border: solid $primary;
+    color: $text;
+    background: $error 30%;
+}
+
+.validation-error {
+    color: $error;
+    text-style: bold;
+    margin-top: 1;
+    text-opacity: 0%;
+}
+
+.validation-error.show {
+    text-opacity: 100%;
+}
+
+Input:focus,
+TextArea:focus,
+Select:focus {
+    border: solid $primary;
+}
+
+Input {
+    background: $surface;
+}
+
+TextArea {
+    background: $surface;
+}
+
+Select {
+    background: $surface;
 }

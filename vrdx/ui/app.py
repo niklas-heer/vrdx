@@ -10,6 +10,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
+from textual.theme import Theme
 from textual.widgets import (
     Header,
     Label,
@@ -36,70 +37,106 @@ try:
         resources.files("vrdx.ui").joinpath("styles.tcss").read_text(encoding="utf-8")
     )
 except (FileNotFoundError, OSError, AttributeError):
-    _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI */
+    _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI - Neon/Cyberpunk Theme */
 
 Screen {
-    background: #111827;
-    color: #f9fafb;
+    background: $background;
+    color: $text;
+    layout: vertical;
 }
 
 #main-layout {
+    height: 1fr;
     width: 100%;
-    height: 100%;
 }
 
 #left-column {
-    width: 25%;
+    width: 26%;
+    min-width: 20w;
+    border: solid $primary;
     padding: 1;
-    border-right: solid #374151;
+}
+
+#right-column {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
 }
 
 #decisions-title,
 #files-title {
     text-style: bold;
-    padding-bottom: 0;
+    color: $accent;
+    padding: 0 1;
+    margin-bottom: 1;
+    height: auto;
 }
 
 #pane-hints {
     padding: 0 1;
-    color: #9ca3af;
+    color: $text-muted;
+    height: 1;
 }
 
 #decision-list,
 #file-list {
-    border: solid #374151;
-    background: #1f2937;
-    padding: 0;
+    border: solid $primary;
+    background: $surface;
+    height: 1fr;
+    min-height: 8;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+#decision-list ListItem:hover,
+#file-list ListItem:hover {
+    background: $accent;
+}
+
+#decision-list ListView:focus ListItem.--highlight,
+#file-list ListView:focus ListItem.--highlight {
+    background: $primary;
 }
 
 #file-list ListItem.file-no-markers {
-    color: #9ca3af;
+    color: $text-muted;
+    text-style: dim;
 }
 
 #file-list ListItem.file-no-markers Label {
-    color: #9ca3af;
-}
-
-#editor-pane,
-#preview-pane {
-    border: solid #374151;
-    padding: 1;
-    background: #0f172a;
+    color: $text-muted;
 }
 
 #editor-pane {
-    width: 45%;
+    width: 100%;
+    height: 50%;
+    min-height: 16;
+    border: solid $primary;
+    padding: 1 2;
+    margin: 0 1;
+    overflow-y: auto;
+    background: $panel;
 }
 
 #preview-pane {
-    width: 30%;
+    width: 100%;
+    height: 1fr;
+    min-height: 8;
+    border: solid $accent;
+    padding: 1 2;
+    margin: 0 1;
+    overflow-y: auto;
+    background: $panel;
 }
 
 #status-bar {
-    background: #1f2937;
-    color: #f9fafb;
-    border-top: solid #374151;
+    background: $boost;
+    color: $text;
+    border-top: solid $primary;
     padding: 0 1;
+    height: auto;
+    min-height: 1;
+    content-align: center middle;
 }
 """
 
@@ -177,6 +214,29 @@ class VrdxApp(App[None]):
 
     CSS = _CSS_TEXT
 
+    # Neon/Cyberpunk theme configuration
+    THEME = "vrdx_neon"
+
+    THEMES = {
+        "vrdx_neon": Theme(
+            name="vrdx_neon",
+            primary="#FF00FF",  # Bright magenta
+            secondary="#00FFFF",  # Cyan
+            warning="#FF6B35",  # Orange
+            error="#FF0000",  # Red
+            success="#00FF00",  # Lime green
+            accent="#00FFFF",  # Cyan for accents
+            dark=True,
+            background="#0a0e27",  # Very dark navy
+            surface="#1a1f3a",  # Dark surface
+            panel="#0f1420",  # Dark panel
+            boost="#1f2a3f",  # Boost color for status bar
+            text="#E0E0E0",  # Light gray
+            text_muted="#999999",  # Muted gray
+            text_disabled="#666666",  # Disabled gray
+        )
+    }
+
     BINDINGS = [
         Binding("1", "focus_decisions", "Decisions", show=False),
         Binding("2", "focus_files", "Files", show=False),
@@ -229,16 +289,18 @@ class VrdxApp(App[None]):
                     yield Label("Files", id="files-title")
                     self._file_list = FileList(id="file-list")
                     yield self._file_list
-                self._editor = FormBasedDecisionEditor(
-                    decision_id=0,
-                    current_status="📝 Draft",
-                    id="editor-pane",
-                )
-                yield self._editor
-                self._preview = PreviewPane(id="preview-pane")
-                yield self._preview
+                with Vertical(id="right-column"):
+                    self._editor = FormBasedDecisionEditor(
+                        decision_id=0,
+                        current_status="📝 Draft",
+                        id="editor-pane",
+                    )
+                    yield self._editor
+                    self._preview = PreviewPane(id="preview-pane")
+                    yield self._preview
 
     def on_mount(self) -> None:
+        self.theme = "vrdx_neon"
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()

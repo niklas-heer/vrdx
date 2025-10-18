@@ -12,6 +12,7 @@ from typing import Optional
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.widgets import Button, Label, Static, TextArea, Select
 from textual.message import Message
 
@@ -63,43 +64,43 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: 100%;
         layout: vertical;
-        background: $surface;
+        background: $panel;
     }
 
     #editor-header {
         width: 100%;
         height: auto;
-        padding: 2 2;
-        margin-bottom: 0;
+        padding: 1 2;
+        margin-bottom: 1;
         background: $panel;
-        text-style: bold underline;
-        color: $text;
-        border-bottom: solid $accent;
-        opacity: 0;
+        text-style: bold;
+        color: $primary;
+        border-bottom: solid $primary;
+        text-opacity: 100%;
     }
 
     #form-scroll {
         width: 100%;
         height: 1fr;
         overflow: auto;
-        padding: 5 5;
+        padding: 1 2;
     }
 
     .form-section {
         width: 100%;
         height: auto;
-        padding: 3 1;
+        padding: 1 0;
         margin-bottom: 0;
         border: none;
-        opacity: 0;
+        text-opacity: 100%;
     }
 
     .form-section-title {
         text-style: bold;
         color: $accent;
-        padding: 0;
+        padding: 0 0 1 0;
         height: auto;
-        margin-bottom: 2;
+        margin-bottom: 0;
         margin-top: 0;
         text-opacity: 100%;
     }
@@ -108,21 +109,23 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: 1;
         background: $boost;
-        margin: 3 0;
-        opacity: 0;
+        margin: 1 0;
+        text-opacity: 100%;
     }
 
     #title-area {
         width: 100%;
-        height: 6;
+        height: auto;
+        min-height: 3;
+        max-height: 5;
         margin-bottom: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #title-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     .status-section {
@@ -135,54 +138,57 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: auto;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #status-select:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #decision-area {
         width: 100%;
         height: auto;
-        min-height: 8;
+        min-height: 3;
+        max-height: 15;
         margin-bottom: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #decision-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #context-area {
         width: 100%;
         height: auto;
-        min-height: 8;
+        min-height: 3;
+        max-height: 15;
         margin-bottom: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #context-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #consequences-area {
         width: 100%;
         height: auto;
-        min-height: 8;
+        min-height: 3;
+        max-height: 15;
         margin-bottom: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #consequences-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #button-row {
@@ -190,33 +196,55 @@ class FormBasedDecisionEditor(Static):
         height: auto;
         layout: horizontal;
         align-horizontal: left;
-        padding: 3 2;
-        margin-top: 3;
+        padding: 1 0;
+        margin-top: 1;
         border-top: solid $boost;
-        opacity: 0;
+        text-opacity: 100%;
     }
 
     #save-btn {
-        margin-right: 6;
-        margin-bottom: 1;
+        margin-right: 2;
+        margin-bottom: 0;
+        padding: 0 2;
+        height: 1;
+        border: solid $success;
+        color: $success;
     }
 
     #save-btn:hover {
-        background: $primary 30%;
+        background: $success 20%;
+        border: solid $success;
+    }
+
+    #save-btn:focus {
+        border: solid $primary;
+        color: $text;
+        background: $success 30%;
     }
 
     #cancel-btn {
-        margin-bottom: 1;
+        margin-bottom: 0;
+        padding: 0 2;
+        height: 1;
+        border: solid $error;
+        color: $error;
     }
 
     #cancel-btn:hover {
-        background: $boost 20%;
+        background: $error 20%;
+        border: solid $error;
+    }
+
+    #cancel-btn:focus {
+        border: solid $primary;
+        color: $text;
+        background: $error 30%;
     }
 
     .validation-error {
         color: $error;
         text-style: bold;
-        margin-top: 3;
+        margin-top: 1;
         text-opacity: 0%;
     }
 
@@ -288,6 +316,12 @@ class FormBasedDecisionEditor(Static):
         self._consequences_area: Optional[TextArea] = None
         self._status_select: Optional[Select] = None
         self._error_label: Optional[Label] = None
+
+        # Dynamic textarea sizing
+        self._title_height = reactive(3, init=False)
+        self._decision_height = reactive(3, init=False)
+        self._context_height = reactive(3, init=False)
+        self._consequences_height = reactive(3, init=False)
 
     def compose(self) -> ComposeResult:
         """Compose the form layout.
@@ -383,6 +417,41 @@ class FormBasedDecisionEditor(Static):
             yield Button("Save", id="save-btn", variant="primary")
             yield Button("Cancel", id="cancel-btn", variant="default")
 
+    def _calculate_textarea_height(
+        self, textarea: TextArea, min_height: int, max_height: int
+    ) -> int:
+        """Calculate appropriate height for a textarea based on content.
+
+        Args:
+            textarea: The TextArea widget to measure.
+            min_height: Minimum height in lines.
+            max_height: Maximum height in lines.
+
+        Returns:
+            The calculated height in lines, clamped between min and max.
+        """
+        text = textarea.text
+        if not text:
+            return min_height
+
+        # Count lines in the text
+        lines = len(text.split("\n"))
+
+        # Clamp between min and max
+        return max(min_height, min(lines, max_height))
+
+    def _update_textarea_height(
+        self, textarea: Optional[TextArea], height: int
+    ) -> None:
+        """Update the height style of a textarea.
+
+        Args:
+            textarea: The TextArea widget to update.
+            height: The new height in lines.
+        """
+        if textarea:
+            textarea.styles.height = height
+
     def on_mount(self) -> None:
         """Set up the form when mounted.
 
@@ -435,6 +504,22 @@ class FormBasedDecisionEditor(Static):
         if self._title_area:
             self._title_area.focus()
 
+    def watch_title_height(self, height: int) -> None:
+        """Watch for changes to title height reactive attribute."""
+        self._update_textarea_height(self._title_area, height)
+
+    def watch_decision_height(self, height: int) -> None:
+        """Watch for changes to decision height reactive attribute."""
+        self._update_textarea_height(self._decision_area, height)
+
+    def watch_context_height(self, height: int) -> None:
+        """Watch for changes to context height reactive attribute."""
+        self._update_textarea_height(self._context_area, height)
+
+    def watch_consequences_height(self, height: int) -> None:
+        """Watch for changes to consequences height reactive attribute."""
+        self._update_textarea_height(self._consequences_area, height)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses.
 
@@ -462,6 +547,25 @@ class FormBasedDecisionEditor(Static):
                 easing="in_out_cubic",
             )
             self.action_cancel()
+
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        """Handle textarea content changes for dynamic sizing.
+
+        Updates textarea heights when content changes to fit the current content.
+
+        Args:
+            event: The TextArea changed event.
+        """
+        textarea = event.text_area
+
+        if textarea.id == "title-area":
+            self._title_height = self._calculate_textarea_height(textarea, 3, 5)
+        elif textarea.id == "decision-area":
+            self._decision_height = self._calculate_textarea_height(textarea, 3, 15)
+        elif textarea.id == "context-area":
+            self._context_height = self._calculate_textarea_height(textarea, 3, 15)
+        elif textarea.id == "consequences-area":
+            self._consequences_height = self._calculate_textarea_height(textarea, 3, 15)
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.
