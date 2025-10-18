@@ -340,7 +340,7 @@ class FormBasedDecisionEditor(Static):
                 # Create OptionList with status options
                 status_options = list_status_options()
                 self._status_select = OptionList(
-                    *[(status, status) for status in status_options],
+                    *status_options,
                     id="status-select",
                 )
                 yield self._status_select
@@ -557,7 +557,9 @@ class FormBasedDecisionEditor(Static):
         """
         if event.option_list.id == "status-select":
             status_options = list_status_options()
-            if 0 <= event.option_index < len(status_options):
+            if event.option_index is not None and 0 <= event.option_index < len(
+                status_options
+            ):
                 self.current_status = status_options[event.option_index]
 
     def action_save(self) -> None:
