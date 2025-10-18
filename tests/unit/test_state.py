@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import vrdx.ui.app as ui_app_module
 
 from vrdx.app import commands
 from vrdx.app.state import AppState, FileState, PaneId
@@ -172,3 +173,32 @@ def test_parse_failure_propagates(tmp_path: Path):
             body=bad_body,
             marker_present=True,
         )
+
+
+def test_initialize_files_prioritizes_marker_files(monkeypatch, tmp_path):
+    marker_file = tmp_path / "README.md"
+    marker_file.write_text(
+        "<!-- vrdx start -->\n\n<!-- vrdx end -->\n", encoding="utf-8"
+    )
+    plain_file = tmp_path / "notes.md"
+    plain_file.write_text("No markers here\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "vrdx.ui.app.find_markdown_files",
+        lambda base_directory: [plain_file, marker_file],
+    )
+
+    app_state = AppState(base_directory=tmp_path)
+    app = ui_app_module.VrdxApp(app_state)
+    app._initialize_files()
+
+    assert len(app_state.files) == 2
+    assert [file_state.path.name for file_state in app_state.files] == [
+        "README.md",
+        "notes.md",
+    ]
+    assert app_state.selected_file_index == 0
+    assert app_state.selected_decision_index == 0
+    assert app_state.files[0].has_marker_block
+    assert not app_state.files[1].has_marker_block
+    assert plain_file.read_text(encoding="utf-8") == "No markers here\n"

@@ -21,12 +21,13 @@ from textual.widgets import (
 )
 
 from vrdx.app import commands
+from vrdx.app.commands import apply_template_to_editor
 from vrdx.app.discovery import find_markdown_files
 from vrdx.app.persistence import read_markdown, write_markdown
 from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError, list_status_options, parse_decisions
-from vrdx.parser.markers import detect_marker_block, ensure_marker_block, MarkerError
-from vrdx.parser.template import render_template
+from vrdx.parser.markers import detect_marker_block, MarkerError
+
 
 try:
     _CSS_TEXT = (
@@ -67,6 +68,14 @@ Screen {
     border: solid #374151;
     background: #1f2937;
     padding: 0;
+}
+
+#file-list ListItem.file-no-markers {
+    color: #9ca3af;
+}
+
+#file-list ListItem.file-no-markers Label {
+    color: #9ca3af;
 }
 
 #editor-pane,
@@ -127,7 +136,11 @@ class FileList(ListView):
         for file_state in files_list:
             # Show just the filename for brevity
             label = file_state.path.name
-            self.append(ListItem(Label(str(label))))
+            classes = (
+                "file-has-markers" if file_state.has_marker_block else "file-no-markers"
+            )
+            list_item = ListItem(Label(str(label)), classes=classes)
+            self.append(list_item)
         if self.children and 0 <= selected < len(self.children):
             self.index = selected
 
@@ -168,9 +181,9 @@ class VrdxApp(App[None]):
 
     BINDINGS = [
         Binding("1", "focus_decisions", "Decisions", show=False),
-        Binding("2", "focus_editor", "Editor", show=False),
-        Binding("3", "focus_preview", "Preview", show=False),
-        Binding("4", "focus_files", "Files", show=False),
+        Binding("2", "focus_files", "Files", show=False),
+        Binding("3", "focus_editor", "Editor", show=False),
+        Binding("4", "focus_preview", "Preview", show=False),
         Binding("j,down", "next_decision", "Next decision", show=False),
         Binding("k,up", "previous_decision", "Previous decision", show=False),
         Binding("space", "select_decision", "Edit", show=True),
@@ -206,7 +219,7 @@ class VrdxApp(App[None]):
             self._status_bar = Static("", id="status-bar")
             yield self._status_bar
             self._pane_hints = Static(
-                "1·Decisions  2·Editor  3·Preview  4·Files", id="pane-hints"
+                "1·Decisions  2·Files  3·Editor  4·Preview", id="pane-hints"
             )
             yield self._pane_hints
             with Horizontal(id="main-layout"):
@@ -242,24 +255,14 @@ class VrdxApp(App[None]):
                 self._show_message(f"{path.name}: {exc}")
                 block = None
 
-            marker_present = block is not None
             inserted_marker = False
-
-            if block is None:
-                updated_text, block, inserted_marker = ensure_marker_block(text)
-                if inserted_marker:
-                    write_markdown(path, updated_text)
-                    text = updated_text
-                    self._show_message(f"Inserted decision markers into {path.name}.")
-                marker_present = block is not None
-
             body = block.body(text) if block else ""
             try:
                 file_state = commands.refresh_file_from_body(
                     self.app_state,
                     path=path,
                     body=body,
-                    marker_present=marker_present,
+                    marker_present=block is not None,
                     inserted_marker=inserted_marker,
                 )
             except DecisionParseError as exc:
@@ -267,7 +270,20 @@ class VrdxApp(App[None]):
                 continue
             file_states.append(file_state)
         if file_states:
+            file_states.sort(
+                key=lambda fs: (not fs.has_marker_block, fs.path.name.lower())
+            )
             commands.load_files(self.app_state, file_states)
+            first_with_markers = next(
+                (
+                    idx
+                    for idx, fs in enumerate(self.app_state.files)
+                    if fs.has_marker_block
+                ),
+                0,
+            )
+            self.app_state.selected_file_index = first_with_markers
+            self.app_state.selected_decision_index = 0
         else:
             self._show_message("No markdown files found in the current directory.")
 
@@ -355,7 +371,7 @@ class VrdxApp(App[None]):
         file_state = self.app_state.current_file()
         if not file_state or self._editor is None:
             return
-        template = render_template(file_state.next_decision_id())
+        template = apply_template_to_editor(file_state.next_decision_id())
         self._editor_mode = "edit-new"
         self._editing_decision_id = None
         self._status_message = "Drafting new decision"
@@ -473,6 +489,9 @@ class VrdxApp(App[None]):
             original_text = read_markdown(file_state.path)
         except FileNotFoundError:
             original_text = ""
+
+        from vrdx.parser.markers import ensure_marker_block
+
         updated_text, block, _ = ensure_marker_block(original_text)
         body = commands.serialize_current_file(self.app_state)
         if body and not body.endswith("\n"):

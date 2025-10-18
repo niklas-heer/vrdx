@@ -51,6 +51,15 @@ Screen {
     background: $accent;
 }
 
+#file-list ListItem.file-no-markers {
+    color: $text-muted;
+    text-style: dim;
+}
+
+#file-list ListItem.file-no-markers Label {
+    color: $text-muted;
+}
+
 #editor-pane,
 #preview-pane {
     border: solid $primary;
