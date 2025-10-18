@@ -130,16 +130,23 @@ class FileList(ListView):
 
     can_focus = True
 
-    def populate(self, files: Iterable[FileState], selected: int) -> None:
+    def populate(
+        self, files: Iterable[FileState], selected: int, base_directory: Path
+    ) -> None:
         self.clear()
         files_list = list(files)
         for file_state in files_list:
-            # Show just the filename for brevity
-            label = file_state.path.name
+            # Show relative path from base directory
+            try:
+                relative_path = file_state.path.relative_to(base_directory)
+                label = str(relative_path)
+            except ValueError:
+                # Fallback to just filename if path is not relative to base
+                label = file_state.path.name
             classes = (
                 "file-has-markers" if file_state.has_marker_block else "file-no-markers"
             )
-            list_item = ListItem(Label(str(label)), classes=classes)
+            list_item = ListItem(Label(label), classes=classes)
             self.append(list_item)
         if self.children and 0 <= selected < len(self.children):
             self.index = selected
@@ -294,7 +301,9 @@ class VrdxApp(App[None]):
             self._decision_list.index = self.app_state.selected_decision_index
         if self._file_list is not None:
             self._file_list.populate(
-                self.app_state.files, self.app_state.selected_file_index
+                self.app_state.files,
+                self.app_state.selected_file_index,
+                self.app_state.base_directory,
             )
         self.refresh_preview()
         if self._editor_mode == "view":
