@@ -393,9 +393,7 @@ class VrdxApp(App[None]):
             return
 
         # Configure the form for new decision
-        self._editor.decision_id = self._pending_new_decision_id
-        self._editor.current_status = status
-        self._editor.is_new_decision = True
+        self._editor.reset_for_new_decision(self._pending_new_decision_id, status)
         self._editor_mode = "edit-new"
         self._editing_decision_id = None
         self._status_message = "Creating new decision"
@@ -460,6 +458,13 @@ class VrdxApp(App[None]):
         self._editor.decision_id = decision_state.record.id
         self._editor.current_status = decision_state.record.status
         self._editor.is_new_decision = False
+        # Clear and prepare form for editing
+        try:
+            header = self._editor.query_one("#editor-header", Label)
+            header.update(f"Edit Decision #{decision_state.record.id}")
+        except Exception:
+            # Header widget might not be available, continue anyway
+            pass
         self._editor.set_existing_decision_data(decision_state.record)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()

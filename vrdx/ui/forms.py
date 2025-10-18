@@ -84,11 +84,12 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: auto;
         layout: horizontal;
-        align: left middle;
+        align-horizontal: left;
+        align-vertical: middle;
     }
 
     .status-label {
-        width: auto;
+        width: 1fr;
         height: auto;
         padding-right: 1;
     }
@@ -96,6 +97,7 @@ class FormBasedDecisionEditor(Static):
     #change-status-btn {
         width: auto;
         height: auto;
+        margin-left: 1;
     }
 
     #decision-area {
@@ -300,6 +302,35 @@ class FormBasedDecisionEditor(Static):
     def action_cancel(self) -> None:
         """Cancel editing and post cancellation message."""
         self.post_message(self.Cancelled())
+
+    def reset_for_new_decision(self, decision_id: int, status: str) -> None:
+        """Reset the form for creating a new decision.
+
+        Args:
+            decision_id: The ID for the new decision.
+            status: The status for the new decision.
+        """
+        self.decision_id = decision_id
+        self.current_status = status
+        self.is_new_decision = True
+
+        # Update header to show "Create New" with correct ID
+        header = self.query_one("#editor-header", Label)
+        header.update(f"Create New Decision #{decision_id}")
+
+        # Clear form fields
+        if self._title_input:
+            self._title_input.value = ""
+        if self._decision_area:
+            self._decision_area.text = ""
+        if self._context_area:
+            self._context_area.text = ""
+        if self._consequences_area:
+            self._consequences_area.text = ""
+        if self._status_label:
+            self._status_label.update(status)
+        if self._error_label:
+            self._error_label.update("")
 
     def set_existing_decision_data(
         self,
