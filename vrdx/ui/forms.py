@@ -12,7 +12,7 @@ from typing import Optional
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Input, Label, Static, TextArea, Select
+from textual.widgets import Button, Label, Static, TextArea, Select
 from textual.message import Message
 
 from vrdx.parser import DecisionRecord, list_status_options
@@ -33,7 +33,7 @@ class FormBasedDecisionEditor(Static):
     """A structured form-based editor for creating and editing decisions.
 
     This widget provides a comprehensive form interface for decision management with:
-    - Title input field (required, validated)
+    - Title textarea field (required, validated)
     - Status dropdown selector with all available options
     - Decision textarea for the decision statement
     - Context textarea for decision context
@@ -69,66 +69,120 @@ class FormBasedDecisionEditor(Static):
     #editor-header {
         width: 100%;
         height: auto;
-        padding: 1;
+        padding: 2 2;
+        margin-bottom: 0;
         background: $panel;
-        text-style: bold;
+        text-style: bold underline;
+        color: $text;
         border-bottom: solid $accent;
+        opacity: 0;
     }
 
     #form-scroll {
         width: 100%;
         height: 1fr;
         overflow: auto;
-        padding: 1 1;
+        padding: 5 5;
     }
 
     .form-section {
         width: 100%;
         height: auto;
-        padding: 1 1 2 1;
-        margin-bottom: 1;
-        border-bottom: solid $boost;
+        padding: 3 1;
+        margin-bottom: 0;
+        border: none;
+        opacity: 0;
     }
 
     .form-section-title {
         text-style: bold;
-        color: $text-muted;
-        padding-bottom: 0;
+        color: $accent;
+        padding: 0;
         height: auto;
+        margin-bottom: 2;
+        margin-top: 0;
+        text-opacity: 100%;
     }
 
-    #title-input {
+    .form-separator {
         width: 100%;
-        height: auto;
-        margin-bottom: 1;
+        height: 1;
+        background: $boost;
+        margin: 3 0;
+        opacity: 0;
+    }
+
+    #title-area {
+        width: 100%;
+        height: 6;
+        margin-bottom: 0;
+        border: solid $accent;
+        background-tint: $primary 5%;
+    }
+
+    #title-area:focus {
+        border: solid $accent;
+        background-tint: $primary 10%;
     }
 
     .status-section {
         width: 100%;
         height: auto;
+        margin-bottom: 0;
     }
 
     #status-select {
         width: 100%;
         height: auto;
+        border: solid $accent;
+        background-tint: $primary 5%;
+    }
+
+    #status-select:focus {
+        border: solid $accent;
+        background-tint: $primary 10%;
     }
 
     #decision-area {
         width: 100%;
-        height: 8;
-        margin-bottom: 1;
+        height: auto;
+        min-height: 8;
+        margin-bottom: 0;
+        border: solid $accent;
+        background-tint: $primary 5%;
+    }
+
+    #decision-area:focus {
+        border: solid $accent;
+        background-tint: $primary 10%;
     }
 
     #context-area {
         width: 100%;
-        height: 8;
-        margin-bottom: 1;
+        height: auto;
+        min-height: 8;
+        margin-bottom: 0;
+        border: solid $accent;
+        background-tint: $primary 5%;
+    }
+
+    #context-area:focus {
+        border: solid $accent;
+        background-tint: $primary 10%;
     }
 
     #consequences-area {
         width: 100%;
-        height: 8;
-        margin-bottom: 1;
+        height: auto;
+        min-height: 8;
+        margin-bottom: 0;
+        border: solid $accent;
+        background-tint: $primary 5%;
+    }
+
+    #consequences-area:focus {
+        border: solid $accent;
+        background-tint: $primary 10%;
     }
 
     #button-row {
@@ -136,22 +190,56 @@ class FormBasedDecisionEditor(Static):
         height: auto;
         layout: horizontal;
         align-horizontal: left;
-        padding: 1 1;
-        margin-top: 1;
+        padding: 3 2;
+        margin-top: 3;
         border-top: solid $boost;
+        opacity: 0;
     }
 
     #save-btn {
-        margin-right: 3;
+        margin-right: 6;
+        margin-bottom: 1;
+    }
+
+    #save-btn:hover {
+        background: $primary 30%;
     }
 
     #cancel-btn {
-        margin: 0;
+        margin-bottom: 1;
+    }
+
+    #cancel-btn:hover {
+        background: $boost 20%;
     }
 
     .validation-error {
         color: $error;
         text-style: bold;
+        margin-top: 3;
+        text-opacity: 0%;
+    }
+
+    .validation-error.show {
+        text-opacity: 100%;
+    }
+
+    Input:focus,
+    TextArea:focus,
+    Select:focus {
+        border: solid $accent;
+    }
+
+    Input {
+        background: $surface;
+    }
+
+    TextArea {
+        background: $surface;
+    }
+
+    Select {
+        background: $surface;
     }
     """
 
@@ -194,7 +282,7 @@ class FormBasedDecisionEditor(Static):
         self.is_new_decision = True
 
         # Form widgets (will be set in compose)
-        self._title_input: Optional[Input] = None
+        self._title_area: Optional[TextArea] = None
         self._decision_area: Optional[TextArea] = None
         self._context_area: Optional[TextArea] = None
         self._consequences_area: Optional[TextArea] = None
@@ -206,11 +294,11 @@ class FormBasedDecisionEditor(Static):
 
         Creates a vertical layout with:
         1. Header showing decision ID (updated when editing)
-        2. Scrollable form content with all input fields
+        2. Scrollable form content with all input fields separated by visual lines
         3. Button row with Save and Cancel actions
 
         The form uses a scrollable container to handle content that exceeds
-        available screen height.
+        available screen height, with visual separators between sections.
         """
         # Header with decision ID
         yield Label(
@@ -223,11 +311,14 @@ class FormBasedDecisionEditor(Static):
             # Title section
             with Vertical(classes="form-section"):
                 yield Label("Title", classes="form-section-title")
-                self._title_input = Input(
-                    placeholder="Decision title (e.g., 'Use PostgreSQL for data storage')",
-                    id="title-input",
+                self._title_area = TextArea(
+                    id="title-area",
+                    read_only=False,
                 )
-                yield self._title_input
+                yield self._title_area
+
+            # Visual separator
+            yield Static(classes="form-separator")
 
             # Status section
             with Vertical(classes="form-section"):
@@ -244,14 +335,21 @@ class FormBasedDecisionEditor(Static):
                     )
                     yield self._status_select
 
+            # Visual separator
+            yield Static(classes="form-separator")
+
             # Decision section
             with Vertical(classes="form-section"):
                 yield Label("Decision", classes="form-section-title")
                 self._decision_area = TextArea(
                     id="decision-area",
                     read_only=False,
+                    compact=True,
                 )
                 yield self._decision_area
+
+            # Visual separator
+            yield Static(classes="form-separator")
 
             # Context section
             with Vertical(classes="form-section"):
@@ -259,8 +357,12 @@ class FormBasedDecisionEditor(Static):
                 self._context_area = TextArea(
                     id="context-area",
                     read_only=False,
+                    compact=True,
                 )
                 yield self._context_area
+
+            # Visual separator
+            yield Static(classes="form-separator")
 
             # Consequences section
             with Vertical(classes="form-section"):
@@ -268,6 +370,7 @@ class FormBasedDecisionEditor(Static):
                 self._consequences_area = TextArea(
                     id="consequences-area",
                     read_only=False,
+                    compact=True,
                 )
                 yield self._consequences_area
 
@@ -283,23 +386,81 @@ class FormBasedDecisionEditor(Static):
     def on_mount(self) -> None:
         """Set up the form when mounted.
 
-        Initializes the form by focusing on the title input field,
-        making it ready for immediate user interaction.
+        Initializes the form by focusing on the title field,
+        making it ready for immediate user interaction, with
+        entrance animations for visual polish.
         """
-        if self._title_input:
-            self._title_input.focus()
+        # Animate header fade-in
+        header = self.query_one("#editor-header", Label)
+        header.styles.animate(
+            "opacity",
+            value=1.0,
+            duration=0.5,
+            easing="in_out_cubic",
+        )
+
+        # Animate form sections with staggered entrance
+        sections = self.query(".form-section")
+        for i, section in enumerate(sections):
+            section.styles.animate(
+                "opacity",
+                value=1.0,
+                duration=0.4,
+                easing="out_cubic",
+                delay=0.1 + (i * 0.08),
+            )
+
+        # Animate separators with staggered entrance
+        separators = self.query(".form-separator")
+        for i, separator in enumerate(separators):
+            separator.styles.animate(
+                "opacity",
+                value=1.0,
+                duration=0.4,
+                easing="out_cubic",
+                delay=0.15 + (i * 0.1),
+            )
+
+        # Animate button row fade-in
+        button_row = self.query_one("#button-row", Horizontal)
+        button_row.styles.animate(
+            "opacity",
+            value=1.0,
+            duration=0.5,
+            easing="in_out_cubic",
+            delay=0.5,
+        )
+
+        # Focus on title area
+        if self._title_area:
+            self._title_area.focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses.
 
         Routes Save and Cancel button clicks to their respective action handlers.
+        Provides visual feedback with animations on interaction.
 
         Args:
             event: The button pressed event containing button information.
         """
         if event.button.id == "save-btn":
+            # Add scale animation feedback
+            event.button.styles.animate(
+                "scale",
+                value=(0.95, 0.95),
+                duration=0.2,
+                easing="in_out_cubic",
+            )
             self.action_save()
         elif event.button.id == "cancel-btn":
+            # Add scale animation feedback
+            event.button.styles.animate(
+                "scale",
+                value=(0.95, 0.95),
+                duration=0.2,
+                easing="in_out_cubic",
+            )
             self.action_cancel()
 
     def on_select_changed(self, event: Select.Changed) -> None:
@@ -330,7 +491,7 @@ class FormBasedDecisionEditor(Static):
         optional.
         """
         # Get form data
-        title = (self._title_input.value if self._title_input else "").strip()
+        title = (self._title_area.text if self._title_area else "").strip()
         decision = (self._decision_area.text if self._decision_area else "").strip()
         context = (self._context_area.text if self._context_area else "").strip()
         consequences = (
@@ -388,8 +549,8 @@ class FormBasedDecisionEditor(Static):
         header.update(f"Create New Decision #{decision_id}")
 
         # Clear form fields
-        if self._title_input:
-            self._title_input.value = ""
+        if self._title_area:
+            self._title_area.text = ""
         if self._decision_area:
             self._decision_area.text = ""
         if self._context_area:
@@ -417,8 +578,8 @@ class FormBasedDecisionEditor(Static):
             record: The DecisionRecord to populate the form from.
         """
         self.is_new_decision = False
-        if self._title_input:
-            self._title_input.value = record.title
+        if self._title_area:
+            self._title_area.text = record.title
         if self._decision_area:
             self._decision_area.text = record.decision
         if self._context_area:
@@ -460,7 +621,7 @@ class FormBasedDecisionEditor(Static):
             context, consequences).
         """
         return FormData(
-            title=(self._title_input.value if self._title_input else "").strip(),
+            title=(self._title_area.text if self._title_area else "").strip(),
             status=self.current_status,
             decision=(self._decision_area.text if self._decision_area else "").strip(),
             context=(self._context_area.text if self._context_area else "").strip(),
@@ -474,17 +635,37 @@ class FormBasedDecisionEditor(Static):
 
         Shows an error message to the user in the error label at the bottom
         of the form. Used for validation errors and other user-facing messages.
+        Error messages fade in with visual animation.
 
         Args:
             message: The error message to display.
         """
         if self._error_label:
             self._error_label.update(message)
+            self._error_label.add_class("show")
+            # Animate error message fade-in
+            self._error_label.styles.animate(
+                "text_opacity",
+                value=1.0,
+                duration=0.4,
+                easing="in_out_cubic",
+            )
 
     def clear_error(self) -> None:
         """Clear any error messages.
 
         Removes any previously displayed error messages from the form.
+        Error messages fade out before being cleared.
         """
         if self._error_label:
-            self._error_label.update("")
+            self._error_label.remove_class("show")
+            # Animate error message fade-out
+            self._error_label.styles.animate(
+                "text_opacity",
+                value=0.0,
+                duration=0.3,
+                easing="in_out_cubic",
+                on_complete=lambda: self._error_label.update("")
+                if self._error_label
+                else None,
+            )
