@@ -28,6 +28,7 @@ from vrdx.app.state import AppState, FileState, PaneId
 from vrdx.parser import DecisionParseError, list_status_options, parse_decisions
 from vrdx.parser.markers import detect_marker_block, MarkerError
 from vrdx.ui.modals import StatusSelectionModal
+from vrdx.ui.forms import FormBasedDecisionEditor, FormData
 
 
 try:
@@ -167,19 +168,8 @@ class PreviewPane(Markdown):
             )
 
 
-class EditorPane(TextArea):
-    """Editable text area used for drafting decisions."""
-
-    can_focus = True
-
-    def __init__(self, *, id: str | None = None) -> None:
-        super().__init__(placeholder="Draft decision content…", id=id)
-        self.read_only = True
-
-    def set_content(self, content: str, *, editable: bool = False) -> None:
-        self.value = content or ""
-        self.cursor_position = (0, 0)
-        self.read_only = not editable
+# EditorPane has been replaced with FormBasedDecisionEditor
+# See vrdx/ui/forms.py for the new form-based editor implementation
 
 
 class VrdxApp(App[None]):
@@ -196,7 +186,6 @@ class VrdxApp(App[None]):
         Binding("k,up", "previous_decision", "Previous decision", show=False),
         Binding("space", "select_decision", "Edit", show=True),
         Binding("n", "new_decision", "New", show=True),
-        Binding("p", "pick_status", "Status", show=True),
         Binding("s", "save", "Save", show=True),
         Binding("escape", "cancel", "Cancel", show=False),
         Binding("r", "refresh", "Refresh", show=False),
@@ -213,12 +202,13 @@ class VrdxApp(App[None]):
         self._decision_list: Optional[DecisionList] = None
         self._file_list: Optional[FileList] = None
         self._preview: Optional[PreviewPane] = None
-        self._editor: Optional[EditorPane] = None
+        self._editor: Optional[FormBasedDecisionEditor] = None
         self._pane_hints: Optional[Static] = None
         self._status_bar: Optional[Static] = None
         self._editor_mode: str = "view"
         self._editing_decision_id: Optional[int] = None
         self._pending_new_decision_id: Optional[int] = None
+        self._pending_new_status: Optional[str] = None
         self._status_options = list(list_status_options())
         self._status_message: str = "Ready"
 
@@ -239,7 +229,11 @@ class VrdxApp(App[None]):
                     yield Label("Files", id="files-title")
                     self._file_list = FileList(id="file-list")
                     yield self._file_list
-                self._editor = EditorPane(id="editor-pane")
+                self._editor = FormBasedDecisionEditor(
+                    decision_id=0,
+                    current_status="📝 Draft",
+                    id="editor-pane",
+                )
                 yield self._editor
                 self._preview = PreviewPane(id="preview-pane")
                 yield self._preview
@@ -248,6 +242,7 @@ class VrdxApp(App[None]):
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()
+        self._load_most_recent_decision()
 
     def _initialize_files(self) -> None:
         base_directory = self.app_state.base_directory
@@ -322,12 +317,8 @@ class VrdxApp(App[None]):
     def refresh_editor(self) -> None:
         if self._editor is None:
             return
-        decision_state = self.app_state.current_decision()
-        if decision_state:
-            rendered = decision_state.record.render()
-        else:
-            rendered = "Select a decision to edit."
-        self._editor.set_content(rendered, editable=False)
+        # Form displays are managed by form state, not by refresh_editor
+        pass
 
     def update_dirty_indicator(self) -> None:
         self.dirty_indicator = "● Unsaved" if self.app_state.is_modified else "● Saved"
@@ -379,20 +370,40 @@ class VrdxApp(App[None]):
         self._begin_edit_existing()
 
     def action_new_decision(self) -> None:
+        """Initiate the new decision creation workflow.
+
+        This implements a guided workflow for creating new decisions:
+        1. Calculate the next available decision ID based on existing decisions
+        2. Display a status selection modal to let the user choose the initial status
+        3. Pass control to _on_status_selected when user confirms the status
+
+        This approach improves UX by presenting status selection upfront,
+        reducing cognitive load and making the creation process more discoverable.
+        """
         file_state = self.app_state.current_file()
         if not file_state or self._editor is None:
             return
-        # Store the next decision ID for use in the modal callback
+
+        # Calculate next ID based on existing decisions in the file
         self._pending_new_decision_id = file_state.next_decision_id()
-        # Show the status selection modal
+
+        # Show status selection modal - user selects status before entering editor
+        # When user confirms, _on_status_selected callback will be invoked with selected status
         self.push_screen(StatusSelectionModal(), callback=self._on_status_selected)
 
     def _on_status_selected(self, status: Optional[str]) -> None:
         """Handle the result from the status selection modal.
 
+        After user selects a status in the modal, this callback:
+        1. Validates that a valid status was selected
+        2. Resets the form for new decision creation with the selected status
+        3. Switches to edit mode and focuses on the editor pane
+        4. Updates the status bar to reflect the new mode
+
         Args:
             status: The selected status, or None if the selection was cancelled.
         """
+        # If user cancelled, or if IDs/editor are not available, abort
         if (
             status is None
             or self._pending_new_decision_id is None
@@ -401,78 +412,28 @@ class VrdxApp(App[None]):
             self._pending_new_decision_id = None
             return
 
-        # Create the template with the selected status
-        template = apply_template_to_editor(
-            self._pending_new_decision_id, status=status
-        )
+        # Reset the form with the calculated ID and user-selected status
+        # This clears any previous form state and initializes new decision fields
+        self._editor.reset_for_new_decision(self._pending_new_decision_id, status)
+
+        # Set editor mode to edit-new for proper behavior tracking
         self._editor_mode = "edit-new"
         self._editing_decision_id = None
-        self._status_message = "Drafting new decision"
-        self._editor.set_content(template, editable=True)
-        self.focus_pane(PaneId.EDITOR)
-        self._update_status_bar()
-        self._pending_new_decision_id = None
 
-    def action_pick_status(self) -> None:
-        if self._editor is None or self._editor.read_only:
-            return
-        try:
-            record = self._parse_editor_record()
-        except DecisionParseError as exc:
-            self._show_message(f"Status change failed: {exc}")
-            return
-        try:
-            current_index = self._status_options.index(record.status)
-            next_status = self._status_options[
-                (current_index + 1) % len(self._status_options)
-            ]
-        except ValueError:
-            next_status = self._status_options[0]
-        lines = self._editor.value.splitlines()
-        for idx, line in enumerate(lines):
-            if line.startswith("* **Status**:"):
-                lines[idx] = f"* **Status**: {next_status}"
-                break
-        self._editor.set_content("\n".join(lines), editable=True)
+        # Update UI state and focus
+        self._status_message = "Creating new decision"
+        self.focus_pane(PaneId.EDITOR)  # Move focus to editor pane
+        self._update_status_bar()  # Update mode indicator in status bar
+
+        # Clean up temporary state
+        self._pending_new_decision_id = None
+        self._pending_new_status = status
 
     def action_save(self) -> None:
-        if self._editor is None or self._editor.read_only:
+        if self._editor is None:
             return
-        try:
-            record = self._parse_editor_record()
-        except DecisionParseError as exc:
-            self._show_message(f"Unable to save: {exc}")
-            return
-        if self._editor_mode == "edit-new":
-            commands.create_decision(
-                self.app_state,
-                title=record.title,
-                decision=record.decision,
-                context=record.context,
-                consequences=record.consequences,
-                status=record.status,
-            )
-            self.app_state.selected_decision_index = 0
-        elif (
-            self._editor_mode == "edit-existing"
-            and self._editing_decision_id is not None
-        ):
-            commands.update_decision(
-                self.app_state,
-                decision_id=self._editing_decision_id,
-                title=record.title,
-                status=record.status,
-                decision_text=record.decision,
-                context=record.context,
-                consequences=record.consequences,
-            )
-        else:
-            self._show_message("Nothing to save.")
-            return
-        self._persist_current_file()
-        self._status_message = "Saved"
-        self._reset_edit_state()
-        self.refresh_panes()
+        # The form editor will validate and post a Saved message
+        self._editor.action_save()
 
     def action_refresh(self) -> None:
         self._reset_edit_state()
@@ -480,14 +441,14 @@ class VrdxApp(App[None]):
 
     def action_cancel(self) -> None:
         """Cancel editing and return to view mode."""
-        if self._editor_mode in ("edit-new", "edit-existing"):
-            self._reset_edit_state()
-            self.focus_pane(PaneId.DECISIONS)
-            self._show_message("Editing cancelled")
+        if self._editor is None:
+            return
+        # The form editor will post a Cancelled message
+        self._editor.action_cancel()
 
     def action_show_help(self) -> None:
         self._show_message(
-            "[space] edit  [n] new (select status)  [p] cycle status  [s] save  [esc] cancel  [j/k or arrows] navigate"
+            "[space] select decision  [n] new (select status)  [s] save  [esc] cancel  [j/k↓↑] navigate  Form: status dropdown, [Ctrl+S] save, [Esc] cancel"
         )
 
     def watch_dirty_indicator(self, dirty_indicator: str) -> None:
@@ -502,18 +463,63 @@ class VrdxApp(App[None]):
         self._editor_mode = "edit-existing"
         self._editing_decision_id = decision_state.record.id
         self._status_message = f"Editing decision #{decision_state.record.id}"
-        self._editor.set_content(decision_state.record.render(), editable=True)
+        # Configure the form for existing decision
+        self._editor.decision_id = decision_state.record.id
+        self._editor.current_status = decision_state.record.status
+        self._editor.is_new_decision = False
+        # Clear and prepare form for editing
+        try:
+            header = self._editor.query_one("#editor-header", Label)
+            header.update(f"Edit Decision #{decision_state.record.id}")
+        except Exception:
+            # Header widget might not be available, continue anyway
+            pass
+        self._editor.set_existing_decision_data(decision_state.record)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()
 
-    def _parse_editor_record(self):
-        if self._editor is None:
-            raise DecisionParseError("Editor unavailable.")
-        content = self._editor.value
-        records = parse_decisions(content)
-        if len(records) != 1:
-            raise DecisionParseError("Editor must contain exactly one decision entry.")
-        return records[0]
+    def _handle_form_saved(self, form_data: FormData) -> None:
+        """Handle form saved event.
+
+        Args:
+            form_data: The form data that was submitted.
+        """
+        if self._editor_mode == "edit-new":
+            commands.create_decision(
+                self.app_state,
+                title=form_data.title,
+                decision=form_data.decision,
+                context=form_data.context,
+                consequences=form_data.consequences,
+                status=form_data.status,
+            )
+            self.app_state.selected_decision_index = 0
+        elif (
+            self._editor_mode == "edit-existing"
+            and self._editing_decision_id is not None
+        ):
+            commands.update_decision(
+                self.app_state,
+                decision_id=self._editing_decision_id,
+                title=form_data.title,
+                status=form_data.status,
+                decision_text=form_data.decision,
+                context=form_data.context,
+                consequences=form_data.consequences,
+            )
+        else:
+            self._show_message("Nothing to save.")
+            return
+        self._persist_current_file()
+        self._status_message = "Saved"
+        self._reset_edit_state()
+        self.refresh_panes()
+
+    def _handle_form_cancelled(self) -> None:
+        """Handle form cancelled event."""
+        self._reset_edit_state()
+        self.focus_pane(PaneId.DECISIONS)
+        self._show_message("Editing cancelled")
 
     def _persist_current_file(self) -> None:
         file_state = self.app_state.current_file()
@@ -541,8 +547,10 @@ class VrdxApp(App[None]):
             return
 
         body = commands.serialize_current_file(self.app_state)
-        if body and not body.endswith("\n"):
-            body += "\n"
+        if body:
+            body = "\n" + body
+            if not body.endswith("\n"):
+                body += "\n"
         new_text = block.replace_body(original_text, body)
         write_markdown(file_state.path, new_text)
         self.app_state.mark_saved()
@@ -555,10 +563,34 @@ class VrdxApp(App[None]):
             self.refresh_editor()
         self._update_status_bar()
 
+    def _load_most_recent_decision(self) -> None:
+        """Load the most recent decision into the editing pane.
+
+        The most recent decision is the first one in the list since
+        decisions are ordered by ID in descending order.
+        """
+        file_state = self.app_state.current_file()
+        if file_state and file_state.decisions:
+            # Set the selection to the first decision (most recent)
+            self.app_state.selected_decision_index = 0
+            self._begin_edit_existing()
+
     def _show_message(self, message: str) -> None:
         self._status_message = message
         self.log(message)
         self._update_status_bar()
+
+    def on_form_based_decision_editor_saved(
+        self, event: FormBasedDecisionEditor.Saved
+    ) -> None:
+        """Handle form saved event."""
+        self._handle_form_saved(event.data)
+
+    def on_form_based_decision_editor_cancelled(
+        self, event: FormBasedDecisionEditor.Cancelled
+    ) -> None:
+        """Handle form cancelled event."""
+        self._handle_form_cancelled()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in both decision and file lists."""
@@ -566,8 +598,9 @@ class VrdxApp(App[None]):
             # Decision list selection changed
             if event.list_view.index is not None:
                 self.app_state.selected_decision_index = event.list_view.index
-                self._reset_edit_state()
                 self.refresh_panes()
+                # Load the selected decision into the editing pane
+                self._begin_edit_existing()
         elif event.list_view == self._file_list:
             # File list selection changed
             if event.list_view.index is not None and 0 <= event.list_view.index < len(
@@ -593,7 +626,7 @@ class VrdxApp(App[None]):
                 hint_text = "[s] save  [esc] cancel  [p] cycle status"
             else:
                 hint_text = (
-                    "[space] edit  [n] new  [1-4] focus panes  [?] help  [q] quit"
+                    "[space] select  [n] new  [s] save  [1-4] panes  [?] help  [q] quit"
                 )
 
             # Combine status message or hint with mode

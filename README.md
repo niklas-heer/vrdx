@@ -59,26 +59,44 @@ The vrdx TUI has four main panes:
 
 | Key | Action |
 |-----|--------|
-| `s` | Save decision |
+| `ctrl+s` or `s` | Save decision |
 | `esc` | Cancel editing and return to NORMAL mode |
-| `p` | Cycle through status options |
+| `tab` | Navigate between form fields |
 
 ### Mode Indicators
 
 The status bar shows the current mode (vim-style):
 
 - `-- NORMAL --` - Browse and navigate decisions
-- `-- INSERT (New) --` - Creating a new decision
-- `-- EDIT --` - Editing an existing decision
+- `-- INSERT (New) --` - Creating a new decision (form-based editor active)
+- `-- EDIT --` - Editing an existing decision (form-based editor active)
+
+### Form-Based Editor Features
+
+The form-based editor provides:
+- **Inline validation**: Title is required and cannot be placeholder text
+- **Status dropdown**: Select from all available statuses without modal disruption
+- **Auto-load**: The most recent decision is automatically loaded for editing when you start or select a decision
+- **Keyboard shortcuts**: 
+  - `ctrl+s` to save
+  - `esc` to cancel
+  - `tab` to navigate between fields
 
 ### Creating a New Decision
 
 1. Press `n` to create a new decision
-2. The editor opens with a helpful template including placeholders
-3. Fill in the title, decision, context, and consequences
-4. Press `p` to cycle through status options (📝 Draft, ✅ Accepted, ❌ Rejected, etc.)
-5. Press `s` to save the decision
+2. A status selection modal appears - select the initial status using arrow keys and press `Enter`
+3. The form-based editor opens with all fields ready for input:
+   - **Title**: Required - give your decision a clear title
+   - **Status**: Use the dropdown to select status (📝 Draft, ✅ Accepted, ❌ Rejected, 🤔 Pending, etc.)
+   - **Decision**: What was decided
+   - **Context**: Why this decision was needed
+   - **Consequences**: What are the implications
+4. Fill in the fields - only the title is required
+5. Press `ctrl+s` or click Save to persist the decision
 6. Press `esc` to cancel without saving
+
+The form uses a scrollable container, so if your terminal is small, you can scroll through the fields.
 
 ### Decision Format
 
@@ -123,8 +141,7 @@ just run
 
 <!-- vrdx start -->
 
-### 1. Distribution Strategy: Use uv for Python-based Distribution Only
-
+### 1 Distribution Strategy: Use uv for Python-based Distribution Only
 * **Status**: ✅ Accepted
 * **Decision**: Distribute vrdx exclusively via `uv tool install`. No binary compilation.
 * **Context**: Binary compilation adds unnecessary overhead—slow builds (10-45 min), bloated executables (30-800MB), and startup penalty (200-500ms+)—without real benefit. For an I/O-bound TUI app, Python's fast startup (~80-120ms) and `uv`'s seamless distribution better serve both users and development velocity. Target audience (developers) already has Python installed.
