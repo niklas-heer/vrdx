@@ -109,10 +109,10 @@ Screen {
 
 #editor-pane {
     width: 100%;
-    height: 50%;
-    min-height: 16;
+    height: 2fr;
+    min-height: 10;
     border: solid $primary;
-    padding: 1 2;
+    padding: 1 1;
     margin: 0 1;
     overflow-y: auto;
     background: $panel;
@@ -121,9 +121,9 @@ Screen {
 #preview-pane {
     width: 100%;
     height: 1fr;
-    min-height: 8;
+    min-height: 5;
     border: solid $accent;
-    padding: 1 2;
+    padding: 1 1;
     margin: 0 1;
     overflow-y: auto;
     background: $panel;

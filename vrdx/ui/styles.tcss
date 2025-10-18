@@ -32,7 +32,7 @@ Screen {
 #pane-hints {
     padding: 0 1;
     color: $text-muted;
-    height: 1;
+    height: auto;
 }
 
 #decision-list,
@@ -40,9 +40,9 @@ Screen {
     border: solid $primary;
     background: $surface;
     height: 1fr;
-    min-height: 8;
+    min-height: 6;
     padding: 0;
-    margin-bottom: 1;
+    margin-bottom: 0;
 }
 
 #decision-list ListItem:hover,
@@ -107,35 +107,35 @@ FormBasedDecisionEditor {
 #editor-header {
     width: 100%;
     height: auto;
-    padding: 1 2;
-    margin: 0 0 1 0;
+    padding: 0 1;
+    margin-bottom: 0;
     background: $panel;
     text-style: bold;
     color: $primary;
     border-bottom: solid $primary;
-    opacity: 1.0;
+    text-opacity: 100%;
 }
 
 #form-scroll {
     width: 100%;
     height: 1fr;
     overflow: auto;
-    padding: 1 2;
+    padding: 0 1;
 }
 
 .form-section {
     width: 100%;
     height: auto;
-    padding: 1 0;
+    padding: 0;
     margin-bottom: 0;
     border: none;
-    opacity: 1.0;
+    text-opacity: 100%;
 }
 
 .form-section-title {
     text-style: bold;
     color: $accent;
-    padding: 0 0 1 0;
+    padding: 0;
     margin: 0;
     height: auto;
 }
@@ -144,15 +144,15 @@ FormBasedDecisionEditor {
     width: 100%;
     height: 1;
     background: $boost;
-    margin: 1 0;
-    opacity: 1.0;
+    margin: 0;
+    text-opacity: 100%;
 }
 
 #title-area {
     width: 100%;
     height: auto;
-    min-height: 3;
-    max-height: 5;
+    min-height: 1;
+    max-height: 3;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -174,6 +174,7 @@ FormBasedDecisionEditor {
     height: auto;
     border: solid $accent;
     background: $surface;
+    margin-bottom: 0;
 }
 
 #status-select:focus {
@@ -184,8 +185,8 @@ FormBasedDecisionEditor {
 #decision-area {
     width: 100%;
     height: auto;
-    min-height: 3;
-    max-height: 15;
+    min-height: 2;
+    max-height: 8;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -199,8 +200,8 @@ FormBasedDecisionEditor {
 #context-area {
     width: 100%;
     height: auto;
-    min-height: 3;
-    max-height: 15;
+    min-height: 2;
+    max-height: 8;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -214,8 +215,8 @@ FormBasedDecisionEditor {
 #consequences-area {
     width: 100%;
     height: auto;
-    min-height: 3;
-    max-height: 15;
+    min-height: 2;
+    max-height: 8;
     margin-bottom: 0;
     border: solid $accent;
     background: $surface;
@@ -231,49 +232,53 @@ FormBasedDecisionEditor {
     height: auto;
     layout: horizontal;
     align-horizontal: left;
-    padding: 1 0;
-    margin-top: 1;
-    border-top: solid $boost;
-    opacity: 1.0;
+    padding: 0;
+    margin-top: 0;
+    border-top: none;
+    text-opacity: 100%;
 }
 
 #save-btn {
-    margin-right: 2;
+    margin-right: 1;
     margin-bottom: 0;
-    padding: 0 2;
-    height: 1;
+    padding: 0 1;
+    height: auto;
     border: solid $success;
-    color: $success;
+    background: $success 40%;
+    color: $text;
+    text-style: bold;
 }
 
 #save-btn:hover {
-    background: $success 20%;
+    background: $success 60%;
     border: solid $success;
 }
 
 #save-btn:focus {
     border: solid $primary;
     color: $text;
-    background: $success 30%;
+    background: $success 60%;
 }
 
 #cancel-btn {
     margin-bottom: 0;
-    padding: 0 2;
-    height: 1;
+    padding: 0 1;
+    height: auto;
     border: solid $error;
-    color: $error;
+    background: $error 40%;
+    color: $text;
+    text-style: bold;
 }
 
 #cancel-btn:hover {
-    background: $error 20%;
+    background: $error 60%;
     border: solid $error;
 }
 
 #cancel-btn:focus {
     border: solid $primary;
     color: $text;
-    background: $error 30%;
+    background: $error 60%;
 }
 
 .validation-error {
