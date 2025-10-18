@@ -214,31 +214,6 @@ class VrdxApp(App[None]):
 
     CSS = _CSS_TEXT
 
-    # Neon/Cyberpunk theme configuration
-    THEME = "vrdx_neon"
-
-    THEMES = {
-        "vrdx_neon": Theme(
-            name="vrdx_neon",
-            primary="#FF00FF",  # Bright magenta
-            secondary="#00FFFF",  # Cyan
-            warning="#FF6B35",  # Orange
-            error="#FF0000",  # Red
-            success="#00FF00",  # Lime green
-            accent="#00FFFF",  # Cyan for accents
-            foreground="#E0E0E0",  # Light gray text
-            background="#0a0e27",  # Very dark navy
-            surface="#1a1f3a",  # Dark surface
-            panel="#0f1420",  # Dark panel
-            boost="#1f2a3f",  # Boost color for status bar
-            dark=True,
-            variables={
-                "text-muted": "#999999",  # Muted gray
-                "text-disabled": "#666666",  # Disabled gray
-            },
-        )
-    }
-
     BINDINGS = [
         Binding("1", "focus_decisions", "Decisions", show=False),
         Binding("2", "focus_files", "Files", show=False),
@@ -261,6 +236,28 @@ class VrdxApp(App[None]):
     def __init__(self, app_state: Optional[AppState] = None) -> None:
         super().__init__()
         self.app_state = app_state or AppState(base_directory=Path("."))
+
+        # Register neon theme after app initialization
+        neon_theme = Theme(
+            name="vrdx_neon",
+            primary="#FF00FF",  # Bright magenta
+            secondary="#00FFFF",  # Cyan
+            warning="#FF6B35",  # Orange
+            error="#FF0000",  # Red
+            success="#00FF00",  # Lime green
+            accent="#00FFFF",  # Cyan for accents
+            foreground="#E0E0E0",  # Light gray text
+            background="#0a0e27",  # Very dark navy
+            surface="#1a1f3a",  # Dark surface
+            panel="#0f1420",  # Dark panel
+            boost="#1f2a3f",  # Boost color for status bar
+            dark=True,
+            variables={
+                "text-muted": "#999999",  # Muted gray
+                "text-disabled": "#666666",  # Disabled gray
+            },
+        )
+        self.register_theme(neon_theme)
         self._decision_list: Optional[DecisionList] = None
         self._file_list: Optional[FileList] = None
         self._preview: Optional[PreviewPane] = None
@@ -302,6 +299,7 @@ class VrdxApp(App[None]):
                     yield self._preview
 
     def on_mount(self) -> None:
+        # Apply the neon theme after mounting
         self.theme = "vrdx_neon"
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
