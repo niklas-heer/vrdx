@@ -67,7 +67,6 @@ Screen {
 
 #decision-list,
 #file-list {
-    border: solid $primary;
     background: $surface;
     height: 1fr;
     min-height: 8;
