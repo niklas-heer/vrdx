@@ -37,13 +37,13 @@ class SaveButton(Button):
     SaveButton {
         background: $success;
         color: $text;
-        text-style: b;
         width: auto;
+        padding: 0 1;
         margin: 0 1 0 0;
     }
 
     SaveButton:hover {
-        background-tint: white 10%;
+        background-tint: white 20%;
     }
 
     SaveButton:focus {
@@ -62,13 +62,13 @@ class CancelButton(Button):
     CancelButton {
         background: $error;
         color: $text;
-        text-style: b;
         width: auto;
-        margin: 0;
+        padding: 0 1;
+        margin: 0 1 0 0;
     }
 
     CancelButton:hover {
-        background-tint: white 10%;
+        background-tint: white 20%;
     }
 
     CancelButton:focus {
@@ -118,29 +118,21 @@ class FormBasedDecisionEditor(Static):
     }
 
     #editor-header {
-        width: 100%;
-        height: auto;
-        padding: 0 1;
-        margin-bottom: 0;
-        background: $panel;
-        text-style: bold;
-        color: $primary;
-        border-bottom: solid $primary;
-        text-opacity: 100%;
+        display: none;
     }
 
     #form-scroll {
         width: 100%;
         height: 1fr;
         overflow: auto;
-        padding: 0 1;
+        padding: 0;
     }
 
     .form-section {
         width: 100%;
         height: auto;
         padding: 0;
-        margin-bottom: 0;
+        margin: 0;
         border: none;
         text-opacity: 100%;
     }
@@ -156,19 +148,13 @@ class FormBasedDecisionEditor(Static):
     }
 
     .form-separator {
-        width: 100%;
-        height: 1;
-        background: $boost;
-        margin: 0;
-        text-opacity: 100%;
+        display: none;
     }
 
     #title-area {
         width: 100%;
-        height: auto;
-        min-height: 1;
-        max-height: 2;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
         background: $surface;
     }
@@ -181,7 +167,7 @@ class FormBasedDecisionEditor(Static):
     .status-section {
         width: 100%;
         height: auto;
-        margin-bottom: 0;
+        margin: 0;
     }
 
     #status-select {
@@ -189,6 +175,7 @@ class FormBasedDecisionEditor(Static):
         height: auto;
         border: solid $accent;
         background: $surface;
+        margin: 0;
     }
 
     #status-select:focus {
@@ -198,10 +185,8 @@ class FormBasedDecisionEditor(Static):
 
     #decision-area {
         width: 100%;
-        height: auto;
-        min-height: 1;
-        max-height: 4;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
         background: $surface;
     }
@@ -213,10 +198,8 @@ class FormBasedDecisionEditor(Static):
 
     #context-area {
         width: 100%;
-        height: auto;
-        min-height: 1;
-        max-height: 4;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
         background: $surface;
     }
@@ -228,10 +211,8 @@ class FormBasedDecisionEditor(Static):
 
     #consequences-area {
         width: 100%;
-        height: auto;
-        min-height: 1;
-        max-height: 4;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
         background: $surface;
     }
@@ -247,8 +228,8 @@ class FormBasedDecisionEditor(Static):
         layout: horizontal;
         align-horizontal: left;
         padding: 0;
-        margin-top: 0;
-        border-top: none;
+        margin: 0;
+        border: none;
         text-opacity: 100%;
     }
 
@@ -330,7 +311,7 @@ class FormBasedDecisionEditor(Static):
         self._status_select: Optional[Select] = None
         self._error_label: Optional[Label] = None
 
-        # Dynamic textarea sizing
+        # Dynamic textarea sizing - textareas will grow as needed up to max
         self._title_height = reactive(1, init=False)
         self._decision_height = reactive(1, init=False)
         self._context_height = reactive(1, init=False)
@@ -574,11 +555,11 @@ class FormBasedDecisionEditor(Static):
         if textarea.id == "title-area":
             self._title_height = self._calculate_textarea_height(textarea, 1, 2)
         elif textarea.id == "decision-area":
-            self._decision_height = self._calculate_textarea_height(textarea, 1, 4)
+            self._decision_height = self._calculate_textarea_height(textarea, 1, 3)
         elif textarea.id == "context-area":
-            self._context_height = self._calculate_textarea_height(textarea, 1, 4)
+            self._context_height = self._calculate_textarea_height(textarea, 1, 3)
         elif textarea.id == "consequences-area":
-            self._consequences_height = self._calculate_textarea_height(textarea, 1, 4)
+            self._consequences_height = self._calculate_textarea_height(textarea, 1, 3)
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.
