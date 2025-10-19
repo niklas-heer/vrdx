@@ -204,7 +204,7 @@ FormBasedDecisionEditor {
     border: solid $accent;
     background: $surface;
     margin: 0;
-    padding: 0 1;
+    padding: 0;
 }
 
 #status-select:focus {
