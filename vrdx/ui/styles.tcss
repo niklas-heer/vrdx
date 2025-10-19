@@ -42,7 +42,7 @@ Screen {
 }
 
 #decision-list {
-    border: solid $primary;
+    border: round $primary;
     background: $surface;
     height: 2fr;
     min-height: 6;
@@ -51,7 +51,7 @@ Screen {
 }
 
 #file-list {
-    border: solid $primary;
+    border: round $primary;
     background: $surface;
     height: 1fr;
     min-height: 6;
@@ -79,7 +79,7 @@ Screen {
 }
 
 #editor-pane {
-    border: solid $primary;
+    border: round $primary;
     padding: 1 2;
     margin: 0 1;
     overflow-y: auto;
@@ -90,7 +90,7 @@ Screen {
 }
 
 #preview-pane {
-    border: solid $primary;
+    border: round $primary;
     padding: 1 2;
     margin: 0 1;
     overflow-y: auto;
