@@ -268,6 +268,24 @@ class FormBasedDecisionEditor(Static):
 
         pass
 
+    class PreviewUpdated(Message):
+        """Posted when form content changes for live preview."""
+
+        def __init__(
+            self,
+            title: str,
+            decision: str,
+            context: str,
+            consequences: str,
+            status: str,
+        ) -> None:
+            super().__init__()
+            self.title = title
+            self.decision = decision
+            self.context = context
+            self.consequences = consequences
+            self.status = status
+
     def __init__(
         self,
         decision_id: int,
@@ -498,7 +516,8 @@ class FormBasedDecisionEditor(Static):
     def on_text_area_changed(self, event: TextArea.Changed) -> None:
         """Handle textarea content changes for dynamic sizing.
 
-        Updates textarea heights when content changes to fit the current content.
+        Updates textarea heights when content changes to fit the current content,
+        and posts preview update message for live preview.
 
         Args:
             event: The TextArea changed event.
@@ -514,18 +533,43 @@ class FormBasedDecisionEditor(Static):
         elif textarea.id == "consequences-area":
             self._consequences_height = self._calculate_textarea_height(textarea, 1, 3)
 
+        # Post preview update message with current form content
+        self.post_message(
+            self.PreviewUpdated(
+                title=self._title_area.text if self._title_area else "",
+                decision=self._decision_area.text if self._decision_area else "",
+                context=self._context_area.text if self._context_area else "",
+                consequences=self._consequences_area.text
+                if self._consequences_area
+                else "",
+                status=self.current_status,
+            )
+        )
+
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.
 
         Updates the current_status when the user selects a different status
         from the dropdown. This keeps the form state synchronized with the
-        Select widget value.
+        Select widget value, and posts preview update message.
 
         Args:
             event: The Select widget change event with the new value.
         """
         if event.select.id == "status-select":
             self.current_status = event.value
+            # Post preview update message with current form content
+            self.post_message(
+                self.PreviewUpdated(
+                    title=self._title_area.text if self._title_area else "",
+                    decision=self._decision_area.text if self._decision_area else "",
+                    context=self._context_area.text if self._context_area else "",
+                    consequences=self._consequences_area.text
+                    if self._consequences_area
+                    else "",
+                    status=self.current_status,
+                )
+            )
 
     def action_save(self) -> None:
         """Validate and save the form data.

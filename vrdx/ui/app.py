@@ -649,6 +649,23 @@ class VrdxApp(App[None]):
         """Handle form cancelled event."""
         self._handle_form_cancelled()
 
+    def on_form_based_decision_editor_preview_updated(
+        self, event: FormBasedDecisionEditor.PreviewUpdated
+    ) -> None:
+        """Handle live preview updates from the editor form."""
+        # Build markdown preview from current form content
+        markdown = f"# {event.title}\n\n"
+        markdown += f"* **Status**: {event.status}\n"
+        if event.decision:
+            markdown += f"* **Decision**: {event.decision}\n"
+        if event.context:
+            markdown += f"* **Context**: {event.context}\n"
+        if event.consequences:
+            markdown += f"* **Consequences**: {event.consequences}\n"
+
+        if self._preview is not None:
+            self._preview.show_decision(markdown)
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in both decision and file lists."""
         if event.list_view == self._decision_list:
