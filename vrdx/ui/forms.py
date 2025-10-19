@@ -11,7 +11,8 @@ from typing import Optional
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Grid, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.widgets import Button, Label, Static, TextArea, Select
 from textual.message import Message
 
@@ -63,35 +64,27 @@ class FormBasedDecisionEditor(Static):
         width: 100%;
         height: 100%;
         layout: vertical;
-        background: $surface;
+        background: $panel;
     }
 
     #editor-header {
-        width: 100%;
-        height: auto;
-        padding: 2 2;
-        margin-bottom: 0;
-        background: $panel;
-        text-style: bold underline;
-        color: $text;
-        border-bottom: solid $accent;
-        opacity: 0;
+        display: none;
     }
 
     #form-scroll {
         width: 100%;
         height: 1fr;
         overflow: auto;
-        padding: 5 5;
+        padding: 0;
     }
 
     .form-section {
         width: 100%;
         height: auto;
-        padding: 3 1;
-        margin-bottom: 0;
+        padding: 0;
+        margin: 0;
         border: none;
-        opacity: 0;
+        text-opacity: 100%;
     }
 
     .form-section-title {
@@ -99,124 +92,103 @@ class FormBasedDecisionEditor(Static):
         color: $accent;
         padding: 0;
         height: auto;
-        margin-bottom: 2;
+        margin-bottom: 0;
         margin-top: 0;
         text-opacity: 100%;
     }
 
     .form-separator {
-        width: 100%;
-        height: 1;
-        background: $boost;
-        margin: 3 0;
-        opacity: 0;
+        display: none;
     }
 
     #title-area {
         width: 100%;
-        height: 6;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #title-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     .status-section {
         width: 100%;
         height: auto;
-        margin-bottom: 0;
+        margin: 0;
     }
 
     #status-select {
         width: 100%;
         height: auto;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
+        margin: 0;
     }
 
     #status-select:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #decision-area {
         width: 100%;
-        height: auto;
-        min-height: 8;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #decision-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #context-area {
         width: 100%;
-        height: auto;
-        min-height: 8;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #context-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #consequences-area {
         width: 100%;
-        height: auto;
-        min-height: 8;
-        margin-bottom: 0;
+        height: 1;
+        margin: 0;
         border: solid $accent;
-        background-tint: $primary 5%;
+        background: $surface;
     }
 
     #consequences-area:focus {
-        border: solid $accent;
-        background-tint: $primary 10%;
+        border: solid $primary;
+        background: $surface;
     }
 
     #button-row {
-        width: 100%;
+        width: auto;
         height: auto;
         layout: horizontal;
         align-horizontal: left;
-        padding: 3 2;
-        margin-top: 3;
-        border-top: solid $boost;
-        opacity: 0;
+        padding: 0;
+        margin: 0;
+        border: none;
+        text-opacity: 100%;
     }
 
-    #save-btn {
-        margin-right: 6;
-        margin-bottom: 1;
-    }
 
-    #save-btn:hover {
-        background: $primary 30%;
-    }
-
-    #cancel-btn {
-        margin-bottom: 1;
-    }
-
-    #cancel-btn:hover {
-        background: $boost 20%;
-    }
 
     .validation-error {
         color: $error;
         text-style: bold;
-        margin-top: 3;
+        margin-top: 1;
         text-opacity: 0%;
     }
 
@@ -227,7 +199,7 @@ class FormBasedDecisionEditor(Static):
     Input:focus,
     TextArea:focus,
     Select:focus {
-        border: solid $accent;
+        border: solid $primary;
     }
 
     Input {
@@ -240,6 +212,42 @@ class FormBasedDecisionEditor(Static):
 
     Select {
         background: $surface;
+    }
+
+    Button {
+        width: auto;
+        padding: 0;
+        height: 1;
+        margin: 0;
+        border: none;
+    }
+
+    #save-btn {
+        background: $success;
+        color: $text;
+    }
+
+    #save-btn:hover {
+        background-tint: white 20%;
+        text-style: b;
+    }
+
+    #save-btn:focus {
+        border: solid $primary;
+    }
+
+    #cancel-btn {
+        background: $error;
+        color: $text;
+    }
+
+    #cancel-btn:hover {
+        background-tint: white 20%;
+        text-style: b;
+    }
+
+    #cancel-btn:focus {
+        border: solid $primary;
     }
     """
 
@@ -259,6 +267,24 @@ class FormBasedDecisionEditor(Static):
         """Posted when the form is cancelled."""
 
         pass
+
+    class PreviewUpdated(Message):
+        """Posted when form content changes for live preview."""
+
+        def __init__(
+            self,
+            title: str,
+            decision: str,
+            context: str,
+            consequences: str,
+            status: str,
+        ) -> None:
+            super().__init__()
+            self.title = title
+            self.decision = decision
+            self.context = context
+            self.consequences = consequences
+            self.status = status
 
     def __init__(
         self,
@@ -289,58 +315,48 @@ class FormBasedDecisionEditor(Static):
         self._status_select: Optional[Select] = None
         self._error_label: Optional[Label] = None
 
+        # Dynamic textarea sizing - textareas will grow as needed up to max
+        self._title_height = reactive(1, init=False)
+        self._decision_height = reactive(1, init=False)
+        self._context_height = reactive(1, init=False)
+        self._consequences_height = reactive(1, init=False)
+
     def compose(self) -> ComposeResult:
         """Compose the form layout.
 
         Creates a vertical layout with:
-        1. Header showing decision ID (updated when editing)
-        2. Scrollable form content with all input fields separated by visual lines
-        3. Button row with Save and Cancel actions
+        1. Scrollable form content with all input fields on same line as labels
+        2. Button row with Save and Cancel actions
 
         The form uses a scrollable container to handle content that exceeds
-        available screen height, with visual separators between sections.
+        available screen height.
         """
-        # Header with decision ID
-        yield Label(
-            f"Create New Decision #{self.decision_id}",
-            id="editor-header",
-        )
-
         # Scrollable form content
         with Vertical(id="form-scroll"):
-            # Title section
-            with Vertical(classes="form-section"):
-                yield Label("Title", classes="form-section-title")
+            # Use Grid for consistent label/input alignment
+            with Grid(id="form-grid"):
+                # Title row
+                yield Label("Title:", classes="form-section-title")
                 self._title_area = TextArea(
                     id="title-area",
                     read_only=False,
                 )
                 yield self._title_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
+                # Status row
+                yield Label("Status:", classes="form-section-title")
+                # Create Select with status options
+                status_options = [(status, status) for status in list_status_options()]
+                self._status_select = Select(
+                    status_options,
+                    value=self.current_status,
+                    id="status-select",
+                    compact=True,
+                )
+                yield self._status_select
 
-            # Status section
-            with Vertical(classes="form-section"):
-                yield Label("Status", classes="form-section-title")
-                with Vertical(classes="status-section"):
-                    # Create Select with status options
-                    status_options = [
-                        (status, status) for status in list_status_options()
-                    ]
-                    self._status_select = Select(
-                        status_options,
-                        value=self.current_status,
-                        id="status-select",
-                    )
-                    yield self._status_select
-
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Decision section
-            with Vertical(classes="form-section"):
-                yield Label("Decision", classes="form-section-title")
+                # Decision row
+                yield Label("Decision:", classes="form-section-title")
                 self._decision_area = TextArea(
                     id="decision-area",
                     read_only=False,
@@ -348,12 +364,8 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._decision_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Context section
-            with Vertical(classes="form-section"):
-                yield Label("Context", classes="form-section-title")
+                # Context row
+                yield Label("Context:", classes="form-section-title")
                 self._context_area = TextArea(
                     id="context-area",
                     read_only=False,
@@ -361,12 +373,8 @@ class FormBasedDecisionEditor(Static):
                 )
                 yield self._context_area
 
-            # Visual separator
-            yield Static(classes="form-separator")
-
-            # Consequences section
-            with Vertical(classes="form-section"):
-                yield Label("Consequences", classes="form-section-title")
+                # Consequences row
+                yield Label("Consequences:", classes="form-section-title")
                 self._consequences_area = TextArea(
                     id="consequences-area",
                     read_only=False,
@@ -380,8 +388,43 @@ class FormBasedDecisionEditor(Static):
 
         # Button row
         with Horizontal(id="button-row"):
-            yield Button("Save", id="save-btn", variant="primary")
+            yield Button("Save", id="save-btn", variant="default")
             yield Button("Cancel", id="cancel-btn", variant="default")
+
+    def _calculate_textarea_height(
+        self, textarea: TextArea, min_height: int, max_height: int
+    ) -> int:
+        """Calculate appropriate height for a textarea based on content.
+
+        Args:
+            textarea: The TextArea widget to measure.
+            min_height: Minimum height in lines.
+            max_height: Maximum height in lines.
+
+        Returns:
+            The calculated height in lines, clamped between min and max.
+        """
+        text = textarea.text
+        if not text:
+            return min_height
+
+        # Count lines in the text
+        lines = len(text.split("\n"))
+
+        # Clamp between min and max
+        return max(min_height, min(lines, max_height))
+
+    def _update_textarea_height(
+        self, textarea: Optional[TextArea], height: int
+    ) -> None:
+        """Update the height style of a textarea.
+
+        Args:
+            textarea: The TextArea widget to update.
+            height: The new height in lines.
+        """
+        if textarea:
+            textarea.styles.height = height
 
     def on_mount(self) -> None:
         """Set up the form when mounted.
@@ -390,15 +433,6 @@ class FormBasedDecisionEditor(Static):
         making it ready for immediate user interaction, with
         entrance animations for visual polish.
         """
-        # Animate header fade-in
-        header = self.query_one("#editor-header", Label)
-        header.styles.animate(
-            "opacity",
-            value=1.0,
-            duration=0.5,
-            easing="in_out_cubic",
-        )
-
         # Animate form sections with staggered entrance
         sections = self.query(".form-section")
         for i, section in enumerate(sections):
@@ -435,6 +469,22 @@ class FormBasedDecisionEditor(Static):
         if self._title_area:
             self._title_area.focus()
 
+    def watch_title_height(self, height: int) -> None:
+        """Watch for changes to title height reactive attribute."""
+        self._update_textarea_height(self._title_area, height)
+
+    def watch_decision_height(self, height: int) -> None:
+        """Watch for changes to decision height reactive attribute."""
+        self._update_textarea_height(self._decision_area, height)
+
+    def watch_context_height(self, height: int) -> None:
+        """Watch for changes to context height reactive attribute."""
+        self._update_textarea_height(self._context_area, height)
+
+    def watch_consequences_height(self, height: int) -> None:
+        """Watch for changes to consequences height reactive attribute."""
+        self._update_textarea_height(self._consequences_area, height)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses.
 
@@ -463,18 +513,63 @@ class FormBasedDecisionEditor(Static):
             )
             self.action_cancel()
 
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        """Handle textarea content changes for dynamic sizing.
+
+        Updates textarea heights when content changes to fit the current content,
+        and posts preview update message for live preview.
+
+        Args:
+            event: The TextArea changed event.
+        """
+        textarea = event.text_area
+
+        if textarea.id == "title-area":
+            self._title_height = self._calculate_textarea_height(textarea, 1, 2)
+        elif textarea.id == "decision-area":
+            self._decision_height = self._calculate_textarea_height(textarea, 1, 3)
+        elif textarea.id == "context-area":
+            self._context_height = self._calculate_textarea_height(textarea, 1, 3)
+        elif textarea.id == "consequences-area":
+            self._consequences_height = self._calculate_textarea_height(textarea, 1, 3)
+
+        # Post preview update message with current form content
+        self.post_message(
+            self.PreviewUpdated(
+                title=self._title_area.text if self._title_area else "",
+                decision=self._decision_area.text if self._decision_area else "",
+                context=self._context_area.text if self._context_area else "",
+                consequences=self._consequences_area.text
+                if self._consequences_area
+                else "",
+                status=self.current_status,
+            )
+        )
+
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle status selection changes.
 
         Updates the current_status when the user selects a different status
         from the dropdown. This keeps the form state synchronized with the
-        Select widget value.
+        Select widget value, and posts preview update message.
 
         Args:
             event: The Select widget change event with the new value.
         """
         if event.select.id == "status-select":
             self.current_status = event.value
+            # Post preview update message with current form content
+            self.post_message(
+                self.PreviewUpdated(
+                    title=self._title_area.text if self._title_area else "",
+                    decision=self._decision_area.text if self._decision_area else "",
+                    context=self._context_area.text if self._context_area else "",
+                    consequences=self._consequences_area.text
+                    if self._consequences_area
+                    else "",
+                    status=self.current_status,
+                )
+            )
 
     def action_save(self) -> None:
         """Validate and save the form data.
@@ -571,7 +666,6 @@ class FormBasedDecisionEditor(Static):
         Loads all decision fields from the DecisionRecord into the form fields:
         - Copies title, decision, context, and consequences text
         - Updates status dropdown to show current decision status
-        - Updates header to show "Edit" mode instead of "Create New"
         - Sets is_new_decision flag to False
 
         Args:
@@ -591,10 +685,6 @@ class FormBasedDecisionEditor(Static):
         self.current_status = record.status
         if self._status_select:
             self._status_select.value = record.status
-
-        # Update header to show "Edit" instead of "Create New"
-        header = self.query_one("#editor-header", Label)
-        header.update(f"Edit Decision #{self.decision_id}")
 
     def set_status(self, status: str) -> None:
         """Update the status display.

@@ -10,6 +10,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
+from textual.theme import Theme
 from textual.widgets import (
     Header,
     Label,
@@ -36,70 +37,92 @@ try:
         resources.files("vrdx.ui").joinpath("styles.tcss").read_text(encoding="utf-8")
     )
 except (FileNotFoundError, OSError, AttributeError):
-    _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI */
+    _CSS_TEXT = """/* Layout and styling for the vrdx Textual TUI - Neon/Cyberpunk Theme */
 
 Screen {
-    background: #111827;
-    color: #f9fafb;
+    background: $background;
+    color: $text;
+    layout: vertical;
 }
 
 #main-layout {
+    height: 1fr;
     width: 100%;
-    height: 100%;
 }
 
 #left-column {
-    width: 25%;
-    padding: 1;
-    border-right: solid #374151;
+    width: 26%;
+    min-width: 20w;
 }
 
-#decisions-title,
-#files-title {
-    text-style: bold;
-    padding-bottom: 0;
+#right-column {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
 }
 
-#pane-hints {
-    padding: 0 1;
-    color: #9ca3af;
-}
+
+
+
 
 #decision-list,
 #file-list {
-    border: solid #374151;
-    background: #1f2937;
-    padding: 0;
+    background: $surface;
+    height: 1fr;
+    min-height: 8;
+    padding: 1;
+    margin: 0;
+}
+
+#decision-list ListItem:hover,
+#file-list ListItem:hover {
+    background: $accent;
+}
+
+#decision-list ListView:focus ListItem.--highlight,
+#file-list ListView:focus ListItem.--highlight {
+    background: $primary;
 }
 
 #file-list ListItem.file-no-markers {
-    color: #9ca3af;
+    color: $text-muted;
+    text-style: dim;
 }
 
 #file-list ListItem.file-no-markers Label {
-    color: #9ca3af;
-}
-
-#editor-pane,
-#preview-pane {
-    border: solid #374151;
-    padding: 1;
-    background: #0f172a;
+    color: $text-muted;
 }
 
 #editor-pane {
-    width: 45%;
+    width: 100%;
+    height: 2fr;
+    min-height: 2;
+    border: solid $primary;
+    padding: 1 1;
+    margin: 0 1;
+    overflow-y: auto;
+    background: $panel;
 }
 
 #preview-pane {
-    width: 30%;
+    width: 100%;
+    height: 1fr;
+    min-height: 2;
+    border: solid $accent;
+    padding: 1 1;
+    margin: 0 1;
+    overflow-y: auto;
+    background: $panel;
 }
 
 #status-bar {
-    background: #1f2937;
-    color: #f9fafb;
-    border-top: solid #374151;
+    background: $boost;
+    color: $text;
+    border-top: solid $primary;
     padding: 0 1;
+    height: auto;
+    min-height: 1;
+    content-align: center middle;
 }
 """
 
@@ -199,6 +222,28 @@ class VrdxApp(App[None]):
     def __init__(self, app_state: Optional[AppState] = None) -> None:
         super().__init__()
         self.app_state = app_state or AppState(base_directory=Path("."))
+
+        # Register neon theme after app initialization
+        neon_theme = Theme(
+            name="vrdx_neon",
+            primary="#FF00FF",  # Bright magenta
+            secondary="#00FFFF",  # Cyan
+            warning="#FF6B35",  # Orange
+            error="#FF0000",  # Red
+            success="#00FF00",  # Lime green
+            accent="#00FFFF",  # Cyan for accents
+            foreground="#E0E0E0",  # Light gray text
+            background="#0a0e27",  # Very dark navy
+            surface="#1a1f3a",  # Dark surface
+            panel="#0f1420",  # Dark panel
+            boost="#1f2a3f",  # Boost color for status bar
+            dark=True,
+            variables={
+                "text-muted": "#999999",  # Muted gray
+                "text-disabled": "#666666",  # Disabled gray
+            },
+        )
+        self.register_theme(neon_theme)
         self._decision_list: Optional[DecisionList] = None
         self._file_list: Optional[FileList] = None
         self._preview: Optional[PreviewPane] = None
@@ -217,32 +262,48 @@ class VrdxApp(App[None]):
             yield Header()
             self._status_bar = Static("", id="status-bar")
             yield self._status_bar
-            self._pane_hints = Static(
-                "1·Decisions  2·Files  3·Editor  4·Preview", id="pane-hints"
-            )
-            yield self._pane_hints
             with Horizontal(id="main-layout"):
                 with Vertical(id="left-column"):
-                    yield Label("Decisions", id="decisions-title")
                     self._decision_list = DecisionList(id="decision-list")
                     yield self._decision_list
-                    yield Label("Files", id="files-title")
                     self._file_list = FileList(id="file-list")
                     yield self._file_list
-                self._editor = FormBasedDecisionEditor(
-                    decision_id=0,
-                    current_status="📝 Draft",
-                    id="editor-pane",
-                )
-                yield self._editor
-                self._preview = PreviewPane(id="preview-pane")
-                yield self._preview
+                with Vertical(id="right-column"):
+                    self._editor = FormBasedDecisionEditor(
+                        decision_id=0,
+                        current_status="📝 Draft",
+                        id="editor-pane",
+                    )
+                    yield self._editor
+                    self._preview = PreviewPane(id="preview-pane")
+                    yield self._preview
 
     def on_mount(self) -> None:
+        # Apply the neon theme after mounting
+        self.theme = "vrdx_neon"
+
+        # Set pane headers using border_title
+        self._decision_list.border_title = "[1] Decisions"
+        self._file_list.border_title = "[2] Files"
+        self._editor.border_title = "[3] Editor"
+        self._preview.border_title = "[4] Preview"
+
         self._initialize_files()
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()
         self._load_most_recent_decision()
+        self._update_editor_header()
+
+    def _update_editor_header(self) -> None:
+        """Update the editor pane header with current decision info."""
+        if self._editor.is_new_decision:
+            self._editor.border_title = (
+                f"[3] Editor — Create Decision #{self._editor.decision_id}"
+            )
+        else:
+            self._editor.border_title = (
+                f"[3] Editor — Edit Decision #{self._editor.decision_id}"
+            )
 
     def _initialize_files(self) -> None:
         base_directory = self.app_state.base_directory
@@ -415,6 +476,7 @@ class VrdxApp(App[None]):
         # Reset the form with the calculated ID and user-selected status
         # This clears any previous form state and initializes new decision fields
         self._editor.reset_for_new_decision(self._pending_new_decision_id, status)
+        self._update_editor_header()
 
         # Set editor mode to edit-new for proper behavior tracking
         self._editor_mode = "edit-new"
@@ -468,15 +530,10 @@ class VrdxApp(App[None]):
         self._editor.current_status = decision_state.record.status
         self._editor.is_new_decision = False
         # Clear and prepare form for editing
-        try:
-            header = self._editor.query_one("#editor-header", Label)
-            header.update(f"Edit Decision #{decision_state.record.id}")
-        except Exception:
-            # Header widget might not be available, continue anyway
-            pass
         self._editor.set_existing_decision_data(decision_state.record)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()
+        self._update_editor_header()
 
     def _handle_form_saved(self, form_data: FormData) -> None:
         """Handle form saved event.
@@ -591,6 +648,23 @@ class VrdxApp(App[None]):
     ) -> None:
         """Handle form cancelled event."""
         self._handle_form_cancelled()
+
+    def on_form_based_decision_editor_preview_updated(
+        self, event: FormBasedDecisionEditor.PreviewUpdated
+    ) -> None:
+        """Handle live preview updates from the editor form."""
+        # Build markdown preview from current form content
+        markdown = f"# {event.title}\n\n"
+        markdown += f"* **Status**: {event.status}\n"
+        if event.decision:
+            markdown += f"* **Decision**: {event.decision}\n"
+        if event.context:
+            markdown += f"* **Context**: {event.context}\n"
+        if event.consequences:
+            markdown += f"* **Consequences**: {event.consequences}\n"
+
+        if self._preview is not None:
+            self._preview.show_decision(markdown)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in both decision and file lists."""
