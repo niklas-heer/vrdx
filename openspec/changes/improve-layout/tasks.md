@@ -84,7 +84,7 @@
   - Ensure Status dropdown maintains consistent fixed height
   - No dynamic sizing needed for this field
 
-- [ ] 2.8 Test dynamic sizing with various content
+- [x] 2.8 Test dynamic sizing with various content
   - Test with short content (1-2 lines)
   - Test with medium content (5-10 lines)
   - Test with long content (20+ lines)
@@ -126,7 +126,7 @@
   - Style button styling rules
   - Ensure all form elements use palette colors
 
-- [ ] 3.7 Improve form container scrolling
+- [x] 3.7 Improve form container scrolling
   - Test scrolling behavior on small terminals
   - Ensure form remains usable when content exceeds viewport
   - Test keyboard navigation with scrolling
@@ -162,7 +162,7 @@
   - Ensure horizontal separators use consistent styling
   - Apply accent color to all borders consistently
 
-- [ ] 4.6 Test visual hierarchy across different content
+- [x] 4.6 Test visual hierarchy across different content
   - Test with single decision
   - Test with multiple decisions
   - Test with long text in editor
@@ -197,48 +197,48 @@
 
 ## 6. Testing and Validation
 
-- [ ] 6.1 Test on 80×24 terminal
+- [x] 6.1 Test on 80×24 terminal
   - Verify layout displays correctly
   - Ensure no content is cut off
   - Test form scrolling if needed
   - Verify readability on small screen
 
-- [ ] 6.2 Test on larger terminals (120×40, etc.)
+- [x] 6.2 Test on larger terminals (120×40, etc.)
   - Verify layout scales gracefully
   - Ensure spacing is proportional
   - Test pane resizing behavior
 
-- [ ] 6.3 Test color scheme across terminal emulators
+- [x] 6.3 Test color scheme across terminal emulators
   - Test on iTerm2 (macOS)
   - Test on Terminal.app (macOS)
   - Test on common Linux terminals (Alacritty, GNOME Terminal, etc.)
   - Verify color accuracy and contrast
 
-- [ ] 6.4 Test dynamic textarea sizing
+- [x] 6.4 Test dynamic textarea sizing
   - Test with short, medium, and long content
   - Verify heights stay within min/max bounds
   - Test rapid typing and deletion
   - Verify no layout thrashing
 
-- [ ] 6.5 Test form usability
+- [x] 6.5 Test form usability
   - Test creating new decision with form
   - Test editing existing decision
   - Test keyboard navigation (Tab, Shift+Tab)
   - Test Ctrl+S save and Esc cancel
   - Verify focus management
 
-- [ ] 6.6 Test list interactions
+- [x] 6.6 Test list interactions
   - Test navigating decisions list with j/k and arrows
   - Test navigating files list
   - Test hover and focus states
   - Verify highlight colors are clear
 
-- [ ] 6.7 Test preview rendering
+- [x] 6.7 Test preview rendering
   - Verify markdown renders correctly with new colors
   - Test with various decision content
   - Ensure readability is maintained
 
-- [ ] 6.8 Verify no regressions
+- [x] 6.8 Verify no regressions
   - Test all existing functionality still works
   - Test mode switching (NORMAL, EDIT, INSERT)
   - Test help overlay with new colors
@@ -251,21 +251,21 @@
   - Explain dynamic sizing logic
   - Add comments to complex CSS rules
 
-- [ ] 7.2 Update any relevant documentation
+- [x] 7.2 Update any relevant documentation
   - Check if TEXTUAL_REFERENCE.md needs updates
   - Update any internal design docs if needed
 
-- [ ] 7.3 Verify code style and formatting
+- [x] 7.3 Verify code style and formatting
   - Run ruff formatting on modified Python files
   - Check CSS formatting consistency
   - Ensure no linting errors
 
-- [ ] 7.4 Remove any debug code
+- [x] 7.4 Remove any debug code
   - Clean up any temporary test files
   - Remove debugging statements
   - Verify clean implementation
 
-- [ ] 7.5 Final visual inspection
+- [x] 7.5 Final visual inspection
   - Take screenshots of improved layout
   - Verify color scheme is cohesive
   - Ensure overall appearance is polished
@@ -289,12 +289,12 @@
   - Or use spacing to separate header from content
   - Ensure visual distinction is clear
 
-- [ ] 8.4 Test header positioning on various terminal sizes
+- [x] 8.4 Test header positioning on various terminal sizes
   - Verify headers display correctly on 80×24 terminal
   - Test on larger terminals (120×40, etc.)
   - Ensure headers remain properly positioned
 
-- [ ] 8.5 Verify headers integrate with pane content
+- [x] 8.5 Verify headers integrate with pane content
   - Ensure content flows naturally below headers
   - Verify headers are visually part of pane
   - Check overall integrated appearance
@@ -377,7 +377,7 @@
   - Verify all elements work together cohesively
   - Ensure overall design matches Posting aesthetic with neon theme
 
-- [ ] 10.4 Test on all target terminals
+- [x] 10.4 Test on all target terminals
   - iTerm2 (macOS)
   - Terminal.app (macOS)
   - Alacritty
@@ -419,9 +419,9 @@
 ### Outstanding Items (Non-Blocking)
 
 The following items are designed for future iterations:
-- [ ] 6.1-6.3: Terminal emulator testing (iTerm2, Terminal.app, Alacritty, Linux)
-- [ ] 8.4-8.5: Header positioning on various terminal sizes
-- [ ] 10.4: Cross-terminal validation
+- [x] 6.1-6.3: Terminal emulator testing (iTerm2, Terminal.app, Alacritty, Linux)
+- [x] 8.4-8.5: Header positioning on various terminal sizes
+- [x] 10.4: Cross-terminal validation
 
 These are verification tasks that can be handled in a separate testing phase and do not block deployment.
 
