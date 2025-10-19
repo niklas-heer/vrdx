@@ -307,19 +307,12 @@ class FormBasedDecisionEditor(Static):
         """Compose the form layout.
 
         Creates a vertical layout with:
-        1. Header showing decision ID (updated when editing)
-        2. Scrollable form content with all input fields on same line as labels
-        3. Button row with Save and Cancel actions
+        1. Scrollable form content with all input fields on same line as labels
+        2. Button row with Save and Cancel actions
 
         The form uses a scrollable container to handle content that exceeds
-        available screen height, with visual separators between sections.
+        available screen height.
         """
-        # Header with decision ID
-        yield Label(
-            f"Create New Decision #{self.decision_id}",
-            id="editor-header",
-        )
-
         # Scrollable form content
         with Vertical(id="form-scroll"):
             # Use Grid for consistent label/input alignment
@@ -422,15 +415,6 @@ class FormBasedDecisionEditor(Static):
         making it ready for immediate user interaction, with
         entrance animations for visual polish.
         """
-        # Animate header fade-in
-        header = self.query_one("#editor-header", Label)
-        header.styles.animate(
-            "opacity",
-            value=1.0,
-            duration=0.5,
-            easing="in_out_cubic",
-        )
-
         # Animate form sections with staggered entrance
         sections = self.query(".form-section")
         for i, section in enumerate(sections):
@@ -638,7 +622,6 @@ class FormBasedDecisionEditor(Static):
         Loads all decision fields from the DecisionRecord into the form fields:
         - Copies title, decision, context, and consequences text
         - Updates status dropdown to show current decision status
-        - Updates header to show "Edit" mode instead of "Create New"
         - Sets is_new_decision flag to False
 
         Args:
@@ -658,10 +641,6 @@ class FormBasedDecisionEditor(Static):
         self.current_status = record.status
         if self._status_select:
             self._status_select.value = record.status
-
-        # Update header to show "Edit" instead of "Create New"
-        header = self.query_one("#editor-header", Label)
-        header.update(f"Edit Decision #{self.decision_id}")
 
     def set_status(self, status: str) -> None:
         """Update the status display.

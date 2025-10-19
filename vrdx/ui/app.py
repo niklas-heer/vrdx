@@ -530,12 +530,6 @@ class VrdxApp(App[None]):
         self._editor.current_status = decision_state.record.status
         self._editor.is_new_decision = False
         # Clear and prepare form for editing
-        try:
-            header = self._editor.query_one("#editor-header", Label)
-            header.update(f"Edit Decision #{decision_state.record.id}")
-        except Exception:
-            # Header widget might not be available, continue anyway
-            pass
         self._editor.set_existing_decision_data(decision_state.record)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()
