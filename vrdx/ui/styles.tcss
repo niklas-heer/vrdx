@@ -144,7 +144,7 @@ FormBasedDecisionEditor {
     layout: grid;
     grid-size: 2;
     grid-columns: 15 1fr;
-    grid-gutter: 1 1;
+    grid-gutter: 0 1;
 }
 
 .form-section {

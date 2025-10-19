@@ -292,6 +292,18 @@ class VrdxApp(App[None]):
         self.focus_pane(PaneId.DECISIONS)
         self.refresh_panes()
         self._load_most_recent_decision()
+        self._update_editor_header()
+
+    def _update_editor_header(self) -> None:
+        """Update the editor pane header with current decision info."""
+        if self._editor.is_new_decision:
+            self._editor.border_title = (
+                f"[3] Editor — Create Decision #{self._editor.decision_id}"
+            )
+        else:
+            self._editor.border_title = (
+                f"[3] Editor — Edit Decision #{self._editor.decision_id}"
+            )
 
     def _initialize_files(self) -> None:
         base_directory = self.app_state.base_directory
@@ -464,6 +476,7 @@ class VrdxApp(App[None]):
         # Reset the form with the calculated ID and user-selected status
         # This clears any previous form state and initializes new decision fields
         self._editor.reset_for_new_decision(self._pending_new_decision_id, status)
+        self._update_editor_header()
 
         # Set editor mode to edit-new for proper behavior tracking
         self._editor_mode = "edit-new"
@@ -526,6 +539,7 @@ class VrdxApp(App[None]):
         self._editor.set_existing_decision_data(decision_state.record)
         self.focus_pane(PaneId.EDITOR)
         self._update_status_bar()
+        self._update_editor_header()
 
     def _handle_form_saved(self, form_data: FormData) -> None:
         """Handle form saved event.

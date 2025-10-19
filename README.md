@@ -140,11 +140,9 @@ just run
 ## Decision Records
 
 <!-- vrdx start -->
-
 ### 1 Distribution Strategy: Use uv for Python-based Distribution Only
 * **Status**: ✅ Accepted
 * **Decision**: Distribute vrdx exclusively via `uv tool install`. No binary compilation.
 * **Context**: Binary compilation adds unnecessary overhead—slow builds (10-45 min), bloated executables (30-800MB), and startup penalty (200-500ms+)—without real benefit. For an I/O-bound TUI app, Python's fast startup (~80-120ms) and `uv`'s seamless distribution better serve both users and development velocity. Target audience (developers) already has Python installed.
 * **Consequences**: Zero compilation time, small footprint (~10MB), fast startup, seamless updates—requires Python installed (acceptable tradeoff for target audience).
-
 <!-- vrdx end -->
