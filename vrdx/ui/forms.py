@@ -340,6 +340,7 @@ class FormBasedDecisionEditor(Static):
                     status_options,
                     value=self.current_status,
                     id="status-select",
+                    compact=True,
                 )
                 yield self._status_select
 
