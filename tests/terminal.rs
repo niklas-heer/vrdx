@@ -378,3 +378,290 @@ fn command_line_help_and_errors_do_not_emit_terminal_control_codes() {
         .unwrap();
     assert!(!result.status.success());
 }
+
+#[expect(
+    clippy::unwrap_used,
+    reason = "Fixture creation errors must fail the terminal test."
+)]
+fn seed_record(root: &Path, file: &str, id: u64, title: &str) {
+    let path = root.join(file);
+    let mut document = if path.exists() {
+        vrdx::document::Document::load(&path).unwrap()
+    } else {
+        vrdx::document::Document::new(path)
+    };
+    let mut record = vrdx::document::Record::new(id);
+    record.title = title.into();
+    document.save_record(&record).unwrap();
+}
+
+#[test]
+fn delete_confirmation_defaults_to_cancel_and_can_remove_last_record() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "DECISIONS.md", 1, "Delete me");
+    let mut session = Session::start(root.path());
+    session.send(b"d");
+    session.wait_for("Confirm deletion");
+    session.send(b"\r");
+    session.wait_for("Deletion cancelled");
+    assert_eq!(
+        vrdx::document::Document::load(root.path().join("DECISIONS.md"))
+            .unwrap()
+            .records
+            .len(),
+        1
+    );
+    session.send(b"d");
+    session.wait_for("Confirm deletion");
+    session.send(b"y");
+    session.wait_for("Deleted decision #1");
+    assert_eq!(
+        vrdx::document::Document::load(root.path().join("DECISIONS.md"))
+            .unwrap()
+            .records
+            .len(),
+        0
+    );
+    session.exit(b"q");
+}
+
+#[test]
+fn reorder_and_global_search_keep_file_and_record_identity() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Alpha");
+    seed_record(root.path(), "A.md", 2, "Beta");
+    seed_record(root.path(), "B.md", 1, "Needle Unicode 界");
+    let mut session = Session::start(root.path());
+    session.send(b"J");
+    session.wait_for("Moved decision #2");
+    let document = vrdx::document::Document::load(root.path().join("A.md")).unwrap();
+    assert_eq!(
+        document
+            .records
+            .iter()
+            .map(|record| record.id)
+            .collect::<Vec<_>>(),
+        vec![1, 2]
+    );
+    session.send(b"/");
+    session.wait_for("Search:");
+    session.type_text("Needle");
+    session.wait_for("Search: Needle");
+    session.send(b"\r");
+    session.wait_for("Selected B.md#1");
+    session.send(b"\r");
+    session.wait_for("EDIT #1");
+    session.type_text(" found");
+    session.send(b"\x13");
+    session.wait_for("Saved decision #1 to B.md");
+    assert_eq!(
+        vrdx::document::Document::load(root.path().join("B.md"))
+            .unwrap()
+            .records
+            .first()
+            .unwrap()
+            .title,
+        "Needle Unicode 界 found"
+    );
+    session.exit(b"q");
+    let mut reopened = Session::start(root.path());
+    reopened.wait_for("#1 Alpha");
+    reopened.exit(b"q");
+}
+
+#[test]
+fn repository_template_creates_an_explicitly_saved_draft() {
+    let root = TempDir::new().unwrap();
+    std::fs::create_dir_all(root.path().join(".vrdx/templates")).unwrap();
+    seed_record(
+        root.path(),
+        ".vrdx/templates/architecture.md",
+        88,
+        "Template architecture",
+    );
+    let mut session = Session::start(root.path());
+    session.send(b"t");
+    session.wait_for("Templates");
+    session.wait_for("architecture");
+    session.send(b"\r");
+    session.wait_for("Template architecture loaded");
+    assert!(!root.path().join("DECISIONS.md").exists());
+    session.send(b"\x13");
+    session.wait_for("Saved decision");
+    assert_eq!(
+        vrdx::document::Document::load(root.path().join("DECISIONS.md"))
+            .unwrap()
+            .records
+            .first()
+            .unwrap()
+            .title,
+        "Template architecture"
+    );
+    session.exit(b"q");
+}
+
+#[test]
+fn relationship_is_persisted_then_followed_by_identity() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Source");
+    seed_record(root.path(), "B.md", 7, "Target");
+    let mut session = Session::start(root.path());
+    session.send(b"l");
+    session.wait_for("Relationships");
+    session.send(b"a");
+    session.wait_for("Add relationship");
+    session.send(b"\r");
+    session.wait_for("Relationship added to draft");
+    session.send(b"\x13");
+    session.wait_for("Saved decision #1");
+    session.send(b"l");
+    session.wait_for("Relationships");
+    session.wait_for("B.md#7");
+    session.send(b"\r");
+    session.wait_for("Selected B.md#7");
+    session.exit(b"q");
+    assert!(
+        std::fs::read_to_string(root.path().join("A.md"))
+            .unwrap()
+            .contains("vrdx:B.md#7")
+    );
+}
+
+#[test]
+fn explicit_merge_preserves_disjoint_external_change() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Original");
+    let mut session = Session::start(root.path());
+    session.send(b"\r");
+    session.wait_for("EDIT #1");
+    session.type_text(" local");
+    let path = root.path().join("A.md");
+    let mut disk = vrdx::document::Document::load(&path).unwrap();
+    let mut record = disk.records.first().unwrap().clone();
+    record.context = "External context".into();
+    disk.save_record(&record).unwrap();
+    session.send(b"\x13");
+    session.wait_for("Save failed:");
+    session.send(b"\x1bm");
+    session.wait_for("Saved decision #1");
+    let merged = vrdx::document::Document::load(path).unwrap();
+    assert_eq!(merged.records.first().unwrap().title, "Original local");
+    assert_eq!(merged.records.first().unwrap().context, "External context");
+    session.exit(b"q");
+}
+
+#[test]
+fn explicit_merge_conflict_retains_the_editable_draft() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Original");
+    let mut session = Session::start(root.path());
+    session.send(b"\r");
+    session.wait_for("EDIT #1");
+    session.type_text(" local");
+    let path = root.path().join("A.md");
+    let mut disk = vrdx::document::Document::load(&path).unwrap();
+    let mut record = disk.records.first().unwrap().clone();
+    record.title = "External title".into();
+    disk.save_record(&record).unwrap();
+    session.send(b"\x1bm");
+    session.wait_for("Save failed:");
+    session.wait_for("Original local");
+    assert_eq!(
+        vrdx::document::Document::load(path)
+            .unwrap()
+            .records
+            .first()
+            .unwrap()
+            .title,
+        "External title"
+    );
+    session.send(b"\x1b");
+    session.wait_for("Editing cancelled");
+    session.exit(b"q");
+}
+
+#[test]
+fn git_history_inspects_an_earlier_record_without_modifying_disk() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Historical title");
+    for arguments in [
+        vec!["init", "-q"],
+        vec!["add", "A.md"],
+        vec![
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "First decision",
+        ],
+    ] {
+        assert!(
+            std::process::Command::new("git")
+                .args(arguments)
+                .current_dir(root.path())
+                .status()
+                .unwrap()
+                .success()
+        );
+    }
+    let path = root.path().join("A.md");
+    let mut disk = vrdx::document::Document::load(&path).unwrap();
+    let mut record = disk.records.first().unwrap().clone();
+    record.title = "Current title".into();
+    disk.save_record(&record).unwrap();
+    let mut session = Session::start(root.path());
+    session.send(b"h");
+    session.wait_for("Git history");
+    session.wait_for("First decision");
+    session.send(b"\r");
+    session.wait_for("Historical title");
+    session.send(b"\x1b");
+    session.wait_for("Git history");
+    session.send(b"\x1b");
+    session.wait_absent("Git history");
+    session.exit(b"q");
+    assert_eq!(
+        vrdx::document::Document::load(path)
+            .unwrap()
+            .records
+            .first()
+            .unwrap()
+            .title,
+        "Current title"
+    );
+}
+
+#[test]
+fn mouse_change_status_preserves_fields_and_uppercase_n_creates() {
+    let root = TempDir::new().unwrap();
+    seed_record(root.path(), "A.md", 1, "Original");
+    let mut session = Session::start(root.path());
+    session.send(b"\r");
+    session.wait_for("EDIT #1");
+    session.type_text(" edited");
+    session.click_text("Change");
+    session.wait_for("Confirm");
+    session.send(b"\x1b[B\r");
+    session.wait_absent("Confirm");
+    session.send(b"\x13");
+    session.wait_for("Saved decision #1");
+    let document = vrdx::document::Document::load(root.path().join("A.md")).unwrap();
+    assert_eq!(document.records.first().unwrap().title, "Original edited");
+    assert!(
+        document
+            .records
+            .first()
+            .unwrap()
+            .status
+            .contains("Accepted")
+    );
+    session.send(b"N");
+    session.wait_for("Confirm");
+    session.send(b"\r");
+    session.wait_for("NEW #2");
+    session.send(b"\x1b");
+    session.wait_for("Editing cancelled");
+    session.exit(b"q");
+}

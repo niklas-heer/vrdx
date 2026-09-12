@@ -10,7 +10,10 @@ use crossterm::event::{
 };
 use ratatui::{Frame, layout::Rect};
 
-use crate::document::{Document, Record};
+use crate::{
+    document::{Document, Record},
+    repository::Repository,
+};
 
 pub(crate) const STATUSES: [&str; 5] = [
     "📝 Draft",
@@ -214,6 +217,12 @@ pub(crate) enum Action {
     File(usize),
     Decision(usize),
     Edit,
+    Delete,
+    Move(bool),
+    Search,
+    Templates,
+    Links,
+    History,
 }
 
 #[derive(Clone, Debug)]
@@ -228,6 +237,37 @@ pub(crate) enum Popup {
         selected: usize,
     },
     Help,
+    Delete {
+        id: u64,
+    },
+    Search {
+        query: TextBuffer,
+        selected: usize,
+    },
+    Templates {
+        names: Vec<String>,
+        selected: usize,
+    },
+    Links {
+        targets: Vec<(String, u64, String)>,
+        selected: usize,
+        adding: bool,
+    },
+    History {
+        entries: Vec<(String, String)>,
+        selected: usize,
+        offset: usize,
+        has_more: bool,
+    },
+    Historical {
+        title: String,
+        text: String,
+        scroll: u16,
+        entries: Vec<(String, String)>,
+        selected: usize,
+        offset: usize,
+        has_more: bool,
+    },
 }
 
 /// All mutable UI state. Terminal setup and restoration belong to the caller.
@@ -245,6 +285,8 @@ pub struct App {
     pub(crate) preview_scroll: u16,
     pub(crate) save_rect: Rect,
     pub(crate) cancel_rect: Rect,
+    pub(crate) status_rect: Rect,
+    pub(crate) viewport: Rect,
     pub(crate) no_color: bool,
     /// Set when a quit request has been accepted.
     pub quit: bool,
@@ -277,6 +319,8 @@ impl App {
             preview_scroll: 0,
             save_rect: Rect::default(),
             cancel_rect: Rect::default(),
+            status_rect: Rect::default(),
+            viewport: Rect::default(),
             no_color: std::env::var_os("NO_COLOR").is_some(),
             quit: false,
         };
@@ -376,6 +420,21 @@ impl App {
                 self.preview_scroll = 0;
             }
             Action::Edit => self.edit_selected(),
+            Action::Delete => {
+                if let Some(record) = self.current_record() {
+                    self.popup = Some(Popup::Delete { id: record.id });
+                }
+            }
+            Action::Move(down) => self.reorder(down),
+            Action::Search => {
+                self.popup = Some(Popup::Search {
+                    query: TextBuffer::default(),
+                    selected: 0,
+                });
+            }
+            Action::Templates => self.open_templates(),
+            Action::Links => self.open_links(false),
+            Action::History => self.open_history(),
             Action::File(_) | Action::Decision(_) => {}
         }
     }
@@ -435,6 +494,10 @@ impl App {
     }
 
     fn save(&mut self) -> bool {
+        self.persist(false)
+    }
+
+    fn persist(&mut self, merge: bool) -> bool {
         let Some(draft) = self.draft.as_ref() else {
             return false;
         };
@@ -463,7 +526,11 @@ impl App {
             .iter_mut()
             .find(|document| document.path == path)
         {
-            document.save_record(&record)
+            if merge {
+                document.merge_record(&record)
+            } else {
+                document.save_record(&record)
+            }
         } else {
             let mut document = Document::new(path.clone());
             document
@@ -511,6 +578,12 @@ impl App {
     pub fn handle_event(&mut self, event: Event) {
         match event {
             Event::Key(key) if key.kind != KeyEventKind::Release => self.handle_key(key),
+            Event::Paste(text) if matches!(self.popup, Some(Popup::Search { .. })) => {
+                if let Some(Popup::Search { query, selected }) = self.popup.as_mut() {
+                    query.insert(&text, true);
+                    *selected = 0;
+                }
+            }
             Event::Paste(text) if self.popup.is_none() && self.pane == Pane::Editor => {
                 if let Some(draft) = self.draft.as_mut() {
                     let single_line = draft.field == 0;
@@ -529,6 +602,8 @@ impl App {
                     self.save();
                 } else if self.cancel_rect.contains(position) {
                     self.cancel();
+                } else if self.status_rect.contains(position) {
+                    self.choose_status();
                 }
             }
             _ => {}
@@ -553,6 +628,10 @@ impl App {
                 _ => {}
             }
         }
+        if key.modifiers.contains(KeyModifiers::ALT) && key.code == KeyCode::Char('m') {
+            self.persist(true);
+            return;
+        }
         if key.modifiers.contains(KeyModifiers::ALT)
             && let Some(pane) = number_pane(key.code)
         {
@@ -569,8 +648,18 @@ impl App {
         }
         match key.code {
             KeyCode::Char('q') => self.request(Action::Quit),
-            KeyCode::Char('n') => self.request(Action::New),
+            KeyCode::Char('n' | 'N') => self.request(Action::New),
             KeyCode::Char('r') => self.request(Action::Refresh),
+            KeyCode::Char('d') => self.request(Action::Delete),
+            KeyCode::Char('J') => self.request(Action::Move(true)),
+            KeyCode::Char('K') => self.request(Action::Move(false)),
+            KeyCode::Char('/') => self.request(Action::Search),
+            KeyCode::Char('t') => self.request(Action::Templates),
+            KeyCode::Char('l') => self.request(Action::Links),
+            KeyCode::Char('h') => self.request(Action::History),
+            KeyCode::Char('m') => {
+                self.persist(true);
+            }
             KeyCode::Char('?') => self.popup = Some(Popup::Help),
             KeyCode::Char('s') => {
                 self.save();
@@ -645,17 +734,7 @@ impl App {
                         KeyCode::Enter | KeyCode::Char(' ') | KeyCode::Down | KeyCode::Up
                     )
                 {
-                    let selected = self
-                        .draft
-                        .as_ref()
-                        .and_then(|draft| {
-                            STATUSES.iter().position(|status| *status == draft.status)
-                        })
-                        .unwrap_or(0);
-                    self.popup = Some(Popup::Status {
-                        selected,
-                        target: None,
-                    });
+                    self.choose_status();
                 } else if field >= 5 && matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
                     if field == 5 {
                         self.save();
@@ -669,6 +748,19 @@ impl App {
                 }
             }
         }
+    }
+
+    fn choose_status(&mut self) {
+        let selected = self
+            .draft
+            .as_ref()
+            .and_then(|draft| STATUSES.iter().position(|status| *status == draft.status))
+            .unwrap_or(0);
+        self.popup = Some(Popup::Status {
+            selected,
+            target: None,
+        });
+        self.pane = Pane::Editor;
     }
 
     fn popup_key(&mut self, key: KeyEvent) {
@@ -739,6 +831,433 @@ impl App {
                     }
                 }
             }
+            other => self.workflow_key(other, key),
+        }
+    }
+
+    fn workflow_key(&mut self, popup: Popup, key: KeyEvent) {
+        match popup {
+            Popup::Delete { id } => match key.code {
+                KeyCode::Char('y' | 'Y') => self.delete(id),
+                KeyCode::Esc | KeyCode::Enter | KeyCode::Char('n' | 'N') => {
+                    self.status = "Deletion cancelled.".into();
+                }
+                _ => self.popup = Some(Popup::Delete { id }),
+            },
+            Popup::Search {
+                mut query,
+                mut selected,
+            } => {
+                match key.code {
+                    KeyCode::Esc => return,
+                    KeyCode::Enter => {
+                        if let Some((file, id, _)) =
+                            self.search_results(&query.text()).get(selected).cloned()
+                        {
+                            self.select_identity(&file, id);
+                        }
+                        return;
+                    }
+                    KeyCode::Down => {
+                        selected =
+                            move_index(selected, self.search_results(&query.text()).len(), true);
+                    }
+                    KeyCode::Up => selected = selected.saturating_sub(1),
+                    _ => {
+                        query.key(key, true);
+                        selected = 0;
+                    }
+                }
+                self.popup = Some(Popup::Search { query, selected });
+            }
+            Popup::Templates { names, selected } => {
+                if key.code == KeyCode::Enter {
+                    if let Some(name) = names.get(selected) {
+                        self.use_template(name);
+                    }
+                } else if key.code != KeyCode::Esc {
+                    let selected = popup_index(selected, names.len(), key.code);
+                    self.popup = Some(Popup::Templates { names, selected });
+                }
+            }
+            Popup::Links {
+                targets,
+                selected,
+                adding,
+            } => match key.code {
+                KeyCode::Esc => {}
+                KeyCode::Char('a') => self.open_links(true),
+                KeyCode::Enter => {
+                    if let Some((file, id, _)) = targets.get(selected) {
+                        if adding {
+                            self.add_link(file, *id);
+                        } else {
+                            self.select_identity(file, *id);
+                        }
+                    }
+                }
+                _ => {
+                    let selected = popup_index(selected, targets.len(), key.code);
+                    self.popup = Some(Popup::Links {
+                        targets,
+                        selected,
+                        adding,
+                    });
+                }
+            },
+            other => self.history_key(other, key),
+        }
+    }
+
+    fn history_key(&mut self, popup: Popup, key: KeyEvent) {
+        match popup {
+            Popup::History {
+                entries,
+                selected,
+                offset,
+                has_more,
+            } => {
+                if key.code == KeyCode::Char('n') && has_more {
+                    let next_offset = offset.saturating_add(entries.len());
+                    self.popup = Some(Popup::History {
+                        entries,
+                        selected,
+                        offset,
+                        has_more,
+                    });
+                    self.history_at(next_offset);
+                } else if key.code == KeyCode::Char('p') && offset > 0 {
+                    self.popup = Some(Popup::History {
+                        entries,
+                        selected,
+                        offset,
+                        has_more,
+                    });
+                    self.history_at(offset.saturating_sub(200));
+                } else if key.code == KeyCode::Enter {
+                    if let Some((revision, summary)) = entries.get(selected) {
+                        let result = self.repository().and_then(|repository| {
+                            repository.historical(
+                                &self.current_file(),
+                                self.current_record().map_or(0, |record| record.id),
+                                revision,
+                            )
+                        });
+                        match result {
+                            Ok(record) => {
+                                self.popup = Some(Popup::Historical {
+                                    title: format!(
+                                        "{} {summary}",
+                                        revision.chars().take(8).collect::<String>()
+                                    ),
+                                    text: format!(
+                                        "#{} {}\n{}\n\nDecision\n{}\n\nContext\n{}\n\nConsequences\n{}",
+                                        record.id,
+                                        record.title,
+                                        record.status,
+                                        record.decision,
+                                        record.context,
+                                        record.consequences
+                                    ),
+                                    scroll: 0,
+                                    entries,
+                                    selected,
+                                    offset,
+                                    has_more,
+                                });
+                            }
+                            Err(error) => {
+                                self.status = error.to_string();
+                                self.popup = Some(Popup::History {
+                                    entries,
+                                    selected,
+                                    offset,
+                                    has_more,
+                                });
+                            }
+                        }
+                    }
+                } else if key.code != KeyCode::Esc {
+                    let selected = popup_index(selected, entries.len(), key.code);
+                    self.popup = Some(Popup::History {
+                        entries,
+                        selected,
+                        offset,
+                        has_more,
+                    });
+                }
+            }
+            other => self.historical_key(other, key),
+        }
+    }
+
+    fn historical_key(&mut self, popup: Popup, key: KeyEvent) {
+        if let Popup::Historical {
+            title,
+            text,
+            mut scroll,
+            entries,
+            selected,
+            offset,
+            has_more,
+        } = popup
+        {
+            if key.code == KeyCode::Esc {
+                self.popup = Some(Popup::History {
+                    entries,
+                    selected,
+                    offset,
+                    has_more,
+                });
+            } else {
+                let maximum = crate::ui::historical_max_scroll(&text, self.viewport);
+                scroll = scroll.min(maximum);
+                match key.code {
+                    KeyCode::Down | KeyCode::Char('j') => {
+                        scroll = scroll.saturating_add(1).min(maximum);
+                    }
+                    KeyCode::Up | KeyCode::Char('k') => scroll = scroll.saturating_sub(1),
+                    KeyCode::Home => scroll = 0,
+                    KeyCode::End => scroll = maximum,
+                    _ => {}
+                }
+                self.popup = Some(Popup::Historical {
+                    title,
+                    text,
+                    scroll,
+                    entries,
+                    selected,
+                    offset,
+                    has_more,
+                });
+            }
+        }
+    }
+
+    fn repository(&self) -> Result<Repository, crate::repository::Error> {
+        Repository::new(&self.root)
+    }
+
+    fn current_file(&self) -> String {
+        self.current_document().map_or_else(
+            || "DECISIONS.md".into(),
+            |document| relative(&self.root, &document.path),
+        )
+    }
+
+    fn delete(&mut self, id: u64) {
+        let root = self.root.clone();
+        if let Some(document) = self.documents.get_mut(self.file_index) {
+            if let Err(error) = validate_target(&root, &document.path) {
+                self.status = error.to_string();
+                return;
+            }
+            match document.delete_record(id) {
+                Ok(()) => {
+                    self.decision_index = self
+                        .decision_index
+                        .min(document.records.len().saturating_sub(1));
+                    self.status = format!("Deleted decision #{id}");
+                }
+                Err(error) => self.status = format!("Delete failed: {error}"),
+            }
+        }
+    }
+
+    fn reorder(&mut self, down: bool) {
+        if let Some(document) = self.documents.get_mut(self.file_index) {
+            if let Err(error) = validate_target(&self.root, &document.path) {
+                self.status = error.to_string();
+                return;
+            }
+            if let Some(record) = document.records.get(self.decision_index) {
+                let id = record.id;
+                let destination = move_index(self.decision_index, document.records.len(), down);
+                match document.move_record(id, destination) {
+                    Ok(()) => {
+                        self.decision_index = destination;
+                        self.status = format!("Moved decision #{id}");
+                    }
+                    Err(error) => self.status = format!("Move failed: {error}"),
+                }
+            }
+        }
+    }
+
+    pub(crate) fn search_results(&self, query: &str) -> Vec<(String, u64, String)> {
+        let query = query.to_lowercase();
+        self.documents
+            .iter()
+            .flat_map(|document| {
+                let file = relative(&self.root, &document.path);
+                let query = &query;
+                document.records.iter().filter_map(move |record| {
+                    let haystack = format!(
+                        "{file} {} {} {} {} {} {}",
+                        record.id,
+                        record.title,
+                        record.status,
+                        record.decision,
+                        record.context,
+                        record.consequences
+                    )
+                    .to_lowercase();
+                    haystack
+                        .contains(query)
+                        .then(|| (file.clone(), record.id, record.title.clone()))
+                })
+            })
+            .collect()
+    }
+
+    fn select_identity(&mut self, file: &str, id: u64) {
+        if let Some((file_index, decision_index)) =
+            self.documents
+                .iter()
+                .enumerate()
+                .find_map(|(index, document)| {
+                    (relative(&self.root, &document.path) == file)
+                        .then(|| {
+                            document
+                                .records
+                                .iter()
+                                .position(|record| record.id == id)
+                                .map(|position| (index, position))
+                        })
+                        .flatten()
+                })
+        {
+            self.file_index = file_index;
+            self.decision_index = decision_index;
+            self.preview_scroll = 0;
+            self.pane = Pane::Decisions;
+            self.status = format!("Selected {file}#{id}");
+        } else {
+            self.status = format!("Decision not found: {file}#{id}. Reload with r.");
+        }
+    }
+
+    fn open_templates(&mut self) {
+        match self
+            .repository()
+            .and_then(|repository| repository.templates())
+        {
+            Ok(names) => {
+                self.popup = Some(Popup::Templates { names, selected: 0 });
+            }
+            Err(error) => self.status = error.to_string(),
+        }
+    }
+
+    fn use_template(&mut self, name: &str) {
+        match self
+            .repository()
+            .and_then(|repository| repository.template(name))
+        {
+            Ok(mut record) => {
+                let path = self.current_document().map_or_else(
+                    || self.root.join("DECISIONS.md"),
+                    |document| document.path.clone(),
+                );
+                let next = self.current_document().map_or(Ok(1), Document::next_id);
+                match next {
+                    Ok(id) => {
+                        record.id = id;
+                        let mut draft = Draft::new(path, record, true);
+                        draft.baseline = Record::new(id);
+                        self.draft = Some(draft);
+                        self.pane = Pane::Editor;
+                        self.editor_scroll = 0;
+                        self.status = format!("Template {name} loaded. Ctrl+S saves.");
+                    }
+                    Err(error) => self.status = error.to_string(),
+                }
+            }
+            Err(error) => self.status = error.to_string(),
+        }
+    }
+
+    fn open_links(&mut self, adding: bool) {
+        let Some(id) = self.current_record().map(|record| record.id) else {
+            self.status = "Select a decision first.".into();
+            return;
+        };
+        let targets = if adding {
+            self.search_results("")
+                .into_iter()
+                .filter(|(file, target_id, _)| *file != self.current_file() || *target_id != id)
+                .collect()
+        } else {
+            match self
+                .repository()
+                .and_then(|repository| repository.relationships(&self.current_file(), id))
+            {
+                Ok(links) => links
+                    .into_iter()
+                    .map(|link| (link.file, link.id, link.title))
+                    .collect(),
+                Err(error) => {
+                    self.status = error.to_string();
+                    return;
+                }
+            }
+        };
+        self.popup = Some(Popup::Links {
+            targets,
+            selected: 0,
+            adding,
+        });
+    }
+
+    fn add_link(&mut self, file: &str, id: u64) {
+        let Some(source_id) = self.current_record().map(|record| record.id) else {
+            return;
+        };
+        match self
+            .repository()
+            .and_then(|repository| repository.link(&self.current_file(), source_id, file, id))
+        {
+            Ok(link) => {
+                self.edit_selected();
+                if let Some(draft) = &mut self.draft {
+                    if !draft.context.chars.is_empty() {
+                        draft.context.insert("\n\n", false);
+                    }
+                    draft.context.insert(&link, false);
+                    draft.field = 3;
+                }
+                self.status = "Relationship added to draft. Ctrl+S saves.".into();
+            }
+            Err(error) => self.status = error.to_string(),
+        }
+    }
+
+    fn open_history(&mut self) {
+        self.history_at(0);
+    }
+
+    fn history_at(&mut self, offset: usize) {
+        match self
+            .repository()
+            .and_then(|repository| repository.history_page(&self.current_file(), offset, 200))
+        {
+            Ok(page) => {
+                if offset > 0 && page.entries.is_empty() {
+                    self.status = "No older commits remain. History may have changed.".into();
+                    return;
+                }
+                self.popup = Some(Popup::History {
+                    entries: page
+                        .entries
+                        .into_iter()
+                        .map(|entry| (entry.revision, entry.summary))
+                        .collect(),
+                    selected: 0,
+                    offset,
+                    has_more: page.has_more,
+                });
+            }
+            Err(error) => self.status = error.to_string(),
         }
     }
 
@@ -1150,6 +1669,98 @@ mod tests {
         check_eq!(
             app.draft.as_ref().map(|draft| draft.decision.text()),
             Some("first\nsecond 界".into())
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn search_cancellation_restores_selection_and_escape_does_not_drop_a_guarded_draft()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let directory = tempfile::tempdir()?;
+        seed(directory.path(), "Original")?;
+        let mut document = Document::new(directory.path().join("OTHER.md"));
+        let mut record = Record::new(0);
+        record.title = "Needle".into();
+        document.save_record(&record)?;
+        let mut app = App::new(directory.path().to_path_buf())?;
+        let original = app.current_file();
+        press(&mut app, KeyCode::Char('/'));
+        app.handle_event(Event::Paste("Needle".into()));
+        check_eq!(app.search_results("Needle").len(), 1);
+        check_eq!(app.current_file(), original);
+        press(&mut app, KeyCode::Esc);
+        check_eq!(app.current_file(), original);
+        press(&mut app, KeyCode::Enter);
+        app.handle_event(Event::Paste(" changed".into()));
+        app.pane = Pane::Decisions;
+        for shortcut in ['/', 'd', 'J', 't', 'l', 'h'] {
+            press(&mut app, KeyCode::Char(shortcut));
+            check!(matches!(app.popup, Some(Popup::Guard { .. })));
+            press(&mut app, KeyCode::Esc);
+            check!(app.current_dirty());
+            check_eq!(app.current_file(), original);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn deleting_a_stale_record_preserves_external_edit() -> Result<(), Box<dyn std::error::Error>> {
+        let directory = tempfile::tempdir()?;
+        let path = seed(directory.path(), "Original")?;
+        let mut app = App::new(directory.path().to_path_buf())?;
+        press(&mut app, KeyCode::Char('d'));
+        let mut document = Document::load(&path)?;
+        let mut record = document
+            .records
+            .first()
+            .cloned()
+            .ok_or_else(|| io::Error::other("Missing fixture"))?;
+        record.context = "Concurrent edit".into();
+        document.save_record(&record)?;
+        press(&mut app, KeyCode::Char('y'));
+        check!(app.status.starts_with("Delete failed:"));
+        check_eq!(
+            Document::load(&path)?
+                .records
+                .first()
+                .map(|record| record.context.clone()),
+            Some("Concurrent edit".into())
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn history_scroll_is_bounded_and_an_exhausted_page_cannot_advance()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let directory = tempfile::tempdir()?;
+        let mut app = App::new(directory.path().to_path_buf())?;
+        app.viewport = Rect::new(0, 0, 80, 24);
+        let text = "History line\n".repeat(50);
+        app.popup = Some(Popup::Historical {
+            title: "History".into(),
+            text: text.clone(),
+            scroll: 0,
+            entries: vec![("revision".into(), "subject".into())],
+            selected: 0,
+            offset: 0,
+            has_more: false,
+        });
+        press(&mut app, KeyCode::End);
+        let maximum = crate::ui::historical_max_scroll(&text, app.viewport);
+        check!(maximum > 0);
+        for _ in 0..10 {
+            press(&mut app, KeyCode::Down);
+        }
+        check!(matches!(app.popup, Some(Popup::Historical { scroll, .. }) if scroll == maximum));
+        press(&mut app, KeyCode::Home);
+        check!(matches!(
+            app.popup,
+            Some(Popup::Historical { scroll: 0, .. })
+        ));
+        press(&mut app, KeyCode::Esc);
+        press(&mut app, KeyCode::Char('n'));
+        check!(
+            matches!(&app.popup, Some(Popup::History { entries, offset: 0, .. }) if entries.len() == 1)
         );
         Ok(())
     }

@@ -23,7 +23,7 @@ use crossterm::{
 };
 use vrdx::app::App;
 
-const HELP: &str = "vrdx — engineering decisions in Markdown\n\nUsage: vrdx [DIRECTORY]\n\n  -h, --help       Show this help\n  -V, --version    Show the version\n\nLaunches the Ratatui editor in DIRECTORY (default: current directory).\nKeys: n new, Enter edit, 1–4 panes, r refresh, ? help, q quit.\nEditing: Tab next field, Ctrl+S save, Escape cancel, Ctrl+Q quit.\n";
+const HELP: &str = "vrdx — engineering decisions in Markdown\n\nUsage: vrdx [DIRECTORY]\n       vrdx agent COMMAND [OPTIONS]\n\n  -h, --help       Show this help\n  -V, --version    Show the version\n\nLaunches the Ratatui editor in DIRECTORY (default: current directory).\nKeys: n new, Enter edit, d delete, J/K reorder, / search, t templates, l links, h history.\nEditing: Tab next field, Ctrl+S save, Alt+m merge, Escape cancel, Ctrl+Q quit.\nUse vrdx agent --help for the headless JSON interface.\n";
 
 #[derive(Debug, PartialEq, Eq)]
 enum Command {
@@ -110,19 +110,52 @@ fn run(directory: &Path) -> Result<()> {
     result
 }
 
-fn start() -> Result<()> {
+fn start() -> Result<ExitCode> {
+    let arguments: Vec<_> = env::args_os().skip(1).collect();
+    if arguments
+        .first()
+        .is_some_and(|argument| argument == "agent")
+    {
+        return Ok(run_agent(arguments.into_iter().skip(1)));
+    }
     color_eyre::install()?;
-    match parse_args(env::args_os().skip(1))? {
+    match parse_args(arguments)? {
         Command::Help => print!("{HELP}"),
         Command::Version => println!("vrdx {}", env!("CARGO_PKG_VERSION")),
         Command::Run(directory) => run(&directory)?,
     }
-    Ok(())
+    Ok(ExitCode::SUCCESS)
+}
+
+fn run_agent(arguments: impl Iterator<Item = OsString>) -> ExitCode {
+    let arguments = arguments
+        .map(OsString::into_string)
+        .collect::<std::result::Result<Vec<_>, _>>();
+    let Ok(arguments) = arguments else {
+        println!(
+            "{}",
+            serde_json::json!({"ok": false, "schema_version": 1, "error": {"code": "usage", "message": "Agent arguments must be UTF-8"}})
+        );
+        return ExitCode::from(2);
+    };
+    match vrdx::cli::run(&arguments) {
+        Ok(result) => {
+            println!("{result}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            println!(
+                "{}",
+                serde_json::json!({"ok": false, "schema_version": 1, "error": {"code": error.code, "message": error.message}})
+            );
+            ExitCode::from(error.exit_code())
+        }
+    }
 }
 
 fn main() -> ExitCode {
     match start() {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(status) => status,
         Err(error) => {
             eprintln!("{error:?}");
             ExitCode::FAILURE

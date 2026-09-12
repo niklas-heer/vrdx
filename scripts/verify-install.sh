@@ -16,7 +16,7 @@ if "$smoke_dir/install/bin/vrdx" "$smoke_dir/missing" > "$smoke_dir/error.txt" 2
   exit 1
 fi
 test -s "$smoke_dir/error.txt"
-# The terminal harness launches this installed binary in its own temporary project.
+# Both harnesses launch this installed binary in their own temporary projects.
 VRDX_TEST_BINARY="$smoke_dir/install/bin/vrdx" cargo nextest run \
-  --locked --manifest-path "$project_dir/Cargo.toml" --test terminal
+  --locked --manifest-path "$project_dir/Cargo.toml" --test terminal --test cli
 printf '%s\n' 'Installed binary smoke test passed outside the source checkout.'

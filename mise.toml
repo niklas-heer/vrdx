@@ -34,6 +34,10 @@ run = "cargo nextest run --locked --all-features"
 description = "Run documentation tests (separate from nextest)"
 run = "cargo test --locked --doc --all-features"
 
+[tasks.contracts]
+description = "Verify Premise representation and identity contracts"
+run = "cargo nextest run --locked --test contracts"
+
 [tasks."test-e2e"]
 description = "Run the real terminal interaction tests"
 run = "cargo nextest run --locked --test terminal"

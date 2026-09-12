@@ -46,4 +46,4 @@ Minimum supported size is 80×24. Compact layout keeps actions reachable and pre
 
 Use topic branches and Conventional Commits. OpenSpec tracks approved changes; keep specifications synchronized with implementation and archive after delivery. The user's Rust/Ratatui/mise/nightly/Premise instructions supersede historical Python-only distribution decisions. references/ and archived specifications remain read-only historical context.
 
-Search/JSON commands, persistent decision relationships, and Git-history navigation are future capabilities, not current feature claims. Supported platforms remain macOS/Linux.
+Headless JSON commands, search, persistent file-and-ID relationships, repository templates, deletion/reordering, field-level three-way merge, and Git-history inspection are implemented capabilities. Supported platforms remain macOS/Linux. Premise Fielded/Keyed contracts are shared by the parser, persistence, and agent transport; Rust documentation tests remain part of the standard crate architecture.

@@ -27,6 +27,6 @@ Every accepted edit survives reopening; ordinary save failures retain draft and 
 
 Approved for implementation by the user's Rust/Ratatui/mise request, subsequently refined to pinned nightly Rust and Premise. These explicit instructions supersede the previous Python-only distribution constraint. No additional implementation approval is required.
 
-## Deferred Work
+## Follow-up Completion
 
-Search/JSON commands, durable decision relationships, Git-history navigation, and automatic conflict merge remain later milestones. No claim of portable compare-and-swap is made for independent external editors.
+The approved complete-decision-workflows change delivers search/JSON commands, durable decision relationships, templates, Git-history navigation, three-way conflict merging, and the original delete/reorder requirements. No claim of portable compare-and-swap is made for independent external editors.

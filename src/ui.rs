@@ -34,8 +34,10 @@ fn panel(title: impl Into<Line<'static>>, active: bool, no_color: bool) -> Block
 
 pub(crate) fn draw(app: &mut App, frame: &mut Frame<'_>) {
     let area = frame.area();
+    app.viewport = area;
     app.save_rect = Rect::default();
     app.cancel_rect = Rect::default();
+    app.status_rect = Rect::default();
     if area.width < 80 || area.height < 24 {
         frame.render_widget(
             Paragraph::new(
@@ -89,9 +91,9 @@ pub(crate) fn draw(app: &mut App, frame: &mut Frame<'_>) {
         draw_editor(app, frame, right);
     }
     let shortcuts = if app.draft.is_some() {
-        "Ctrl+S Save · Esc Cancel · Tab Fields · Alt+1–4 Panes · Ctrl+Q Quit"
+        "Ctrl+S Save · Alt+m Merge · Esc Cancel · Tab Fields · Ctrl+Q Quit"
     } else {
-        "1–4 Panes · j/k Move · Enter Edit · n New · r Reload · ? Help · q Quit"
+        "Enter Edit · n New · / Search · t Templates · l Links · h History · ? Help"
     };
     let lines = vec![
         Line::from(app.status.clone()),
@@ -175,13 +177,8 @@ fn draw_files(app: &App, frame: &mut Frame<'_>, area: Rect) {
     frame.render_stateful_widget(list, area, &mut state);
 }
 
-fn draw_editor(app: &mut App, frame: &mut Frame<'_>, area: Rect) {
-    let draft = app.draft.clone();
-    let record = draft
-        .as_ref()
-        .map(crate::app::Draft::record)
-        .or_else(|| app.current_record().cloned());
-    let title = draft.as_ref().map_or_else(
+fn editor_title(draft: Option<&crate::app::Draft>) -> String {
+    draft.map_or_else(
         || "[3] Editor — read only".to_owned(),
         |draft| {
             format!(
@@ -190,7 +187,16 @@ fn draw_editor(app: &mut App, frame: &mut Frame<'_>, area: Rect) {
                 draft.id
             )
         },
-    );
+    )
+}
+
+fn draw_editor(app: &mut App, frame: &mut Frame<'_>, area: Rect) {
+    let draft = app.draft.clone();
+    let record = draft
+        .as_ref()
+        .map(crate::app::Draft::record)
+        .or_else(|| app.current_record().cloned());
+    let title = editor_title(draft.as_ref());
     let block = panel(title, app.pane == Pane::Editor, app.no_color);
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -207,7 +213,7 @@ fn draw_editor(app: &mut App, frame: &mut Frame<'_>, area: Rect) {
     ];
     let labels = [
         "Title",
-        "Status · Enter to choose",
+        "Status · [Change] · Enter",
         "Decision",
         "Context",
         "Consequences",
@@ -249,6 +255,9 @@ fn draw_editor(app: &mut App, frame: &mut Frame<'_>, area: Rect) {
         } else {
             label
         };
+        if row == 1 && draft.is_some() {
+            app.status_rect = field_area;
+        }
         let block = panel((*label).to_owned(), focused, app.no_color);
         let content_area = block.inner(field_area);
         frame.render_widget(block, field_area);
@@ -510,10 +519,42 @@ fn markdown_text(source: &str, no_color: bool) -> Text<'static> {
     Text::from(lines)
 }
 
+fn draw_choices(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    title: &str,
+    items: Vec<String>,
+    selected: usize,
+    hint: &str,
+    no_color: bool,
+) {
+    let [list, footer] = Layout::vertical([Constraint::Min(1), Constraint::Length(2)]).areas(area);
+    let empty = items.is_empty();
+    let items: Vec<_> = if empty {
+        vec![ListItem::new("No entries")]
+    } else {
+        items.into_iter().map(ListItem::new).collect()
+    };
+    frame.render_stateful_widget(
+        List::new(items)
+            .block(panel(title.to_owned(), true, no_color))
+            .highlight_symbol("› ")
+            .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
+        list,
+        &mut ListState::default().with_selected((!empty).then_some(selected)),
+    );
+    frame.render_widget(Paragraph::new(hint).wrap(Wrap { trim: false }), footer);
+}
+
 fn draw_popup(app: &App, popup: &Popup, frame: &mut Frame<'_>, area: Rect) {
     let width = 68.min(area.width.saturating_sub(4));
     let height = match popup {
-        Popup::Help => 18,
+        Popup::Help
+        | Popup::Search { .. }
+        | Popup::Templates { .. }
+        | Popup::Links { .. }
+        | Popup::History { .. }
+        | Popup::Historical { .. } => 20,
         Popup::Status { .. } => 11,
         _ => 9,
     }
@@ -580,7 +621,7 @@ fn draw_popup(app: &App, popup: &Popup, frame: &mut Frame<'_>, area: Rect) {
         }
         Popup::Help => {
             let mut help = String::from(
-                "Browse: 1 Decisions · 2 Files · 3 Editor · 4 Preview\nTab / Shift+Tab switch panes; arrows or j/k move.\nEnter / Space edits the selected decision.\nn creates a decision; r reloads files; q quits.\n\nEdit: Tab / Shift+Tab switch fields and buttons.\nCtrl+S saves; Escape discards the draft.\nAlt+1–4 switches panes without dropping a draft.\nEnter opens Status; arrows choose; Enter confirms.\nCtrl+Q requests quit with unsaved-changes protection.\nPaste and Unicode text are supported.\n\nEnter / Escape closes help.",
+                "Browse: 1–4 panes · Tab switches · j/k or arrows move\nEnter edits · n/N new · t template · r reload · q quit\n/ searches all repository decisions as you type\nd delete (y confirms; Enter cancels) · J/K reorder\nl relationships: Enter follows; a adds to draft\nh history: n older / p newer · Enter inspect · Esc back\n\nEdit: Tab / Shift+Tab switch fields and buttons\nCtrl+S strict save · Alt+m explicitly merge and save\nm merges from another pane while retaining the draft\nEsc discards · Alt+1–4 panes · Ctrl+Q guarded quit\nEnter or click Change opens Status; Enter confirms\nPaste and Unicode text supported\n\nEnter / Escape closes help.",
             );
             if !app.diagnostics.is_empty() {
                 help.push_str("\n\nUnreadable files:\n");
@@ -593,6 +634,148 @@ fn draw_popup(app: &App, popup: &Popup, frame: &mut Frame<'_>, area: Rect) {
                 rectangle,
             );
         }
+        other => draw_workflow_popup(app, other, frame, rectangle),
+    }
+}
+
+fn historical_lines(text: &str, width: u16) -> Vec<String> {
+    wrapped_buffer(
+        &TextBuffer {
+            chars: text.chars().collect(),
+            cursor: 0,
+        },
+        usize::from(width),
+    )
+    .0
+}
+
+pub(crate) fn historical_max_scroll(text: &str, viewport: Rect) -> u16 {
+    let width = 68.min(viewport.width.saturating_sub(4)).saturating_sub(2);
+    let visible = 20.min(viewport.height.saturating_sub(2)).saturating_sub(2);
+    u16::try_from(
+        historical_lines(text, width)
+            .len()
+            .saturating_sub(usize::from(visible)),
+    )
+    .unwrap_or(u16::MAX)
+}
+
+fn draw_workflow_popup(app: &App, popup: &Popup, frame: &mut Frame<'_>, rectangle: Rect) {
+    match popup {
+        Popup::Delete { id } => {
+            frame.render_widget(Paragraph::new(format!("Delete decision #{id}?\n\nThis removes the decision from its Markdown file.\n\n[y] Delete    [Enter / n / Esc] Cancel (default)"))
+                .block(panel("Confirm deletion", true, app.no_color)).wrap(Wrap { trim: false }), rectangle);
+        }
+        Popup::Search { query, selected } => {
+            let results = app.search_results(&query.text());
+            let items = results
+                .iter()
+                .map(|(file, id, title)| format!("{file}#{id}  {title}"))
+                .collect();
+            draw_choices(
+                frame,
+                rectangle,
+                &format!("Search: {}", query.text()),
+                items,
+                *selected,
+                "Type to search · ↑/↓ select · Enter open · Esc cancel",
+                app.no_color,
+            );
+        }
+        Popup::Templates { names, selected } => draw_choices(
+            frame,
+            rectangle,
+            "Templates",
+            names.clone(),
+            *selected,
+            "↑/↓ select · Enter create draft · Esc cancel",
+            app.no_color,
+        ),
+        Popup::Links {
+            targets,
+            selected,
+            adding,
+        } => draw_choices(
+            frame,
+            rectangle,
+            if *adding {
+                "Add relationship"
+            } else {
+                "Relationships"
+            },
+            targets
+                .iter()
+                .map(|(file, id, title)| format!("{file}#{id}  {title}"))
+                .collect(),
+            *selected,
+            if *adding {
+                "Enter add to draft · Esc cancel"
+            } else {
+                "Enter follow · a add relationship · Esc close"
+            },
+            app.no_color,
+        ),
+        other => draw_history_popup(app, other, frame, rectangle),
+    }
+}
+
+fn draw_history_popup(app: &App, popup: &Popup, frame: &mut Frame<'_>, rectangle: Rect) {
+    match popup {
+        Popup::History {
+            entries,
+            selected,
+            offset,
+            has_more,
+        } => draw_choices(
+            frame,
+            rectangle,
+            &format!(
+                "Git history · commits {}–{}",
+                offset.saturating_add(1),
+                offset.saturating_add(entries.len())
+            ),
+            entries
+                .iter()
+                .map(|(revision, summary)| {
+                    format!("{} {summary}", revision.chars().take(8).collect::<String>())
+                })
+                .collect(),
+            *selected,
+            if *has_more {
+                "↑/↓ select · Enter inspect · n older · p newer · Esc close"
+            } else {
+                "↑/↓ select · Enter inspect · p newer · Esc close"
+            },
+            app.no_color,
+        ),
+        Popup::Historical {
+            title,
+            text,
+            scroll,
+            ..
+        } => {
+            let width = rectangle.width.saturating_sub(2);
+            let lines = historical_lines(text, width);
+            let visible = usize::from(rectangle.height.saturating_sub(2));
+            let maximum = lines.len().saturating_sub(visible);
+            let scroll = usize::from(*scroll).min(maximum);
+            let position = format!(
+                " Lines {}–{}/{} · ↑/↓ Home/End · Esc back ",
+                scroll.saturating_add(1),
+                scroll.saturating_add(visible).min(lines.len()),
+                lines.len()
+            );
+            let block =
+                panel(format!("History: {title}"), true, app.no_color).title_bottom(position);
+            let lines: Vec<_> = lines
+                .into_iter()
+                .skip(scroll)
+                .take(visible)
+                .map(Line::from)
+                .collect();
+            frame.render_widget(Paragraph::new(lines).block(block), rectangle);
+        }
+        _ => {}
     }
 }
 

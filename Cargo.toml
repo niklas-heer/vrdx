@@ -15,6 +15,9 @@ tempfile = "3.23.0"
 unicode-width = "0.2.2"
 signal-hook = "0.3.18"
 premise = "=0.1.5"
+serde_json = "1.0.149"
+serde = { version = "1.0.228", default-features = false, features = ["std"] }
+sha2 = { version = "0.10.9", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 portable-pty = "0.9.0"
@@ -27,6 +30,7 @@ harness = false
 
 [lints.rust]
 unsafe_code = "forbid"
+unknown_lints = "forbid"
 
 [lints.clippy]
 pedantic = { level = "deny", priority = -1 }

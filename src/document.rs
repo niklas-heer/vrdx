@@ -16,6 +16,7 @@ use pulldown_cmark::{Event, Parser, Tag};
 
 const START: &str = "<!-- vrdx start -->";
 const END: &str = "<!-- vrdx end -->";
+const HIGH_WATER: &str = "<!-- vrdx high-water";
 const FIELDS: [&str; 4] = ["Status", "Decision", "Context", "Consequences"];
 
 /// An editable decision. Narrative fields may be empty, including for drafts.
@@ -196,6 +197,7 @@ pub struct Document {
     baseline: Option<Vec<u8>>,
     spans: Vec<Range<usize>>,
     block: Option<Range<usize>>,
+    high_water: Option<u64>,
 }
 
 impl Document {
@@ -221,6 +223,7 @@ impl Document {
             baseline: None,
             spans: Vec::new(),
             block: None,
+            high_water: None,
         }
     }
 
@@ -229,7 +232,9 @@ impl Document {
     /// # Errors
     /// Rejects malformed markers, fields, identifiers, or ambiguous records.
     pub fn parse(path: PathBuf, source: String) -> Result<Self, Error> {
-        let block = marker_block(&source)?;
+        let excluded = code_ranges(&source);
+        let block = marker_block(&source, &excluded)?;
+        let high_water = high_water_mark(&source, block.as_ref(), &excluded)?.map(|(id, _)| id);
         let (records, spans) = match &block {
             Some(range) => parse_records(&source, range.clone())?,
             None => (Vec::new(), Vec::new()),
@@ -242,10 +247,18 @@ impl Document {
             source,
             spans,
             block,
+            high_water,
         })
     }
 
+    /// Return the exact source bytes represented by this document's snapshot.
+    #[must_use]
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+
     /// Return the next unused identifier, starting at zero.
+    /// Deleted identifiers remain reserved by persisted high-water metadata.
     ///
     /// # Errors
     /// Returns [`Error::IdOverflow`] when the largest identifier cannot increase.
@@ -253,6 +266,7 @@ impl Document {
         self.records
             .iter()
             .map(|record| record.id)
+            .chain(self.high_water)
             .max()
             .map_or(Ok(0), |id| id.checked_add(1).ok_or(Error::IdOverflow))
     }
@@ -271,6 +285,145 @@ impl Document {
         self.save_with_hook(record, || Ok(()))
     }
 
+    /// Delete a decision while preserving its surrounding source.
+    /// A high-water comment before the start marker reserves historical IDs.
+    ///
+    /// # Errors
+    /// Returns an invalid-target, conflict, or I/O error without updating the snapshot.
+    pub fn delete_record(&mut self, id: u64) -> Result<(), Error> {
+        self.check_baseline()?;
+        let index = self.record_index(id)?;
+        let span = self
+            .spans
+            .get(index)
+            .ok_or_else(|| Error::Invalid("Missing original record span".into()))?;
+        let source = splice(&self.source, span.clone(), "")?;
+        let highest = self
+            .records
+            .iter()
+            .map(|record| record.id)
+            .chain(self.high_water)
+            .max()
+            .ok_or_else(|| Error::Invalid("Cannot delete from an empty document".into()))?;
+        let source = with_high_water(&source, highest)?;
+        let parsed = Self::parse(self.path.clone(), source)?;
+        self.publish(parsed, || Ok(()))
+    }
+
+    /// Move a decision to its zero-based final index, retaining its exact bytes.
+    ///
+    /// Whitespace between records stays in its original position. Moving a
+    /// decision does not normalize headings, paragraphs, line endings, or IDs.
+    ///
+    /// # Errors
+    /// Rejects unknown IDs, out-of-range indices, conflicts, and I/O failures.
+    pub fn move_record(&mut self, id: u64, destination: usize) -> Result<(), Error> {
+        self.check_baseline()?;
+        let index = self.record_index(id)?;
+        if destination >= self.records.len() {
+            return Err(Error::Invalid(
+                "Destination index is outside the decision list".into(),
+            ));
+        }
+        if index == destination {
+            return Ok(());
+        }
+        if self.spans.len() != self.records.len() {
+            return Err(Error::Invalid(
+                "Record list no longer matches its source snapshot".into(),
+            ));
+        }
+        let mut ordered = self.spans.clone();
+        let moved = ordered.remove(index);
+        ordered.insert(destination, moved);
+        let mut source = String::with_capacity(self.source.len());
+        let mut previous = 0;
+        for (slot, span) in self.spans.iter().zip(ordered) {
+            source.push_str(slice(&self.source, previous..slot.start)?);
+            source.push_str(slice(&self.source, span)?);
+            previous = slot.end;
+        }
+        source.push_str(slice(&self.source, previous..self.source.len())?);
+        let parsed = Self::parse(self.path.clone(), source)?;
+        self.publish(parsed, || Ok(()))
+    }
+
+    /// Merge independent local and on-disk field changes using this snapshot.
+    ///
+    /// Unrelated records and document text come from the latest disk snapshot.
+    /// A successful merge refreshes this document, including when no write is
+    /// needed. New records use strict saving rather than guessing identity.
+    ///
+    /// # Errors
+    /// Conflicts when the target disappeared or both writers changed a field
+    /// differently. Validation and I/O errors preserve this snapshot and disk.
+    pub fn merge_record(&mut self, record: &Record) -> Result<(), Error> {
+        self.check_snapshot()?;
+        let original = Self::parse(self.path.clone(), self.source.clone())?;
+        if found_ref(&original.records, record.id).is_none() {
+            return self.save_record(record);
+        }
+        let latest = match Self::load(&self.path) {
+            Err(Error::Io(error)) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Err(Error::Conflict(self.path.clone()));
+            }
+            result => result?,
+        };
+        self.merge_record_against(record, latest)
+    }
+
+    /// Merge against a specific latest snapshot already verified by the caller.
+    ///
+    /// The supplied snapshot's disk baseline remains authoritative through the
+    /// final atomic publication check. This binds a caller's version precondition
+    /// to the data actually used for merging instead of silently reloading it.
+    ///
+    /// # Errors
+    /// Rejects a different document path, a stale latest snapshot, or conflicting
+    /// field changes. Failed validation and persistence preserve this document.
+    pub fn merge_record_against(&mut self, record: &Record, mut latest: Self) -> Result<(), Error> {
+        self.check_snapshot()?;
+        if self.path != latest.path && fs::canonicalize(&self.path)? != latest.path {
+            return Err(Error::Invalid(
+                "Merge snapshots must refer to the same document".into(),
+            ));
+        }
+        latest.check_baseline()?;
+        let original = Self::parse(self.path.clone(), self.source.clone())?;
+        let Some(base) = found_ref(&original.records, record.id) else {
+            return self.save_record(record);
+        };
+        let disk = found_ref(&latest.records, record.id)
+            .ok_or_else(|| Error::Conflict(self.path.clone()))?;
+        let merge = |before: &String, local: &String, external: &String| {
+            if local == before || local == external {
+                Ok(external.clone())
+            } else if external == before {
+                Ok(local.clone())
+            } else {
+                Err(Error::Conflict(self.path.clone()))
+            }
+        };
+        let merged = Record {
+            id: record.id,
+            title: merge(&base.title, &record.title, &disk.title)?,
+            status: merge(&base.status, &record.status, &disk.status)?,
+            decision: merge(&base.decision, &record.decision, &disk.decision)?,
+            context: merge(&base.context, &record.context, &disk.context)?,
+            consequences: merge(&base.consequences, &record.consequences, &disk.consequences)?,
+        };
+        latest.save_record(&merged)?;
+        *self = latest;
+        Ok(())
+    }
+
+    fn record_index(&self, id: u64) -> Result<usize, Error> {
+        self.records
+            .iter()
+            .position(|record| record.id == id)
+            .ok_or_else(|| Error::Invalid(format!("Unknown decision identifier {id}")))
+    }
+
     fn save_with_hook(
         &mut self,
         record: &Record,
@@ -281,11 +434,26 @@ impl Document {
             return Ok(());
         }
         validate_record(record)?;
+        if found_ref(&self.records, record.id).is_none()
+            && self.high_water.is_some_and(|highest| record.id <= highest)
+        {
+            return Err(Error::Invalid(
+                "Identifier is reserved by the document's deletion history".into(),
+            ));
+        }
         let updated = self.edited_source(record)?;
         let parsed = Self::parse(self.path.clone(), updated)?;
         if found_ref(&parsed.records, record.id).map(Fielded::field) != Some(record.field()) {
             return Err(Error::Invalid("The edit cannot round-trip without changing its fields; check surrounding whitespace and Markdown field syntax".into()));
         }
+        self.publish(parsed, before_replace)
+    }
+
+    fn publish(
+        &mut self,
+        parsed: Self,
+        before_replace: impl FnOnce() -> Result<(), Error>,
+    ) -> Result<(), Error> {
         let parent = self
             .path
             .parent()
@@ -318,7 +486,16 @@ impl Document {
         Ok(())
     }
 
+    fn check_snapshot(&self) -> Result<(), Error> {
+        let parsed = Self::parse(self.path.clone(), self.source.clone())?;
+        if parsed.records != self.records || parsed.has_markers != self.has_markers {
+            return Err(Error::Invalid("Document snapshot was modified directly; pass an edited Record to a mutation method instead".into()));
+        }
+        Ok(())
+    }
+
     fn check_baseline(&self) -> Result<(), Error> {
+        self.check_snapshot()?;
         match (&self.baseline, fs::read(&self.path)) {
             (Some(expected), Ok(actual)) if *expected == actual => Ok(()),
             (None, Err(error)) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -355,7 +532,7 @@ impl Document {
             return splice(&self.source, span.clone(), &rendered);
         }
         if let Some(block) = &self.block {
-            let position = self.spans.first().map_or(block.start, |span| span.start);
+            let position = self.spans.first().map_or(block.end, |span| span.start);
             let inserted = if self.spans.is_empty() {
                 format!("{newline}{rendered}{newline}")
             } else {
@@ -412,8 +589,7 @@ fn code_ranges(source: &str) -> Vec<Range<usize>> {
         .collect()
 }
 
-fn marker_block(source: &str) -> Result<Option<Range<usize>>, Error> {
-    let excluded = code_ranges(source);
+fn marker_block(source: &str, excluded: &[Range<usize>]) -> Result<Option<Range<usize>>, Error> {
     let positions = |marker: &str| {
         source
             .match_indices(marker)
@@ -435,6 +611,59 @@ fn marker_block(source: &str) -> Result<Option<Range<usize>>, Error> {
     }
 }
 
+fn high_water_mark(
+    source: &str,
+    block: Option<&Range<usize>>,
+    excluded: &[Range<usize>],
+) -> Result<Option<(u64, Range<usize>)>, Error> {
+    let mut found = None;
+    for (start, _) in source.match_indices(HIGH_WATER) {
+        if excluded.iter().any(|range| range.contains(&start)) {
+            continue;
+        }
+        let invalid = || {
+            Error::Invalid("Expected one decimal high-water comment before the start marker".into())
+        };
+        if found.is_some()
+            || block.is_none_or(|range| start >= range.start.saturating_sub(START.len()))
+        {
+            return Err(invalid());
+        }
+        let remaining = slice(source, start..source.len())?;
+        let end = remaining.find("-->").ok_or_else(invalid)?.saturating_add(3);
+        let comment = slice(remaining, 0..end)?;
+        let digits = comment
+            .strip_prefix("<!-- vrdx high-water: ")
+            .and_then(|value| value.strip_suffix(" -->"))
+            .ok_or_else(invalid)?;
+        if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+            return Err(invalid());
+        }
+        let id = digits.parse().map_err(|_| invalid())?;
+        found = Some((id, start..start.saturating_add(end)));
+    }
+    Ok(found)
+}
+
+fn with_high_water(source: &str, highest: u64) -> Result<String, Error> {
+    let excluded = code_ranges(source);
+    let block = marker_block(source, &excluded)?;
+    let marker = format!("{HIGH_WATER}: {highest} -->");
+    if let Some((_, span)) = high_water_mark(source, block.as_ref(), &excluded)? {
+        return splice(source, span, &marker);
+    }
+    let position = block
+        .ok_or_else(|| Error::Invalid("Missing start marker".into()))?
+        .start
+        .saturating_sub(START.len());
+    let newline = if source.contains("\r\n") {
+        "\r\n"
+    } else {
+        "\n"
+    };
+    splice(source, position..position, &format!("{marker}{newline}"))
+}
+
 fn lines_with_offsets(source: &str) -> impl Iterator<Item = (usize, &str)> {
     source.split_inclusive('\n').scan(0_usize, |offset, line| {
         let start = *offset;
@@ -448,6 +677,14 @@ fn heading(line: &str) -> Result<Option<(u64, String)>, Error> {
         return Ok(None);
     };
     let Some((id, title)) = rest.trim_start().split_once(char::is_whitespace) else {
+        if rest
+            .trim_start()
+            .starts_with(|character: char| character.is_ascii_digit())
+        {
+            return Err(Error::Invalid(
+                "Decision heading requires an identifier and title".into(),
+            ));
+        }
         return Ok(None);
     };
     let id = id.strip_suffix('.').unwrap_or(id);
@@ -507,9 +744,16 @@ fn parse_records(
         let absolute = block.start.saturating_add(*start);
         spans.push(absolute..absolute.saturating_add(section.len()));
     }
-    if records.is_empty() && !body.trim().is_empty() {
+    if records.is_empty()
+        && lines_with_offsets(body).any(|(offset, line)| {
+            !excluded.iter().any(|range| range.contains(&offset))
+                && FIELDS
+                    .iter()
+                    .any(|label| line.starts_with(&format!("* **{label}**:")))
+        })
+    {
         return Err(Error::Invalid(
-            "Marker block contains no valid decisions".into(),
+            "Decision fields have no valid record heading".into(),
         ));
     }
     Ok((records, spans))
