@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2024"
 description = "Capture and manage engineering decisions in repository Markdown files"
 repository = "https://github.com/niklas-heer/vrdx"
-include = ["src/**", "tests/**", "benches/**", "Cargo.toml", "Cargo.lock", "README.md", "rust-toolchain.toml", "clippy.toml"]
+include = ["/src/**/*.rs", "/tests/*.rs", "/benches/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/rust-toolchain.toml", "/clippy.toml"]
 
 [dependencies]
 ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_29"] }
