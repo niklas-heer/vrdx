@@ -1,7 +1,7 @@
 # design Specification
 
 ## Purpose
-TBD - created by archiving change design-foundations. Update Purpose after archive.
+Current requirements for design, including the approved Rust migration.
 ## Requirements
 ### Requirement: CLI TUI Decision Management
 The system SHALL provide a standalone terminal application that discovers Markdown decision records, parses structured decision content, and enables users to browse and edit those decisions without relying on external services.
@@ -17,87 +17,137 @@ The system SHALL provide a standalone terminal application that discovers Markdo
 - **THEN** the application SHALL expose the decisions for viewing and editing inside the terminal
 
 ### Requirement: Layered Architecture Boundaries
-The system SHALL maintain a layered architecture that separates CLI startup, Textual app orchestration, file discovery, decision parsing, state management, and persistence responsibilities.
+The system SHALL separate Rust CLI/terminal startup, Ratatui rendering, repository discovery, decision parsing, draft state, and persistence. Premise SHALL provide reusable named-record and keyed-lookup primitives in the domain core.
 
 #### Scenario: CLI startup initializes app state
-- **GIVEN** the user invokes the CLI with a target directory
-- **WHEN** the entrypoint resolves arguments and logging
-- **THEN** it SHALL construct an application state object and launch the Textual interface
+- **WHEN** the Rust entrypoint resolves a target directory
+- **THEN** it SHALL construct application state and launch the Ratatui interface
 
 #### Scenario: Parser and persistence isolation
-- **GIVEN** the application is parsing or rewriting decision content
-- **WHEN** marker detection or serialization is required
-- **THEN** those responsibilities SHALL be handled by dedicated parser and persistence modules, not by UI widgets
+- **WHEN** source parsing or writing is required
+- **THEN** dedicated document operations SHALL perform it independently of UI widgets
 
 ### Requirement: Pane-Oriented TUI Layout
-The Textual interface SHALL render four primary panes within an 80×24 friendly layout: decisions list, decision editor, preview, and file list, with numeric shortcuts for focus.
+The Ratatui interface SHALL provide Decisions, Files, Editor, and Preview panes within an 80×24 friendly layout. Normal layout SHALL place Decisions and Files in the left column and Editor above Preview in the right column. Compact layout MAY show Editor and Preview separately to keep editing usable, while numeric shortcuts retain access to every pane.
 
 #### Scenario: Pane layout at launch
-- **GIVEN** the TUI has started
+- **GIVEN** the TUI has started at a size sufficient for normal layout
 - **WHEN** the interface renders
-- **THEN** it SHALL display the decisions list and file list in the left column, the editor in the center, and the preview on the right
+- **THEN** Decisions and Files SHALL appear in the left column and Editor above Preview in the right column
 
 #### Scenario: Numeric pane focus
-- **GIVEN** the user presses a numeric key between 1 and 4
-- **WHEN** the corresponding pane exists
-- **THEN** the application SHALL shift focus to that pane and update the visual highlight
+- **WHEN** the user invokes a pane shortcut outside text input
+- **THEN** `1` SHALL expose and focus Decisions, `2` Files, `3` Editor, and `4` Preview
+- **AND** compact layout SHALL reveal the requested pane without discarding the active draft
 
 ### Requirement: Interaction Model Parity
-The system SHALL support lazygit-inspired keyboard interactions including `j`/`k` navigation, `space` to activate the focused item, `n` to start a new decision, `s` to save, `r` to refresh discovery, and `?` for help.
+The system SHALL support lazygit-inspired keyboard interactions including `j`/`k` navigation, `space` to edit the selected decision, `n` to start a new decision, `r` to refresh discovery, and `?` for help outside text inputs. Editing SHALL use Ctrl+S to save and Escape to cancel. Plain letters typed into form fields SHALL remain text.
 
 #### Scenario: Navigating with j and k
 - **GIVEN** the decisions list pane is focused
 - **WHEN** the user presses `j` or `k`
-- **THEN** the selection SHALL move to the next or previous decision respectively
+- **THEN** the selection SHALL move to the next or previous decision subject to the unsaved-draft guard
 
 #### Scenario: Editing and saving a decision
 - **GIVEN** a decision is selected
-- **WHEN** the user presses `space` to edit and `s` to save
-- **THEN** the editor SHALL toggle into edit mode, accept changes, and write the updated decision back through the persistence layer
+- **WHEN** the user presses `space`, edits it, and presses Ctrl+S
+- **THEN** the editor SHALL accept changes and save through the persistence layer using the same validation and outcome handling as the Save button
+
+#### Scenario: Ordinary text entry
+- **GIVEN** an editable field has focus
+- **WHEN** the user types letters used by application shortcuts
+- **THEN** those characters SHALL be inserted without triggering navigation, status changes, saving, or quitting
 
 ### Requirement: Marker Block Canonicalization
-The system SHALL treat `<!-- vrdx start -->` and `<!-- vrdx end -->` as the canonical decision block delimiters, inserting them when missing, validating their ordering, and ignoring inline-code examples wrapped in single backticks.
+The system SHALL treat `<!-- vrdx start -->` and `<!-- vrdx end -->` as the canonical decision block delimiters, validating their ordering and ignoring examples in Markdown inline code and fenced code blocks. Adding a marker block to a previously uninitialized file SHALL require user confirmation and SHALL be committed together with the first successfully saved decision.
 
 #### Scenario: Detecting canonical markers
-- **GIVEN** a Markdown file with a properly ordered marker block
+- **GIVEN** a Markdown file with a properly ordered marker block outside code examples
 - **WHEN** the application scans the file
 - **THEN** it SHALL recognize a single decision block bounded by the canonical delimiters
 
 #### Scenario: Inserting scaffold when markers absent
 - **GIVEN** a Markdown file without markers
-- **WHEN** the user agrees to add decision management
-- **THEN** the system SHALL append the canonical start marker, a blank line, and the end marker using the file’s newline convention
+- **WHEN** the user confirms initialization and successfully saves the first decision
+- **THEN** the system SHALL append the canonical marker block containing that decision using the file's newline convention
+- **AND** cancellation or failure before committing the first save SHALL leave the original file unchanged
 
 #### Scenario: Ignoring inline examples
-- **GIVEN** documentation that references the markers using inline backticks
+- **GIVEN** documentation that references markers inside Markdown inline-code spans or fenced code
 - **WHEN** the parser processes the file
-- **THEN** the inline examples SHALL NOT create marker blocks or disrupt discovery
+- **THEN** those examples SHALL NOT create marker blocks or disrupt discovery
 
 ### Requirement: Decision Template Structure
-New decisions SHALL use the template heading `### <ID> <Title>` followed by bullet-prefixed Status, Decision, Context, and Consequences fields, with default status set to `📝 Draft`.
+New decisions SHALL use the template heading `### <ID> <Title>` followed by bullet-prefixed Status, Decision, Context, and Consequences fields, with default status set to `📝 Draft`. The same validation contract SHALL apply to form submission and persisted source: title and status are nonempty, IDs are nonnegative and unique within a file, and each canonical field label occurs exactly once. Decision, Context, and Consequences values MAY be empty for any status.
 
 #### Scenario: Creating a new decision
 - **GIVEN** the user presses `n`
 - **WHEN** the editor opens with a template
-- **THEN** it SHALL pre-populate the heading, default status, and placeholder bullets for all required fields
+- **THEN** it SHALL pre-populate the next ID, default status, and placeholders for all required fields
+- **AND** placeholder text SHALL NOT be persisted as entered content
 
 #### Scenario: Maintaining descending ID order
 - **GIVEN** multiple decisions exist in a block
 - **WHEN** a new decision is saved
 - **THEN** the persistence layer SHALL insert it at the top of the block so the highest ID appears first
 
+#### Scenario: Title-only record reopens
+- **GIVEN** a decision has a valid title and status with empty narrative fields
+- **WHEN** it is saved and loaded in a new application session
+- **THEN** the record SHALL remain discoverable with identical field values
+
+#### Scenario: Ambiguous record source
+- **GIVEN** a document contains duplicate decision IDs, duplicate canonical labels, or missing canonical labels
+- **WHEN** the document is loaded or a proposed edit is validated
+- **THEN** the system SHALL report the affected file and line and SHALL prevent rewriting the ambiguous document
+- **AND** it SHALL NOT silently choose a duplicate or discard source
+
+#### Scenario: Paragraphs and code examples survive editing
+- **GIVEN** a narrative field contains paragraph breaks, indentation, or fenced code
+- **WHEN** a valid edit is saved and reopened
+- **THEN** the field's meaningful whitespace and contents SHALL survive
+- **AND** apparent decision headings or labels inside fenced code SHALL NOT be interpreted as record structure
+
+#### Scenario: Submission would change structure
+- **GIVEN** entered text would be reinterpreted as a record heading, marker, or field boundary after rendering
+- **WHEN** generated source fails validation or fails to reproduce the submitted field values
+- **THEN** the system SHALL refuse the save with a validation error and retain the draft
+
 ### Requirement: Persistence Integrity
-The system SHALL preserve non-marker content, newline styles, and existing decisions when rewriting marker blocks, while supporting reorder and delete operations initiated from the TUI.
+The system SHALL preserve non-marker content, newline styles, and unedited decision source when rewriting marker blocks. Saves SHALL validate generated records, detect observed changes to the loaded file baseline, and replace existing files atomically. A failed save before replacement MUST preserve both the original file and the active draft.
 
 #### Scenario: Saving with unchanged surroundings
-- **GIVEN** a user edits a decision body
+- **GIVEN** a user edits one decision in an existing document
 - **WHEN** the changes are saved
-- **THEN** content outside the marker block SHALL remain untouched and the original newline convention SHALL be preserved
+- **THEN** content outside the edited decision span SHALL remain byte-for-byte unchanged, including other decisions, surrounding prose, original line endings, and any UTF-8 BOM
+- **AND** newly rendered structural lines SHALL use the document's existing newline convention
 
-#### Scenario: Reordering decisions
-- **GIVEN** the user moves a decision up or down
-- **WHEN** the operation completes
-- **THEN** the block serialization SHALL reflect the new order without duplicating or dropping decisions
+#### Scenario: No-op save
+- **GIVEN** the draft values equal the saved baseline
+- **WHEN** the user saves and the file baseline is still current
+- **THEN** the system SHALL perform no file write and SHALL report a successful unchanged save
+
+#### Scenario: External edit detected before save
+- **GIVEN** a file changed after loading, including a change outside its marker block
+- **WHEN** either baseline comparison in the save transaction observes that change
+- **THEN** the save SHALL be refused as a conflict without overwriting the current file
+- **AND** the draft SHALL remain available with an actionable conflict message
+
+#### Scenario: Failure before atomic replacement
+- **GIVEN** a validated edit to an existing document
+- **WHEN** temporary writing, flushing, synchronization, or replacement fails before the destination is replaced
+- **THEN** the existing file SHALL remain unchanged and the draft SHALL remain unsaved
+- **AND** unused temporary files SHALL be cleaned up
+
+#### Scenario: Successful atomic replacement
+- **WHEN** a validated edit passes baseline checks and replacement succeeds
+- **THEN** the complete document SHALL be published through a temporary sibling and atomic replacement, preserving the original permission bits
+- **AND** the in-memory saved records and baseline SHALL be updated only after replacement succeeds
+
+#### Scenario: Invalid or missing destination
+- **GIVEN** an existing draft's file disappears, becomes unreadable, or no longer has a valid marker block
+- **WHEN** Save is requested
+- **THEN** the system SHALL retain the draft and report the relevant error without recreating or silently repairing the file
 
 ### Requirement: Future Iteration Roadmap Reference
 The specification SHALL document outstanding design milestones (status picker enhancements, Markdown preview rendering, in-app reordering polish, logging improvements, tooling updates, and CI workflows) so future proposals can reference and refine them.
@@ -111,4 +161,3 @@ The specification SHALL document outstanding design milestones (status picker en
 - **GIVEN** maintainers need to confirm historical design intent
 - **WHEN** they consult the archived spec
 - **THEN** it SHALL reflect the original goals and architecture described in the legacy design document
-

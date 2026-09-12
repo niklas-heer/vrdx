@@ -1,35 +1,4 @@
-# ui-layout Specification
-
-## Purpose
-Current requirements for ui-layout, including the approved Rust migration.
-## Requirements
-### Requirement: Prioritize Files with Decision Blocks
-The files pane SHALL list Markdown files containing `<!-- vrdx start -->` … `<!-- vrdx end -->` marker blocks before any other Markdown files and automatically select the first such file on application startup.
-
-#### Scenario: Files with marker blocks are sorted and focused
-- **GIVEN** the repository contains multiple Markdown files, some with decision marker blocks and some without
-- **WHEN** the TUI loads the files pane
-- **THEN** all files that contain decision marker blocks MUST appear before files without marker blocks
-- **AND** the first file in the list that contains a marker block MUST be selected by default
-
-### Requirement: Visualize Files Without Decision Blocks
-Markdown files that do not contain decision marker blocks SHALL remain focusable but MUST present a visually muted (grayed out) style to distinguish them from files containing decisions.
-
-#### Scenario: Files without markers render in muted style
-- **GIVEN** a Markdown file lacking decision marker blocks appears in the files pane
-- **WHEN** the files pane renders the list
-- **THEN** the entry representing that file MUST use the designated muted styling token(s)
-- **AND** the entry MUST remain selectable so users can insert a new decision block if desired
-
-### Requirement: Update Pane Numbering and Shortcuts
-Pane numbering, on-screen hints, and keyboard shortcuts SHALL map as: `1` Decisions, `2` Files, `3` Editor, `4` Preview. The Editor pane SHALL now display a form-based interface for decision creation and editing instead of a raw text editor.
-
-#### Scenario: Editor pane displays form-based interface
-- **GIVEN** a user focuses the Editor pane (press `3`)
-- **WHEN** editing a decision or creating a new one
-- **THEN** the Editor pane MUST display the form-based interface with structured fields
-- **AND** the existing pane numbering and shortcuts MUST remain unchanged
-- **AND** keyboard navigation between form fields MUST work intuitively
+## MODIFIED Requirements
 
 ### Requirement: Form-Based Decision Editor Interface
 The system SHALL provide a structured form-based editor for creating and editing decisions with distinct Title, Status, Decision, Context, and Consequences fields. The Title SHALL be a single-line input and the Status SHALL be a dropdown containing the supported status options.
@@ -148,31 +117,6 @@ The system SHALL allow status changes through the form's Status dropdown while p
 - **THEN** the dropdown MUST close without changing the previously selected status
 - **AND** the edit session MUST remain open with its other draft values unchanged
 
-### Requirement: Status Selection in New Decision Workflow
-When creating a new decision by pressing `N`, the system SHALL present the user with an interactive status selection interface before opening the editor, allowing the user to choose from the curated set of status options (📝 Draft, ✅ Accepted, ❌ Rejected, ⛔ Deprecated by …, ⬆️ Supersedes …).
-
-#### Scenario: User creates new decision with status selection
-- **WHEN** the user presses `N` with an active file containing a marker block
-- **THEN** a status selection menu MUST appear showing all available status options
-- **AND** the first status option (📝 Draft) MUST be highlighted or marked as the current selection
-- **AND** the user MUST be able to navigate between options using arrow keys or j/k
-- **AND** pressing Enter MUST confirm the selection
-- **AND** pressing Escape MUST cancel the operation and return to the previous pane
-
-#### Scenario: Editor opens with selected status pre-filled
-- **GIVEN** the user has selected a status from the status selection menu
-- **WHEN** the user confirms the selection by pressing Enter
-- **THEN** the editor MUST open in edit mode with a new decision template
-- **AND** the template MUST include the correct next decision ID calculated from the file
-- **AND** the Status field MUST be pre-filled with the user-selected status option
-- **AND** all other fields (Title, Decision, Context, Consequences) MUST contain appropriate placeholder text
-
-#### Scenario: Status selection wraps around
-- **GIVEN** the status selection menu is open and the last status option is highlighted
-- **WHEN** the user presses the down arrow or `j` key
-- **THEN** the selection MUST wrap to the first status option (📝 Draft)
-- **AND** pressing the up arrow or `k` key from the first option MUST wrap to the last status option
-
 ### Requirement: Accessible Status Cycling During New Decision Editing
 The system SHALL provide keyboard access to the Status dropdown during new-decision editing and SHALL display only shortcuts implemented in the current context. Status selection SHALL use the dropdown's keyboard controls without reserving ordinary text input characters for status cycling.
 
@@ -188,6 +132,8 @@ The system SHALL provide keyboard access to the Status dropdown during new-decis
 - **THEN** they MUST identify Ctrl+S for saving and Escape for cancellation when no child popup is open
 - **AND** they MUST NOT advertise an unimplemented P status-cycling action or an ordinary S key as the form save shortcut
 - **AND** typing P or S MUST insert the character in that field
+
+## ADDED Requirements
 
 ### Requirement: Draft Navigation Guard
 The system SHALL guard navigation that would abandon a modified draft, including selecting another decision or file, starting another decision, refreshing from disk, and quitting. The guard SHALL offer Save, Discard, and Stay; explicit Cancel SHALL retain its defined discard behavior.

@@ -2,41 +2,34 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  linux:
-    name: Linux (Earthly)
-    runs-on: ubuntu-latest
+  quality:
+    name: Rust nightly (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: "1"
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Earthly
-        uses: earthly/actions/setup-earthly@v1
+      - uses: actions/checkout@v7.0.1
+      - uses: jdx/mise-action@v4.3.0
         with:
-          version: latest
-
-      - name: Run Earthly multi-distro tests
-        run: earthly --ci +ci
-
-  macos:
-    name: macOS
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Install Python 3.13
-        run: uv python install 3.13
-
-      - name: Sync dependencies
-        run: uv sync
-
-      - name: Run unit tests
-        run: uv run --with pytest pytest
+          version: "2026.7.7"
+          cache: true
+      - name: Check, lint, test, and verify installed binary
+        run: mise run ci

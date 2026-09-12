@@ -1,8 +1,5 @@
-# implementation Specification
+## MODIFIED Requirements
 
-## Purpose
-Current requirements for implementation, including the approved Rust migration.
-## Requirements
 ### Requirement: Package Structure and Responsibilities
 The system SHALL provide a Rust binary and library separating terminal lifecycle and CLI, application/draft state, source-aware decision parsing and persistence, and Ratatui rendering. Premise SHALL supply the domain's named record representation and keyed lookup.
 
@@ -87,6 +84,8 @@ Production Rust SHALL forbid unsafe code and enforce the requested pedantic, nur
 #### Scenario: Encouraging rapid iteration
 - **WHEN** contributors launch Bacon or watchexec through mise
 - **THEN** changes SHALL produce compiler/lint/test feedback without taking control of the terminal to run vrdx
+
+## ADDED Requirements
 
 ### Requirement: Documentation Matches Shipped Behavior
 The README SHALL describe Rust/mise setup, supported commands and bindings, copyable Markdown records, and current features. Historical Python distribution decisions SHALL be marked superseded by the user's Rust decision.

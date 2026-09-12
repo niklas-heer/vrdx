@@ -1,0 +1,46 @@
+[package]
+name = "vrdx"
+version = "0.2.0"
+edition = "2024"
+description = "Capture and manage engineering decisions in repository Markdown files"
+repository = "https://github.com/niklas-heer/vrdx"
+include = ["src/**", "tests/**", "benches/**", "Cargo.toml", "Cargo.lock", "README.md", "rust-toolchain.toml", "clippy.toml"]
+
+[dependencies]
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_29"] }
+crossterm = { version = "0.29.0", default-features = false, features = ["events", "bracketed-paste"] }
+color-eyre = { version = "0.6.5", default-features = false }
+pulldown-cmark = { version = "0.13.0", default-features = false }
+tempfile = "3.23.0"
+unicode-width = "0.2.2"
+signal-hook = "0.3.18"
+premise = "=0.1.5"
+
+[dev-dependencies]
+portable-pty = "0.9.0"
+vt100 = "0.16.2"
+criterion = { version = "0.7.0", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "parser"
+harness = false
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+unchecked_time_subtraction = "deny"
+todo = "deny"
+string_slice = "deny"
+panic_in_result_fn = "deny"
+panic = "deny"
+exit = "deny"
+as_conversions = "deny"
