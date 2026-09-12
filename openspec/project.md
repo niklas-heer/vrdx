@@ -1,60 +1,49 @@
 # Project Context
 
 ## Purpose
-vrdx is a standalone CLI/TUI for curating architecture and engineering decision records directly inside a repository. It emulates the ergonomics of tools like lazygit while focusing on discovering Markdown files, parsing structured decision blocks, and helping practitioners compose, review, and update decisions without leaving the terminal.
-The project targets engineering teams that prefer Markdown-based documentation and want a lightweight workflow for decision governance without introducing heavyweight web tooling or bespoke storage formats.
 
-## Tech Stack
-- **Language & Runtime:** Python 3.13 managed with uv for reproducible environments.
-- **TUI Framework:** Textual (with Rich) powers the four-pane terminal interface and async event loop.
-- **Markdown Processing:** markdown-it-py and mdurl provide targeted parsing around decision markers.
-- **Data Modeling:** Pydantic models ensure structured decision records with validation.
-- **Packaging & Distribution:** Hatchling backend with uv tool install for delivery (no binary bundling).
-- **Testing & Tooling:** pytest, pytest-asyncio, textual-dev for UI tests, ptw for watch mode, and ruff for linting and formatting enforcement.
+vrdx manages engineering decisions directly in repository Markdown files through a keyboard-first terminal UI. Files remain readable and reviewable with ordinary editors and Git. Runtime behavior does not depend on hosted services or perform automatic Git operations.
 
-## Project Conventions
+## Stack and Development
 
-### Code Style
-- Write fully type-annotated Python; prefer explicit dataclasses or Pydantic models for shared data.
-- Keep modules single-purpose (e.g., discovery, parsing, state) to align with the layered architecture.
-- Enforce style with ruff (see `just lint` / `just lint-fix`) and maintain descriptive docstrings for public functions.
-- Avoid silent modifications to user files; surface errors with actionable log messages via the centralized logging helpers.
+- Rust 2024, pinned to nightly-2026-09-06 at the user's request; there was no pre-existing Rust MSRV. No stable MSRV is claimed.
+- Ratatui with Crossterm for rendering, terminal lifecycle, keyboard/mouse/paste input, and resize events.
+- Premise (library name patterns) for named records, keyed lookup, and code-attached rationale in the domain core.
+- pulldown-cmark for source-offset Markdown context, tempfile for atomic publication, unicode-width for terminal cells, and signal-hook for clean interrupt handling.
+- mise manages the pinned compiler and development utilities. Cargo.lock is committed. No Nix, devenv, justfile, Python, or uv runtime is required.
 
-### Architecture Patterns
-- CLI entrypoints (`main.py`, `cli.py`) handle argument parsing, logging configuration, and `AppState` wiring.
-- App runner bootstraps a Textual `VrdxApp` that orchestrates pane focus, state transitions, and command routing.
-- Discovery and persistence layers isolate filesystem scanning, marker detection, and write-back so UI logic remains declarative.
-- Parser layer converts marker blocks into structured decision models and guarantees canonical serialization for round-trip edits.
-- State and command modules centralize mutations (create/update/reorder/delete) and maintain cross-pane synchronization.
-- UI pane widgets follow a lazygit-inspired layout (decisions, editor, preview, files) sized to operate within an 80×24 terminal while scaling up gracefully.
+Use mise install followed by mise run ci for local verification. Rust Analyzer settings are checked in. Bacon and watchexec provide check/test feedback without automatically launching the interactive application. nextest executes unit and integration tests; cargo test --doc runs documentation tests. Criterion benchmarks parser throughput.
 
-### Testing Strategy
-- Unit tests cover CLI resolution, discovery filters, marker parsing, decision serialization, state transitions, and command behaviors.
-- Integration fixtures exercise end-to-end flows that read, edit, and persist decision blocks across Markdown files.
-- Textual `AppTest`-based tests simulate key bindings and pane focus changes to guard the TUI interaction model.
-- Watch-mode (`ptw`) and CI runs (`uv run pytest -v`, Earthly multi-distro) ensure rapid feedback.
+## Architecture
 
-### Git Workflow
-- The canonical branch is `main`; CI runs on pushes to `main` and on every pull request.
-- Contributors develop changes on topic branches and submit pull requests; Earthly plus GitHub Actions must pass before merging.
-- Commit style is conventional-but-unenforced—use concise, imperative subject lines that describe behavior, not implementation details.
-- Release artifacts align with `main` and are distributed via `uv tool install` (no separate release branch or binary packaging).
+- src/main.rs: argument parsing and terminal/event lifecycle.
+- src/document.rs: validated Premise-compatible records, source-preserving parsing, and persistence.
+- src/app.rs: repository discovery, file/record selection, draft state, input handling, and text editing.
+- src/ui.rs: responsive Ratatui rendering and mouse hit regions.
+- tests/: executable pseudo-terminal journeys and documentation checks.
 
-## Domain Context
-- Decision records live inside Markdown marker blocks bounded by `<!-- vrdx start -->` and `<!-- vrdx end -->` delimiters.
-- Each decision starts with a heading in the form `### <ID> <Title>` and includes bullet-labeled Status, Decision, Context, and Consequences fields.
-- Status values are curated (📝 Draft, ✅ Accepted, ❌ Rejected, ⛔ Deprecated by …, ⬆️ Supersedes …) with reciprocal link management handled by the command layer.
-- The UI presents four panes (decisions list, editor, preview, files) with numeric focus shortcuts (`1`–`4`), lazygit-style navigation (`j`/`k` or arrows), and a contextual help overlay (`?`).
-- New decisions are inserted at the top of the marker block so the most recent decisions remain visible.
+Document operations work without a TUI. The app owns one draft, and saves commit domain state only after persistence succeeds. Record IDs are unique per file. Core records retain full u64 identity through Premise's text field encoding rather than its saturating integer conversion.
 
-## Important Constraints
-- Official support targets macOS and Linux; Windows support is presently out of scope.
-- Distribution is Python-only via uv; binary bundlers (PyInstaller, Nuitka, etc.) are intentionally unsupported.
-- The application assumes Markdown files with canonical markers; malformed or duplicated markers surface explicit errors and require user correction before persistence.
-- Automatic Git operations are intentionally omitted—users manage commit, stage, and push steps manually.
-- Terminal layout is optimized for 80×24; larger terminals expand, but smaller sizes degrade the experience.
+## Data and Reliability
 
-## External Dependencies
-- GitHub Actions with Earthly orchestrate CI across macOS and Linux.
-- uv provides runtime management, tool installation, and upgrade flows for end users.
-- Textual and related libraries (Rich, markdown-it-py, mdurl, Pydantic) are bundled as part of the Python distribution—no external web services are required at runtime.
+The canonical block uses <!-- vrdx start --> and <!-- vrdx end --> outside Markdown code examples. Records start with ### <ID> <Title> and have Status, Decision, Context, and Consequences labels. Title and status must be nonempty; narrative values may be empty. New records are inserted at the top. Unknown status text remains readable.
+
+Preserve untouched source, newline styles, and existing records. Duplicate/missing labels, duplicate IDs, malformed markers, invalid UTF-8, or ambiguous generated structure must yield diagnostics rather than silent rewrites. No-op saves do not write. Atomic saves compare the original raw source before preparation and before replacement. External-editor races between the final check and rename remain a documented limitation. New files use no-clobber publication. Failed saves retain drafts.
+
+## Testing and Quality
+
+Formatting, all-target compilation, strict Clippy, nextest, doc tests, and installed-binary checks run in CI on Linux and macOS. Production Rust forbids unsafe code and the requested panic/index/arithmetic/cast restrictions. Any allowance must be narrowly scoped and explained. Tests may use assertions and explicit test-only allowances.
+
+Ratatui TestBackend tests cover rendering and focus at compact and large sizes. portable-pty tests launch the actual executable, type UTF-8 characters and terminal sequences, decode the VT100 screen, inspect saved files, and check terminal cleanup. Tests use temporary repositories, bounded waits, and child-process cleanup. Installed tests run from outside the checkout.
+
+## UI Contract
+
+Normal mode uses 1 Decisions, 2 Files, 3 Editor, 4 Preview; j/k or arrows navigate, Enter/Space edits, n creates, r reloads, ? shows help, q quits. Editing uses Tab/Shift+Tab, Ctrl+S, Escape, and Ctrl+Q for guarded quit. Alt+1–4 switches panes during editing without consuming ordinary digit input. Status selection preserves other fields. Save and Cancel return to a read-only view. Save/Discard/Stay guards protect drafts when abandoning them.
+
+Minimum supported size is 80×24. Compact layout keeps actions reachable and preview accessible; smaller terminals request resizing without discarding work. NO_COLOR is honored, and focus is visible without color.
+
+## Workflow and Scope
+
+Use topic branches and Conventional Commits. OpenSpec tracks approved changes; keep specifications synchronized with implementation and archive after delivery. The user's Rust/Ratatui/mise/nightly/Premise instructions supersede historical Python-only distribution decisions. references/ and archived specifications remain read-only historical context.
+
+Headless JSON commands, search, persistent file-and-ID relationships, repository templates, deletion/reordering, field-level three-way merge, and Git-history inspection are implemented capabilities. Supported platforms remain macOS/Linux. Premise Fielded/Keyed contracts are shared by the parser, persistence, and agent transport; Rust documentation tests remain part of the standard crate architecture.

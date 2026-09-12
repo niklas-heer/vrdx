@@ -1,8 +1,5 @@
-# decision-markers Specification
+## MODIFIED Requirements
 
-## Purpose
-Current requirements for decision-markers, including the approved Rust migration.
-## Requirements
 ### Requirement: Ignore Inline Marker Examples
 The marker detection subsystem SHALL treat literal `<!-- vrdx start -->` and `<!-- vrdx end -->` strings as plain text when they appear inside Markdown inline-code spans or fenced code blocks. Code examples SHALL NOT open, close, or duplicate a decision marker block. Decision parsing SHALL likewise exclude fenced code contents when recognizing record headings and canonical field labels.
 

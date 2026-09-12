@@ -1,0 +1,80 @@
+min_version = "2026.7.7"
+
+[tools]
+# Keep this date aligned with rust-toolchain.toml for direct Cargo users.
+rust = { version = "nightly-2026-09-06", profile = "minimal", components = ["rustfmt", "clippy", "rust-analyzer"] }
+"github:cargo-bins/cargo-binstall" = "1.23.0"
+"github:nextest-rs/nextest" = { version = "0.9.144", version_prefix = "cargo-nextest-" }
+"cargo:bacon" = "3.25.0"
+"github:watchexec/watchexec" = "2.7.2"
+"github:cargo-generate/cargo-generate" = "0.24.0"
+"github:tareqimbasher/cargo-seek" = "0.2.0"
+
+[tasks.fmt]
+description = "Check Rust formatting"
+run = "cargo fmt --all --check"
+
+[tasks."fmt-fix"]
+description = "Apply Rust formatting"
+run = "cargo fmt --all"
+
+[tasks.check]
+description = "Type-check every target and feature"
+run = "cargo check --locked --all-targets --all-features"
+
+[tasks.clippy]
+description = "Enforce strict Clippy rules with no warnings"
+run = "cargo clippy --locked --all-targets --all-features -- -D warnings"
+
+[tasks.test]
+description = "Run unit and integration tests with nextest"
+run = "cargo nextest run --locked --all-features"
+
+[tasks."test-doc"]
+description = "Run documentation tests (separate from nextest)"
+run = "cargo test --locked --doc --all-features"
+
+[tasks.contracts]
+description = "Verify Premise representation and identity contracts"
+run = "cargo nextest run --locked --test contracts"
+
+[tasks."test-e2e"]
+description = "Run the real terminal interaction tests"
+run = "cargo nextest run --locked --test terminal"
+
+[tasks.bench]
+description = "Measure parser throughput with Criterion"
+run = "cargo bench --locked --bench parser"
+
+[tasks.dev]
+description = "Watch Clippy diagnostics with bacon; run the app separately"
+run = "bacon clippy"
+raw = true
+
+[tasks.run]
+description = "Launch the TUI; pass a directory after --"
+run = "cargo run --locked --"
+raw = true
+
+[tasks.watch]
+description = "Rerun checks and tests on changes without taking over the terminal"
+run = "watchexec --restart --exts rs,toml --ignore target -- mise run check ::: test"
+
+[tasks.ci]
+description = "Run the same quality gates used in CI"
+run = [
+  "mise run fmt",
+  "mise run check",
+  "mise run clippy",
+  "cargo nextest run --locked --all-features --profile ci",
+  "mise run test-doc",
+  "mise run verify-install",
+]
+
+[tasks."verify-install"]
+description = "Install and smoke-test the binary outside the checkout"
+run = "sh scripts/verify-install.sh"
+
+[tasks.package]
+description = "Verify the distributable Cargo package without publishing"
+run = "cargo package --locked"
