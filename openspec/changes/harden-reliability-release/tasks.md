@@ -31,10 +31,10 @@
 - [x] 5.1 Replace Python/uv/justfile/Earthly sources and configuration with the verified Rust implementation and mise workflow.
 - [x] 5.2 Update README examples, bindings, distribution decisions, and project conventions, preserving historical decisions.
 - [x] 5.3 Synchronize the approved OpenSpec requirements and validate all specifications.
-- [ ] 5.4 Commit conventional changes, push the feature branch, and verify the committed artifact.
+- [x] 5.4 Commit conventional changes, push the feature branch, and verify the committed artifact.
 
 Archive this approved change after merge/deployment as a release follow-up; the current specifications are already synchronized.
 
 ## Verification
 
-Pinned nightly local CI passed: rustfmt, all-target/all-feature compilation, Clippy with warnings denied, 45 nextest tests, one doctest, and nine installed-binary checks. The terminal suite sends UTF-8 characters, control keys, bracketed paste, mouse clicks, resize events, and SIGTERM through actual OS pseudo-terminals. Criterion ran against 1, 100, and 1,000 record fixtures. Linux/macOS remote CI and committed-package verification are recorded at delivery.
+Pinned nightly local CI passed: rustfmt, all-target/all-feature compilation, Clippy with warnings denied, 45 nextest tests, one doctest, and nine installed-binary checks. The terminal suite sends UTF-8 characters, control keys, bracketed paste, mouse clicks, resize events, and SIGTERM through actual OS pseudo-terminals. Criterion ran against 1, 100, and 1,000 record fixtures. The committed Cargo package passed packaging and compilation with only the 16 intended source/metadata files; legacy ignored caches are excluded. The feature branch is pushed. Linux/macOS remote CI results are reported on the pull request.
