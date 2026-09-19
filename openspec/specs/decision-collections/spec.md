@@ -57,3 +57,53 @@ The CLI SHALL suggest potentially related decisions deterministically with obser
 #### Scenario: Topical overlap
 - **WHEN** two unlinked records share meaningful tags or words
 - **THEN** suggest SHALL expose the overlap and score as an advisory candidate rather than a confirmed relationship
+
+### Requirement: Graph-first exploration
+The dashboard SHALL open in graph view and retain a records view. Pointer hover and keyboard focus SHALL distinguish the highlighted decision, its direct neighbors and connecting edges. Selecting a decision SHALL show its immediate neighborhood with named relationship directions and access to full reasoning. Context outside current filters SHALL be labeled, and clearing selection SHALL restore the filtered overview. Isolated decisions SHALL have an explicit empty connection state.
+
+#### Scenario: Explore a filtered decision
+- **WHEN** a user selects a decision whose direct neighbor does not match the current filters
+- **THEN** the neighborhood SHALL include that neighbor as context and label it as outside the filters
+- **AND** the user SHALL be able to navigate the relationship, read full reasoning and return to the filtered overview
+
+### Requirement: Dashboard appearance
+The dashboard SHALL support light, dark and system appearance, use system preference initially, and remember explicit choices when browser storage is available. Controls, records, graph connections, validation findings and full record details SHALL remain readable and keyboard accessible in both themes.
+
+#### Scenario: Remember dark appearance
+- **WHEN** a user chooses dark appearance and reloads the page with browser storage available
+- **THEN** the dashboard SHALL retain dark appearance
+- **AND** choosing system appearance SHALL follow subsequent operating-system appearance changes
+
+### Requirement: Read reasoning alongside connections
+Selecting a graph decision SHALL immediately display its full Markdown body, title, lifecycle, date and source path in a reading pane without opening a modal. The graph SHALL remain available for navigation. Selecting another decision SHALL update the reader and its neighborhood together. The reader SHALL reuse safe Markdown rendering, expose invalid-collection warnings and adapt to narrow screens without hiding content behind an additional action.
+
+#### Scenario: Follow a connection while reading
+- **WHEN** a user selects a graph decision and then one of its neighbors
+- **THEN** the visible full reasoning and graph neighborhood SHALL both belong to the newly selected decision
+- **AND** the user SHALL be able to read the content and continue navigating without opening or dismissing a dialog
+
+### Requirement: Concise human and agent authoring
+The CLI SHALL generate concise proposed records with a short title, one decision, its reasons and consequences. JSON creation SHALL accept a documented strict input object from a file or stdin, generate identity/date defaults, reject invalid input without writing a record and return the created identity and path. An explicit editor option SHALL use VISUAL or EDITOR, stage the draft before publication and retain a recoverable draft on failure. A prompt command SHALL return copyable authoring instructions without a collection, network access or file creation.
+
+#### Scenario: Agent creates a decision
+- **WHEN** an agent submits valid JSON using the guide's input contract
+- **THEN** creation SHALL publish a formatted proposed record and return versioned JSON with its identity and path
+- **AND** unknown fields or missing required content SHALL produce actionable errors without a published record
+
+#### Scenario: Editor fails
+- **WHEN** the editor exits unsuccessfully or saves invalid metadata
+- **THEN** the CLI SHALL retain the staged draft, report its recovery path and leave the collection unchanged
+
+### Requirement: Conservative explicit formatting
+The CLI SHALL offer fmt and fmt --check for deterministic metadata ordering and spacing. Formatting SHALL preserve comments, record identity, lifecycle, relationships and Markdown body bytes. Check-only mode SHALL perform no writes and report files needing formatting with a nonzero exit status. A second formatting pass SHALL make no changes. Invalid collections SHALL be rejected before writes; replacement SHALL be atomic per file and preserve permissions. No multi-file transaction is promised.
+
+#### Scenario: Format and check
+- **WHEN** a valid record with irregular metadata spacing is formatted
+- **THEN** its Markdown body and metadata values SHALL remain unchanged and a subsequent check SHALL pass
+
+### Requirement: Actionable diagnostics
+Validation SHALL report deterministic findings with the affected file, stable code, explanation and repair hint in both human and JSON output. Errors SHALL give enough context to choose the next action without exposing source bodies as instructions. Validation SHALL not infer decision acceptance, require verbose prose or mutate records.
+
+#### Scenario: Broken relationship
+- **WHEN** validation finds an unresolved target or inconsistent replacement lifecycle
+- **THEN** output SHALL identify the affected records and suggest the relevant reference or status correction

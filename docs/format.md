@@ -4,11 +4,21 @@
 
 ## Collections and filenames
 
-The default directory is `decisions/`, relative to the working directory. `new` creates it when needed; collection queries report a missing directory. `guide` works without a collection. Use `--dir PATH` before or after any command to select another collection. Every direct `.md` child is a decision except `README.md`. Subdirectories are not scanned; symlink candidates are reported as errors. Unrecognized legacy files produce diagnostics rather than disappearing from results.
+The default directory is `decisions/`, relative to the working directory. `new` creates it when needed; collection queries report a missing directory. `guide` and `prompt` work without a collection. Use `--dir PATH` before or after any command to select another collection. Every direct `.md` child is a decision except `README.md`. Subdirectories are not scanned; symlink candidates are reported as errors. Unrecognized legacy files produce diagnostics rather than disappearing from results.
 
-New decisions default to `proposed` and today's UTC date. Use `--date YYYY-MM-DD`, `--status accepted` or another lifecycle state, repeat `--tag`, and optionally supply `--body-file PATH`. Edit the resulting Markdown with your preferred editor to develop the reasoning, change status, or add relationships. vrdx never rewrites existing decision files. Commit changes normally with Git.
+New decisions default to `proposed` and today's UTC date. Use `--date YYYY-MM-DD`, `--status accepted` or another lifecycle state, repeat `--tag`, and optionally supply `--body-file PATH`. Edit the resulting Markdown with your preferred editor to develop the reasoning, change status, or add relationships. Only the explicit `fmt` command rewrites existing metadata formatting; it preserves the exact body. Commit changes normally with Git.
 
 Filenames look like `2026-09-19_143052123_use-a-local-cache.md`: decision date, UTC creation time including milliseconds, and a short title slug. They sort chronologically by decision date, with creation time as a tie-breaker. The full ID lives **only in metadata**, not the generated filename. You may rename the file freely; its identity and graph relationships remain intact. A filename collision fails without overwriting the existing file; retry or use a different title.
+
+## Authoring and formatting
+
+`new "Title" --edit` stages a new draft in a temporary file and runs `VISUAL`, falling back to `EDITOR`. Quoted executable paths and arguments are supported; shell expansion and pipelines are not. Use a waiting editor command such as `code --wait`. The editor must exit successfully and leave valid metadata with the generated ID unchanged before publication. On failure, the error identifies the retained draft so you can repair and recover it. `--edit` conflicts with `--json` and `--from-json`; automation never launches an editor implicitly.
+
+`new --from-json PATH` reads one UTF-8 object; `-` reads stdin. Required fields are `title`, `decision`, `why` and a nonempty `consequences` string array. Optional fields are `date`, `status` and `tags`; absent fields use the normal defaults. Unknown fields, null values, blank required text and inputs over 1 MiB are rejected. IDs are generated. Creation produces an independent record; add relationships in Markdown afterward. `guide --json` publishes the schema and example. `prompt "Title"` prints a copyable prompt without writing or calling a model.
+
+`fmt` orders metadata as schema version, ID, title, date, status, tags, supersedes, superseded_by, depends_on and related_to, using one space around `=`. It preserves comments, metadata values, array layout, file permissions and every Markdown body byte, including line endings and code fences. It neither reflows prose nor shortens historical records. `fmt --check` lists files needing changes and exits 1 without writing. New records already follow this style and omit empty optional arrays.
+
+Formatting validates the entire collection before writing, then atomically replaces each changed file after checking for concurrent edits. It is not a transaction across multiple files: an I/O failure or concurrent edit may leave earlier files formatted. Review the diff and rerun after fixing the error.
 
 ## Markdown format
 
@@ -78,17 +88,17 @@ The dashboard can display an invalid collection together with its findings, so p
 
 ## Machine-readable output
 
-Every command supports `--json`. Successful responses use:
+Every command supports `--json`; interactive `new --edit` cannot be combined with it. Successful responses use:
 
 ```json
 {"schema_version":1,"ok":true,"data":{}}
 ```
 
-Errors use `{"schema_version":1,"ok":false,"error":{"code":"...","message":"..."}}`. Validation and rebuild findings use `ok:false` with diagnostic `data`, allowing consumers to inspect all findings. Parse failures in one file do not hide findings from the others. Help/version also use the JSON envelope when requested. JSON stdout contains one complete object and no progress messages or terminal escapes. Treat error codes and schema version as the contract; human wording may evolve.
+Errors use `{"schema_version":1,"ok":false,"error":{"code":"...","message":"...","hint":"..."}}`. Each finding contains `file`, `code`, `message` and `hint`. Validation and rebuild findings use `ok:false` with diagnostic `data`, allowing consumers to inspect all findings. Parse failures in one file do not hide findings from the others. Help/version also use the JSON envelope when requested. JSON stdout contains one complete object and no progress messages or terminal escapes. Treat error codes and schema version as the contract; human wording may evolve.
 
 `dashboard --json` emits a startup envelope with `data.url`, `data.read_only` and `data.directory`, then keeps serving in the foreground until terminated. Its startup success indicates that the local server started, not that every decision is valid. Use `validate --json` to check the collection; use `rebuild --json` to export it without starting a server.
 
-Exit codes: **0** success, **1** invalid collection/record or other operational failure, **2** CLI usage, **3** identity conflict, **4** missing directory/record/file. Filename publication failures are operational errors. JSON record summaries contain `id`, `title`, `date`, `status`, `tags`, `file` and `applies`; `show` and graph nodes also include full metadata and body. Paths are relative to `--dir`. Ordering is deterministic for unchanged files; concurrent manual edits are not an atomic collection snapshot.
+Exit codes: **0** success, **1** invalid collection/record, formatting needed or other operational failure, **2** CLI usage or invalid JSON input, **3** identity conflict, **4** missing directory/record/file. Filename publication failures are operational errors. JSON record summaries contain `id`, `title`, `date`, `status`, `tags`, `file` and `applies`; `show` and graph nodes also include full metadata and body. Paths are relative to `--dir`. Ordering is deterministic for unchanged files; concurrent manual edits are not an atomic collection snapshot.
 
 `context` is local, deterministic retrieval, with no AI service or credentials:
 
@@ -100,6 +110,6 @@ Exit codes: **0** success, **1** invalid collection/record or other operational 
 
 ## Portability and boundaries
 
-The complete graph is derived from Markdown. No database, persistent index or external AI service is required. Collections are flat; references are collection-local. The CLI creates records but does not mutate existing files, migrate historical formats or automate Git. The earlier embedded numeric-record format is not imported automatically.
+The complete graph is derived from Markdown. No database, persistent index or external AI service is required. Collections are flat; references are collection-local. The CLI creates records and explicitly formats metadata; it does not rewrite existing narrative content, migrate historical formats or automate Git. The earlier embedded numeric-record format is not imported automatically.
 
 Symlink checks are best-effort, not a security boundary against a process racing filesystem access. Creation syncs the file before publication but does not guarantee directory durability across power loss. Future interfaces can build on `vrdx::records::Graph` and the versioned CLI JSON contract while preserving Markdown authority.

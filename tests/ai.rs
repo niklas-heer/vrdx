@@ -166,12 +166,17 @@ fn suggestions_explain_tag_and_word_matches_with_stable_order_and_no_writes() {
 #[test]
 fn unrelated_records_and_shared_boilerplate_do_not_produce_suggestions() {
     let root = TempDir::new().unwrap();
-    let boilerplate = "## Decision\nDescribe the choice.\n## Context\nExplain the problem and alternatives.\n## Consequences\nDescribe benefits, costs and trade-offs.\n";
+    let guide = success(root.path(), &["guide"]);
+    let template = guide["record_format"]["body_template"].as_str().unwrap();
+    let boilerplate = format!(
+        "{template}{}",
+        "## Decision\nDescribe the choice.\n## Context\nExplain the problem and alternatives.\n## Consequences\nDescribe benefits, costs and trade-offs.\n"
+    );
     write(
         root.path(),
         "storage.md",
         &record(A, "Event ledger", Status::Accepted, &[]),
-        boilerplate,
+        &boilerplate,
     );
     write(
         root.path(),

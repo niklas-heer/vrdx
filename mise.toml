@@ -72,6 +72,10 @@ run = [
 description = "Build the optimized Rust CLI with overflow checks"
 run = "cargo build --locked --release"
 
+[tasks.bench]
+description = "Measure release CLI latency on 1,000 records (opt-in; no timing gate)"
+run = "cargo test --locked --release --test latency -- --ignored --nocapture"
+
 [tasks."verify-install"]
 description = "Install and smoke-test the binary outside the checkout"
 run = "sh scripts/verify-install.sh"

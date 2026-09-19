@@ -19,7 +19,7 @@ fn readme_record_is_accepted_by_the_collection_parser() {
         graph
             .decisions
             .values()
-            .any(|record| record.body.contains("briefly stale data"))
+            .any(|record| record.body == example.split_once("\n+++\n").unwrap().1)
     );
 }
 

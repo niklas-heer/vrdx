@@ -21,7 +21,7 @@ fn envelope(result: Result<Value, Error>) -> (u16, String) {
                 "invalid_collection" => 422,
                 _ => 500,
             };
-            (status, json!({"schema_version":1,"ok":false,"error":{"code":error.code,"message":error.message}}).to_string())
+            (status, json!({"schema_version":1,"ok":false,"error":{"code":error.code,"message":error.message,"hint":error.hint}}).to_string())
         }
     }
 }

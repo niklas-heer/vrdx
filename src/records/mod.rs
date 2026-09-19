@@ -1,8 +1,10 @@
 //! Standalone Markdown collections. Disk is authoritative; graphs are disposable.
 
 mod ai;
+mod authoring;
 pub mod cli;
 mod dashboard;
+mod formatting;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,17 +20,19 @@ use ulid::Ulid;
 pub struct Error {
     pub code: &'static str,
     pub message: String,
+    pub hint: &'static str,
 }
 impl Error {
     pub(crate) fn new(code: &'static str, message: impl Into<String>) -> Self {
         Self {
             code,
             message: message.into(),
+            hint: repair_hint(code),
         }
     }
     pub(crate) fn exit_code(&self) -> u8 {
         match self.code {
-            "usage" => 2,
+            "usage" | "invalid_input" => 2,
             "conflict" => 3,
             "not_found" => 4,
             _ => 1,
@@ -76,7 +80,7 @@ impl Status {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Metadata {
     pub schema_version: u8,
@@ -134,6 +138,62 @@ pub struct Finding {
     pub file: String,
     pub code: &'static str,
     pub message: String,
+    pub hint: &'static str,
+}
+
+fn repair_hint(code: &str) -> &'static str {
+    match code {
+        "usage" => {
+            "Run vrdx COMMAND --help for accepted arguments; vrdx guide --json describes the input contract."
+        }
+        "invalid_input" => {
+            "Use vrdx guide --json for the new_input schema and example. Supply one JSON object, without Markdown fences."
+        }
+        "invalid_record" => {
+            "Fix the named metadata field or TOML location; vrdx guide explains required fields and formats. Preserve the record ID."
+        }
+        "invalid_collection" => {
+            "Run vrdx --dir PATH validate --json, fix each finding in its source file, then retry."
+        }
+        "not_found" => {
+            "Check --dir and the input path or ID. Use vrdx list to discover IDs, or vrdx new TITLE to start a collection."
+        }
+        "ambiguous_id" => "Use a longer unique prefix or the full ID shown by vrdx list.",
+        "conflict" | "duplicate_id" => {
+            "Keep the original identity. Remove an accidental duplicate file; create a genuinely new decision with vrdx new."
+        }
+        "self_reference" => "Remove this record's own ID from its relationship arrays.",
+        "missing_reference" => {
+            "Correct the relationship target to an existing full ID, restore the missing record, or remove the stale link."
+        }
+        "invalid_replacement" => {
+            "A proposed or rejected decision cannot replace another record. Remove the supersession or set a justified lifecycle after review."
+        }
+        "status_mismatch" => {
+            "Mark the replaced decision superseded, or remove the replacement link if the replacement has not happened."
+        }
+        "missing_replacement" => {
+            "Link exactly one actual replacement using supersedes or superseded_by, or correct this record's status."
+        }
+        "multiple_replacements" => {
+            "Choose one replacement for the old record; use a sequential supersession chain for later replacements."
+        }
+        "supersession_cycle" => {
+            "Remove or correct a supersession edge so replacements move forward without returning to an earlier record."
+        }
+        "invalid_file" => {
+            "Use a regular Markdown file in this flat collection, not a directory or symlink."
+        }
+        "editor" => {
+            "Set VISUAL or EDITOR to an executable with optional arguments (for example code --wait); inspect the retained draft before retrying."
+        }
+        "concurrent_edit" => {
+            "A file changed during formatting. Review the edits and run fmt again; earlier files may already be formatted."
+        }
+        _ => {
+            "Check the path, permissions and available disk space, then retry. Run vrdx validate after repairing the collection."
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -237,7 +297,12 @@ impl Graph {
     /// # Errors
     /// Returns an error if the directory cannot be enumerated.
     pub fn load(directory: &Path) -> Result<Self, Error> {
-        let mut paths = fs::read_dir(directory)?
+        let mut paths = fs::read_dir(directory)
+            .map_err(|error| {
+                let mut error = Error::from(error);
+                error.message = format!("{}: {}", directory.display(), error.message);
+                error
+            })?
             .map(|entry| entry.map(|entry| entry.path()))
             .collect::<Result<Vec<_>, _>>()?;
         paths.sort();
@@ -296,6 +361,7 @@ impl Graph {
             file: file.into(),
             code,
             message: message.into(),
+            hint: repair_hint(code),
         });
     }
 
@@ -340,6 +406,7 @@ impl Graph {
                     file: file.into(),
                     code,
                     message,
+                    hint: repair_hint(code),
                 });
             };
             if edge.from == edge.to {
@@ -387,6 +454,7 @@ impl Graph {
                     file: decision.file.clone(),
                     code: "multiple_replacements",
                     message: format!("{id} has more than one replacement"),
+                    hint: repair_hint("multiple_replacements"),
                 });
             }
             if replacements == 0 && decision.metadata.status == Status::Superseded {
@@ -394,6 +462,7 @@ impl Graph {
                     file: decision.file.clone(),
                     code: "missing_replacement",
                     message: format!("{id} is superseded but has no replacement"),
+                    hint: repair_hint("missing_replacement"),
                 });
             }
         }
@@ -444,6 +513,7 @@ impl Graph {
                     "Cycle blocks these decisions (including downstream records): {}",
                     incoming.keys().cloned().collect::<Vec<_>>().join(", ")
                 ),
+                hint: repair_hint("supersession_cycle"),
             });
         }
     }
@@ -574,8 +644,7 @@ pub fn create(directory: &Path, metadata: Metadata, body: &str) -> Result<Decisi
         timestamp.strftime("%H%M%S%3f"),
         slug
     );
-    let header = toml::to_string(&metadata).map_err(|error| invalid(error.to_string()))?;
-    let source = format!("+++\n{header}+++\n{body}");
+    let source = source(&metadata, body)?;
     fs::create_dir_all(directory)?;
     let mut temp = tempfile::NamedTempFile::new_in(directory)?;
     temp.write_all(source.as_bytes())?;
@@ -587,4 +656,23 @@ pub fn create(directory: &Path, metadata: Metadata, body: &str) -> Result<Decisi
         file,
         body: body.into(),
     })
+}
+
+fn source(metadata: &Metadata, body: &str) -> Result<String, Error> {
+    let header = toml::to_string(metadata).map_err(|error| invalid(error.to_string()))?;
+    let header = header
+        .lines()
+        .filter(|line| {
+            ![
+                "tags = []",
+                "supersedes = []",
+                "superseded_by = []",
+                "depends_on = []",
+                "related_to = []",
+            ]
+            .contains(line)
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    Ok(format!("+++\n{header}\n+++\n{body}"))
 }
