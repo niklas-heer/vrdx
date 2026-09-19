@@ -1,4 +1,14 @@
 :root {
+  color-scheme: light;
+  --sidebar: #edf0e7;
+  --surface: #f0f3ea;
+  --canvas: #f6f7f0;
+  --dot: #cbd4c6;
+  --warning: #fff2d8;
+  --warning-line: #b49145;
+  --edge-supersedes: #55806b;
+  --edge-depends_on: #667fa5;
+  --edge-related_to: #a78d54;
   --paper: #f7f7f0;
   --white: #fffef9;
   --ink: #263c35;
@@ -80,7 +90,7 @@ a {
   inset: 0 auto 0 0;
   width: 230px;
   padding: 36px 25px 24px;
-  background: #edf0e7;
+  background: var(--sidebar);
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -142,7 +152,7 @@ a {
 }
 
 .filter-button:hover {
-  background: #e4e9dd
+  background: var(--soft)
 }
 
 .filter-button[aria-pressed=true] {
@@ -216,7 +226,7 @@ a {
 }
 
 .tag-button {
-  border: 1px solid #d6ddcf;
+  border: 1px solid var(--line);
   border-radius: 5px;
   background: transparent;
   padding: 6px 8px;
@@ -228,7 +238,7 @@ a {
 .tag-button:hover,.tag-button[aria-pressed=true] {
   background: var(--green);
   border-color: var(--green);
-  color: white
+  color: var(--paper)
 }
 
 .tag-button span {
@@ -319,7 +329,7 @@ main {
   font-size: 9px;
   letter-spacing: 2.3px;
   font-weight: 700;
-  color: #608371;
+  color: var(--muted);
   margin: 0 0 18px
 }
 
@@ -372,7 +382,7 @@ h1 em {
   grid-template-columns: repeat(3,minmax(0,1fr));
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #f2f4eb;
+  background: var(--surface);
   margin-bottom: 37px
 }
 
@@ -405,8 +415,8 @@ h1 em {
 }
 
 .notice {
-  border: 1px solid #d7bd78;
-  background: #fff6d9;
+  border: 1px solid var(--warning-line);
+  background: var(--warning);
   border-radius: 8px;
   padding: 16px 18px;
   font-size: 12px;
@@ -506,7 +516,7 @@ h1 em {
 }
 
 .search-box input::placeholder {
-  color: #929d91
+  color: var(--muted)
 }
 
 .search-box kbd {
@@ -583,7 +593,7 @@ h1 em {
 
 .card-date {
   font-size: 9px;
-  color: #889284;
+  color: var(--muted);
   white-space: nowrap
 }
 
@@ -616,11 +626,11 @@ h1 em {
 
 .tag {
   display: inline-block;
-  background: #f0f3ea;
+  background: var(--surface);
   border-radius: 4px;
   padding: 4px 7px;
   font-size: 9px;
-  color: #5a715f;
+  color: var(--muted);
   max-width: 100%;
   overflow-wrap: anywhere
 }
@@ -629,9 +639,9 @@ h1 em {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  border-top: 1px solid #eef0e9;
+  border-top: 1px solid var(--line);
   padding-top: 12px;
-  color: #8a9586;
+  color: var(--muted);
   font-size: 9px
 }
 
@@ -647,15 +657,15 @@ h1 em {
   padding: 23px 0;
   margin-top: 38px;
   font-size: 9px;
-  color: #8c998b
+  color: var(--muted)
 }
 
 .empty {
   padding: 56px 24px;
   text-align: center;
-  border: 1px dashed #cdd7c7;
+  border: 1px dashed var(--line);
   border-radius: 10px;
-  background: #f0f3e9
+  background: var(--surface)
 }
 
 .empty h3 {
@@ -671,7 +681,7 @@ h1 em {
 
 .empty button {
   background: var(--green);
-  color: white;
+  color: var(--paper);
   border-radius: 5px;
   padding: 10px 15px;
   margin-top: 12px;
@@ -728,24 +738,24 @@ h1 em {
 .line-key:before {
   content: "";
   width: 20px;
-  border-top: 2px solid #55806b
+  border-top: 2px solid var(--edge-supersedes)
 }
 
 .line-key.depends_on:before {
-  border-color: #8393b0;
+  border-color: var(--edge-depends_on);
   border-top-style: dashed
 }
 
 .line-key.related_to:before {
-  border-color: #b8a577;
+  border-color: var(--edge-related_to);
   border-top-style: dotted
 }
 
 .graph-scroll {
   overflow: auto;
   max-height: 670px;
-  background-color: #f6f7f0;
-  background-image: radial-gradient(#becabb 1px,transparent 1px);
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--dot) 1px,transparent 1px);
   background-size: 19px 19px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line)
@@ -764,10 +774,10 @@ h1 em {
 
 .graph-node {
   position: absolute;
-  width: 210px;
-  height: 105px;
+  width: 230px;
+  height: 116px;
   padding: 13px 16px;
-  border: 1px solid #d2ddcc;
+  border: 1px solid var(--line);
   background: var(--white);
   border-radius: 7px;
   text-align: left;
@@ -870,7 +880,7 @@ dialog::backdrop {
 }
 
 .identity {
-  background: #f0f3ea;
+  background: var(--surface);
   border-radius: 7px;
   padding: 14px 15px;
   margin: 23px 0;
@@ -898,7 +908,7 @@ dialog::backdrop {
 
 .identity button {
   font-size: 9px;
-  border: 1px solid #cdd8c6;
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 5px 8px;
   background: var(--white);
@@ -935,7 +945,7 @@ dialog::backdrop {
 }
 
 .markdown pre {
-  background: #edf1e7;
+  background: var(--soft);
   padding: 16px;
   overflow: auto;
   border-radius: 6px;
@@ -943,7 +953,7 @@ dialog::backdrop {
 }
 
 .markdown code {
-  background: #edf1e7;
+  background: var(--soft);
   padding: 2px 4px;
   border-radius: 3px;
   font-size: .9em
@@ -982,8 +992,8 @@ dialog::backdrop {
   align-items: center;
   gap: 14px;
   width: 100%;
-  background: #f1f4ec;
-  border: 1px solid #e0e7d9;
+  background: var(--surface);
+  border: 1px solid var(--line);
   text-align: left;
   padding: 12px;
   border-radius: 6px;
@@ -1016,7 +1026,7 @@ dialog::backdrop {
 .detail-warning {
   font-size: 11px;
   line-height: 1.7;
-  background: #fff2d8;
+  background: var(--warning);
   padding: 12px;
   border-radius: 6px
 }
@@ -1255,3 +1265,78 @@ dialog::backdrop {
     transform: none
   }
 }
+
+/* Theme tokens also drive the SVG connections and all detail surfaces. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #161e1b;
+  --sidebar: #1b2520;
+  --white: #222e28;
+  --surface: #202b25;
+  --canvas: #18221d;
+  --dot: #34473b;
+  --ink: #e1e9de;
+  --muted: #adbcad;
+  --line: #3b4c40;
+  --green: #9cd6b5;
+  --soft: #304337;
+  --accepted: #8fcca8;
+  --proposed: #e5c175;
+  --rejected: #dd9c90;
+  --deprecated: #b1afa5;
+  --superseded: #a1b9e1;
+  --warning: #40371f;
+  --warning-line: #ab9255;
+  --edge-supersedes: #89c9a5;
+  --edge-depends_on: #a0b9df;
+  --edge-related_to: #d4bd85;
+}
+.theme-control { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; }
+.theme-control select { font: inherit; color: var(--ink); background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+select:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+.intro { padding: 28px 0 24px; }
+.intro h1 { font-size: clamp(32px,3.5vw,48px); }
+.intro .eyebrow { margin-bottom: 12px; }
+.intro-copy { margin-top: 12px; }
+.intro-note { display: none; }
+.stats { margin-bottom: 25px; }
+.stat { padding-top: 13px; padding-bottom: 13px; }
+.graph-toolbar { align-items: flex-start; }
+.graph-toolbar p { overflow-wrap: anywhere; }
+#graph-hint { display: block; color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 7px; }
+#clear-selection { white-space: nowrap; padding: 5px 0; }
+.graph-node { transition: opacity .16s, border-color .16s, box-shadow .16s; }
+.graph-node[aria-pressed=true], .graph-node.is-highlighted { border: 2px solid var(--green); box-shadow: 0 0 0 4px var(--soft), 0 8px 24px #00000014; }
+.graph-node.is-neighbor { border-color: var(--green); }
+.graph-node.is-muted { opacity: .35; }
+.graph-node .node-caption { display: block; margin-top: 9px; font-size: 9px; color: var(--muted); }
+.graph-edge { stroke-width: 1.7; opacity: .75; transition: opacity .16s, stroke-width .16s; }
+.graph-edge.is-connected { stroke-width: 3; opacity: 1; }
+.graph-edge.is-muted { opacity: .12; }
+.graph-selection { padding: 16px 20px 20px; border-bottom: 1px solid var(--line); }
+.graph-selection p { font-size: 12px; line-height: 1.7; }
+.selection-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.read-decision { background: var(--green); color: var(--paper); border-radius: 6px; padding: 9px 13px; font-size: 11px; }
+.context-label { margin-left: auto; color: var(--muted); font-size: 9px; white-space: nowrap; }
+:root[data-theme=dark] .filter-button[aria-pressed=true] { background: var(--soft); color: var(--ink); }
+:root[data-theme=dark] .tag-button[aria-pressed=true] { background: var(--soft); color: var(--ink); }
+@media(max-width:600px) {
+  .breadcrumb { display: none; }
+  .sync { width: 100%; justify-content: space-between; }
+  .graph-toolbar { gap: 10px; padding: 16px; }
+  .graph-selection { padding: 16px; }
+  .graph-selection .relation { flex-wrap: wrap; }
+  .context-label { margin-left: 88px; }
+  .intro h1 { font-size: 35px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .graph-node,.graph-edge { transition: none; }
+}
+
+.graph { margin-inline: auto; }
+.topbar { height: 60px; }
+.intro { padding: 22px 0; }
+.intro .intro-copy { display: none; }
+.intro h1 { font-size: 36px; }
+.stat-number { font-size: 26px; }
+.stat-label small { display: none; }

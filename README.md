@@ -75,6 +75,15 @@ vrdx dashboard --port 7878
 
 Open **http://127.0.0.1:7878** to explore the current collection. The dashboard presents decisions, lifecycle states, tags and relationships from your Markdown files. It is a local, read-only view; edit the files to change the source.
 
+The map opens by default. Hover over a decision or focus it with the keyboard to
+highlight its direct connections. Select it to explore its neighborhood, follow
+named relationships and open its full reasoning with **Read decision**. Connected
+records outside your filters are labeled as context. **All matches** (or Escape)
+returns to the filtered overview; **Records** switches to the card view.
+
+The **Theme** control offers System, Light and Dark. System follows your device;
+explicit choices are remembered in this browser when local storage is available.
+
 The browser interface ships inside the Rust binary. There is no separate frontend installation or database to synchronize. Stop the foreground process with Ctrl-C when you are done.
 
 If the collection is invalid, the dashboard shows diagnostics. Use `vrdx validate` for the same validation from your terminal.

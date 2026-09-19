@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>vrdx — Decision atlas</title>
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
@@ -21,16 +21,16 @@
     <div class="sidebar-footer"><span class="live-dot"></span><span>Markdown is the source.<br><span class="muted">This view follows your files.</span></span></div>
   </aside>
   <main id="main" tabindex="-1">
-    <header class="topbar"><span class="breadcrumb">Workspace <span>/</span> Decisions</span><div class="sync"><span id="sync-status" role="status">Connecting…</span><button id="refresh" class="icon-button" aria-label="Refresh decisions" title="Refresh decisions">↻</button></div></header>
-    <section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">THE DECISION ATLAS</p><h1 id="page-title">Good decisions.<br><em>Remembered.</em></h1><p class="intro-copy">Explore what was decided, why it matters,<br class="desktop-break"> and how the pieces connect.</p></div><div class="intro-note"><span class="note-mark">↗</span><p>Ideas become decisions.<br>Decisions become context.</p><span>YOUR PROJECT, IN PERSPECTIVE</span></div></section>
+    <header class="topbar"><span class="breadcrumb">Workspace <span>/</span> Decisions</span><div class="sync"><label class="theme-control">Theme <select id="theme" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><span id="sync-status" role="status">Connecting…</span><button id="refresh" class="icon-button" aria-label="Refresh decisions" title="Refresh decisions">↻</button></div></header>
+    <section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">THE DECISION ATLAS</p><h1 id="page-title">See the <em>connections.</em></h1><p class="intro-copy">Every choice has a story. Explore the decisions that shaped it.</p></div><div class="intro-note"><span class="note-mark">↗</span><p>Ideas become decisions.<br>Decisions become context.</p><span>YOUR PROJECT, IN PERSPECTIVE</span></div></section>
     <section id="stats" class="stats" aria-label="Collection overview"></section>
     <div id="notice" class="notice" role="status" hidden></div>
     <section class="collection" aria-label="Decisions">
-      <div class="collection-heading"><div><h2 id="collection-title">All decisions</h2><p id="result-count" class="muted" aria-live="polite">Reading your collection…</p></div><div class="view-switch" role="group" aria-label="View"><button id="cards-view" aria-pressed="true"><span aria-hidden="true">▤</span> Records</button><button id="graph-view" aria-pressed="false"><span aria-hidden="true">⌘</span> Map</button></div></div>
+      <div class="collection-heading"><div><h2 id="collection-title">All decisions</h2><p id="result-count" class="muted" aria-live="polite">Reading your collection…</p></div><div class="view-switch" role="group" aria-label="View"><button id="graph-view" aria-pressed="true"><span aria-hidden="true">⌘</span> Map</button><button id="cards-view" aria-pressed="false"><span aria-hidden="true">▤</span> Records</button></div></div>
       <label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search titles, reasoning, tags, or IDs…" aria-label="Search decisions"><kbd>/</kbd></label>
       <div id="active-filters" class="active-filters"></div>
-      <div id="records" class="records"></div>
-      <section id="graph-panel" class="graph-panel" aria-label="Decision relationship map" hidden><div class="graph-toolbar"><p>Connections, made visible.</p><span>Follow an arrow from a decision to its reference.</span></div><div class="edge-legend"><span class="line-key supersedes">Supersedes</span><span class="line-key depends_on">Depends on</span><span class="line-key related_to">Related to</span></div><div id="graph-scroll" class="graph-scroll"><div id="graph" class="graph"></div></div><div id="status-legend" class="status-legend"></div></section>
+      <div id="records" class="records" hidden></div>
+      <section id="graph-panel" class="graph-panel" aria-label="Decision relationship map"><div class="graph-toolbar"><div><p id="graph-title">Connections, made visible.</p><span id="graph-hint">Hover to trace connections. Select a decision to explore.</span></div><button id="clear-selection" class="text-button" hidden>← All matches</button></div><div class="edge-legend"><span class="line-key supersedes">Supersedes</span><span class="line-key depends_on">Depends on</span><span class="line-key related_to">Related to</span></div><div id="graph-scroll" class="graph-scroll"><div id="graph" class="graph"></div></div><div id="graph-selection" class="graph-selection" aria-live="polite" hidden></div><div id="status-legend" class="status-legend"></div></section>
       <div id="empty" class="empty" hidden></div>
     </section>
     <footer class="main-footer"><span>Plain text. Lasting context.</span><span>vrdx · Decision records</span></footer>

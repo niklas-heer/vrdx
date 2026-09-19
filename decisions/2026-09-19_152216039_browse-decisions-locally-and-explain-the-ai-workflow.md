@@ -28,3 +28,14 @@ People can explore lifecycle states, topics, explicit connections, reasoning and
 The guide carries a record contract, examples, writing style, evidence rules and review workflow. Suggestions expose shared tags and terms, stable ranking and historical status. They are advisory and never establish approval or write relationships. Lexical matching does not understand synonyms or intent; callers must read the full reasoning and choose links deliberately.
 
 The browser renders a safe Markdown subset, with raw HTML displayed as text. Each refresh reads files independently, so concurrent multi-file edits may temporarily show validation findings. Larger collections may eventually justify a more scalable layout or search, but no persistent index is introduced now.
+
+## Dashboard presentation — 2026-09-19
+
+Niklas subsequently requested the graph as the default view, visible connections
+when highlighting a decision, and dark mode. Keep Records as an alternative.
+Hover and keyboard focus preview direct connections; selecting a node reveals
+its neighborhood and named relationship directions without hiding the map behind
+the reasoning drawer. Neighbors outside active filters are explicitly labeled as
+context. Appearance follows the system by default, with locally remembered light
+and dark choices. These presentation choices preserve the read-only architecture
+and require no additional runtime dependency.
