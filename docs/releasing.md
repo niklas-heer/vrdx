@@ -15,7 +15,10 @@ AI guide. We publish through GitHub Releases and `niklas-heer/tap/vrdx`.
 5. The existing Homebrew tap checks hourly for new stable releases. Its
    `Update vrdx` workflow can also be dispatched manually. It generates a formula
    from release checksums, installs/tests it on all four supported platforms,
-   then commits only that formula using the tap's own `GITHUB_TOKEN`.
+   then opens a PR changing only that formula using the tap's own `GITHUB_TOKEN`.
+   Review and merge the PR to publish the Homebrew update, preserving the tap's
+   existing requirement for PRs. The tap permits Actions to create PRs; its token
+   has write permissions only in the update-proposal job, which never approves or merges.
 
 No cross-repository token is needed. A failed release check prevents publication;
 a failed Homebrew check leaves the previous formula available. Rerun a failed

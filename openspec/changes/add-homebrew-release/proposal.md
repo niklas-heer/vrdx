@@ -3,7 +3,7 @@ Niklas requested publication readiness, polished installation docs, CI and Homeb
 
 ## What Changes
 - Keep native four-platform packaging and require the full quality workflow before tag publication.
-- Add a tested binary formula to the existing niklas-heer/homebrew-tap, with scheduled/manual updates using its own repository token after four-platform installation tests.
+- Add a tested binary formula to the existing niklas-heer/homebrew-tap, with scheduled/manual update PRs using its own repository token after four-platform installation tests. Preserve its PR-required main branch.
 - Lead the README with Homebrew installation and document release steps and supported systems.
 
 ## Authorization
