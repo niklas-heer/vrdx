@@ -1,0 +1,85 @@
+min_version = "2026.7.7"
+
+[tools]
+# Keep this version aligned with rust-toolchain.toml and Cargo.toml.
+rust = { version = "1.97.1", profile = "minimal", components = ["rustfmt", "clippy", "rust-analyzer", "rust-src"] }
+dagger = "0.21.9"
+"github:cargo-bins/cargo-binstall" = "1.23.0"
+"github:nextest-rs/nextest" = { version = "0.9.144", version_prefix = "cargo-nextest-" }
+"cargo:bacon" = "3.25.0"
+"github:watchexec/watchexec" = "2.7.2"
+"github:cargo-generate/cargo-generate" = "0.24.0"
+"github:tareqimbasher/cargo-seek" = "0.2.0"
+
+[tasks.fmt]
+description = "Check Rust formatting"
+run = "cargo fmt --all --check"
+
+[tasks."fmt-fix"]
+description = "Apply Rust formatting"
+run = "cargo fmt --all"
+
+[tasks.check]
+description = "Type-check every target and feature"
+run = "cargo check --locked --all-targets --all-features"
+
+[tasks.clippy]
+description = "Enforce strict Clippy rules with no warnings"
+run = "cargo clippy --locked --all-targets --all-features -- -D warnings"
+
+[tasks.test]
+description = "Run unit and integration tests with nextest"
+run = "cargo nextest run --locked --all-features"
+
+[tasks."test-doc"]
+description = "Run documentation tests (separate from nextest)"
+run = "cargo test --locked --doc --all-features"
+
+[tasks."test-e2e"]
+description = "Run complete CLI journeys through a subprocess"
+run = "cargo nextest run --locked --test cli --test ai --test dashboard"
+
+[tasks.dev]
+description = "Watch Clippy diagnostics with bacon; run the app separately"
+run = "bacon clippy"
+raw = true
+
+[tasks.run]
+description = "Run the CLI; pass a command after --"
+run = "cargo run --locked --"
+raw = true
+
+[tasks.watch]
+description = "Rerun checks and tests on changes for the CLI"
+run = "watchexec --restart --exts rs,toml --ignore target -- mise run check ::: test"
+
+[tasks.ci]
+description = "Run reproducible Linux CI through Dagger and Dang (requires a container engine)"
+run = "dagger call ci"
+
+[tasks."ci-native"]
+description = "Run all quality gates on the host; also used inside Dagger"
+run = [
+  "mise run fmt",
+  "mise run check",
+  "mise run clippy",
+  "cargo nextest run --locked --all-features --profile ci",
+  "mise run test-doc",
+  "mise run verify-install",
+]
+
+[tasks.build]
+description = "Build the optimized Rust CLI with overflow checks"
+run = "cargo build --locked --release"
+
+[tasks."verify-install"]
+description = "Install and smoke-test the binary outside the checkout"
+run = "sh scripts/verify-install.sh"
+
+[tasks.package]
+description = "Verify the distributable Cargo package without publishing"
+run = "cargo package --locked"
+
+[tasks."package-release"]
+description = "Package and verify an already-built native release binary; pass its Rust target after --"
+run = "sh scripts/package-release.sh"

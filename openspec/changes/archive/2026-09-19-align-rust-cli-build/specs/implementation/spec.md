@@ -1,15 +1,4 @@
-# implementation Specification
-
-## Purpose
-
-Focused Rust CLI architecture, safe source handling and reproducible verification.
-## Requirements
-### Requirement: Portable CLI architecture
-The application SHALL provide a Rust binary and library for standalone Markdown collection parsing, validation, creation, deterministic graph rebuilding and human/JSON CLI workflows. It SHALL NOT require a terminal, database, persistent index or hosted service.
-
-#### Scenario: Headless use
-- **WHEN** the binary runs without a terminal
-- **THEN** all collection commands SHALL work with the selected directory and documented exit codes
+## MODIFIED Requirements
 
 ### Requirement: Reproducible CLI verification
 The project SHALL pin stable Rust consistently in Cargo.toml, rust-toolchain.toml and mise.toml, with Cargo.lock and mise.lock checked in. Dagger with the Dang SDK SHALL orchestrate containerized Linux checks, reusing mise tasks for formatting, compilation, strict Clippy, nextest, doctests and installed CLI tests. Native macOS verification SHALL remain separate. The application and build SHALL require no Python interpreter or package configuration.
@@ -26,10 +15,3 @@ The project SHALL pin stable Rust consistently in Cargo.toml, rust-toolchain.tom
 #### Scenario: Native platform coverage
 - **WHEN** the macOS job runs mise run ci-native
 - **THEN** checks SHALL execute on macOS rather than substituting Linux-container coverage
-
-### Requirement: Source authority and safe creation
-The system SHALL preserve Markdown authority, publish new files without clobbering existing paths, and leave existing files unchanged. Validation and read commands SHALL perform no persistent writes.
-
-#### Scenario: Filename collision
-- **WHEN** creation targets an existing path
-- **THEN** the command SHALL fail and preserve the existing contents

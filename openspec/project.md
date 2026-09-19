@@ -1,60 +1,28 @@
 # Project Context
 
 ## Purpose
-vrdx is a standalone CLI/TUI for curating architecture and engineering decision records directly inside a repository. It emulates the ergonomics of tools like lazygit while focusing on discovering Markdown files, parsing structured decision blocks, and helping practitioners compose, review, and update decisions without leaving the terminal.
-The project targets engineering teams that prefer Markdown-based documentation and want a lightweight workflow for decision governance without introducing heavyweight web tooling or bespoke storage formats.
 
-## Tech Stack
-- **Language & Runtime:** Python 3.13 managed with uv for reproducible environments.
-- **TUI Framework:** Textual (with Rich) powers the four-pane terminal interface and async event loop.
-- **Markdown Processing:** markdown-it-py and mdurl provide targeted parsing around decision markers.
-- **Data Modeling:** Pydantic models ensure structured decision records with validation.
-- **Packaging & Distribution:** Hatchling backend with uv tool install for delivery (no binary bundling).
-- **Testing & Tooling:** pytest, pytest-asyncio, textual-dev for UI tests, ptw for watch mode, and ruff for linting and formatting enforcement.
+vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files. The user explicitly replaced the earlier terminal editor on 2026-09-19. Markdown and Git are authoritative; the graph is rebuilt in memory. A bundled read-only loopback dashboard visualizes current files; CLI guide, context and explained suggestions provide a versioned AI interface.
 
-## Project Conventions
+## Stack and Architecture
 
-### Code Style
-- Write fully type-annotated Python; prefer explicit dataclasses or Pydantic models for shared data.
-- Keep modules single-purpose (e.g., discovery, parsing, state) to align with the layered architecture.
-- Enforce style with ruff (see `just lint` / `just lint-fix`) and maintain descriptive docstrings for public functions.
-- Avoid silent modifications to user files; surface errors with actionable log messages via the centralized logging helpers.
+- Rust 2024, stable 1.97.1 pinned in Cargo.toml, rust-toolchain.toml and mise.toml.
+- Dagger 0.21.9 with Dang orchestrates Linux checks; mise manages tools/tasks and nextest runs tests. Native macOS checks remain separate.
+- src/main.rs: CLI entry point; src/records/cli.rs: clap workflows and human/versioned JSON transport.
+- src/records/mod.rs: metadata, parsing, no-clobber creation, graph and validation.
+- src/records/ai.rs: embedded authoring guide and deterministic lexical/tag suggestions.
+- src/records/dashboard.rs: tiny_http loopback server; web/ contains dependency-free browser assets.
+- serde/serde_json, toml, ulid, minimal jiff, tempfile, clap and tiny_http are runtime dependencies.
+- Full 26-character uppercase ULIDs live in metadata. Filenames use date, UTC time and title, without IDs.
+- TOML +++ metadata carries schema version, title, ID, date, status, optional tags and relationship arrays; body Markdown is unrestricted.
+- One flat collection per command. No existing-file mutation, database, cache, remote service, terminal UI or automatic Git commands.
 
-### Architecture Patterns
-- CLI entrypoints (`main.py`, `cli.py`) handle argument parsing, logging configuration, and `AppState` wiring.
-- App runner bootstraps a Textual `VrdxApp` that orchestrates pane focus, state transitions, and command routing.
-- Discovery and persistence layers isolate filesystem scanning, marker detection, and write-back so UI logic remains declarative.
-- Parser layer converts marker blocks into structured decision models and guarantees canonical serialization for round-trip edits.
-- State and command modules centralize mutations (create/update/reorder/delete) and maintain cross-pane synchronization.
-- UI pane widgets follow a lazygit-inspired layout (decisions, editor, preview, files) sized to operate within an 80×24 terminal while scaling up gracefully.
+## Quality and Workflow
 
-### Testing Strategy
-- Unit tests cover CLI resolution, discovery filters, marker parsing, decision serialization, state transitions, and command behaviors.
-- Integration fixtures exercise end-to-end flows that read, edit, and persist decision blocks across Markdown files.
-- Textual `AppTest`-based tests simulate key bindings and pane focus changes to guard the TUI interaction model.
-- Watch-mode (`ptw`) and CI runs (`uv run pytest -v`, Earthly multi-distro) ensure rapid feedback.
+Use a topic branch and Conventional Commits. OpenSpec tracks changes; the user's explicit design-and-implement request authorizes implementation. Preserve unrelated local changes. references/ remains read-only historical context.
 
-### Git Workflow
-- The canonical branch is `main`; CI runs on pushes to `main` and on every pull request.
-- Contributors develop changes on topic branches and submit pull requests; Earthly plus GitHub Actions must pass before merging.
-- Commit style is conventional-but-unenforced—use concise, imperative subject lines that describe behavior, not implementation details.
-- Release artifacts align with `main` and are distributed via `uv tool install` (no separate release branch or binary packaging).
+Run mise run ci for containerized Linux verification through Dagger/Dang, or mise run ci-native for formatting, compilation, strict Clippy, nextest, doctests and separately installed CLI checks on the host. Production unsafe code, unwrap/panic/indexing/unchecked arithmetic restrictions remain. Test fixtures may fail immediately on invalid setup or unexpected response shapes. CI covers macOS natively and Linux through the same Dagger pipeline used locally. No Python code, interpreter or package manager is required.
 
-## Domain Context
-- Decision records live inside Markdown marker blocks bounded by `<!-- vrdx start -->` and `<!-- vrdx end -->` delimiters.
-- Each decision starts with a heading in the form `### <ID> <Title>` and includes bullet-labeled Status, Decision, Context, and Consequences fields.
-- Status values are curated (📝 Draft, ✅ Accepted, ❌ Rejected, ⛔ Deprecated by …, ⬆️ Supersedes …) with reciprocal link management handled by the command layer.
-- The UI presents four panes (decisions list, editor, preview, files) with numeric focus shortcuts (`1`–`4`), lazygit-style navigation (`j`/`k` or arrows), and a contextual help overlay (`?`).
-- New decisions are inserted at the top of the marker block so the most recent decisions remain visible.
+## Data and Limits
 
-## Important Constraints
-- Official support targets macOS and Linux; Windows support is presently out of scope.
-- Distribution is Python-only via uv; binary bundlers (PyInstaller, Nuitka, etc.) are intentionally unsupported.
-- The application assumes Markdown files with canonical markers; malformed or duplicated markers surface explicit errors and require user correction before persistence.
-- Automatic Git operations are intentionally omitted—users manage commit, stage, and push steps manually.
-- Terminal layout is optimized for 80×24; larger terminals expand, but smaller sizes degrade the experience.
-
-## External Dependencies
-- GitHub Actions with Earthly orchestrate CI across macOS and Linux.
-- uv provides runtime management, tool installation, and upgrade flows for end users.
-- Textual and related libraries (Rich, markdown-it-py, mdurl, Pydantic) are bundled as part of the Python distribution—no external web services are required at runtime.
+Sorted maps and sets give deterministic output. Invalid collections emit findings and cannot provide authoritative context. Creation syncs a temporary file and publishes without clobbering. Manual edits across files are not an atomic snapshot; filesystem race and power-loss directory durability limitations are documented. Old embedded records and code remain in Git history rather than being silently migrated.

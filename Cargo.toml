@@ -1,0 +1,43 @@
+[package]
+name = "vrdx"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.97.1"
+description = "Capture and manage engineering decisions in repository Markdown files"
+license = "MIT"
+repository = "https://github.com/niklas-heer/vrdx"
+include = ["/src/**/*.rs", "/web/**", "/assets/**", "/docs/**", "/tests/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE", "/rust-toolchain.toml", "/mise.toml", "/clippy.toml"]
+
+[dependencies]
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+jiff = { version = "0.2.37", default-features = false, features = ["std"] }
+serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
+serde_json = "1.0.149"
+tempfile = "3.23.0"
+tiny_http = { version = "0.12.0", default-features = false }
+toml = { version = "1.1.6", default-features = false, features = ["std", "serde", "parse", "display"] }
+ulid = "3.0.0"
+
+[profile.release]
+overflow-checks = true
+
+[lints.rust]
+unsafe_code = "forbid"
+unknown_lints = "forbid"
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+unchecked_time_subtraction = "deny"
+todo = "deny"
+string_slice = "deny"
+panic_in_result_fn = "deny"
+panic = "deny"
+exit = "deny"
+as_conversions = "deny"

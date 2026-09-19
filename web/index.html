@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>vrdx — Decision atlas</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to decisions</a>
+  <aside class="sidebar" aria-label="Collection filters">
+    <a class="brand" href="/" aria-label="vrdx home"><img src="/logo.svg" alt="" width="38" height="38"><span>vrdx<span class="brand-dot">.</span></span></a>
+    <p class="sidebar-subtitle">A place for the why.</p>
+    <div class="collection-label"><span class="tiny-square"></span> LOCAL COLLECTION</div>
+    <nav id="status-filters" aria-label="Filter by status"></nav>
+    <div class="sidebar-section"><h2>Topics</h2><button id="clear-tags" class="text-button" hidden>Clear</button></div>
+    <div id="tag-filters" class="tag-filters"><span class="muted">Loading topics…</span></div>
+    <div class="sidebar-footer"><span class="live-dot"></span><span>Markdown is the source.<br><span class="muted">This view follows your files.</span></span></div>
+  </aside>
+  <main id="main" tabindex="-1">
+    <header class="topbar"><span class="breadcrumb">Workspace <span>/</span> Decisions</span><div class="sync"><span id="sync-status" role="status">Connecting…</span><button id="refresh" class="icon-button" aria-label="Refresh decisions" title="Refresh decisions">↻</button></div></header>
+    <section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">THE DECISION ATLAS</p><h1 id="page-title">Good decisions.<br><em>Remembered.</em></h1><p class="intro-copy">Explore what was decided, why it matters,<br class="desktop-break"> and how the pieces connect.</p></div><div class="intro-note"><span class="note-mark">↗</span><p>Ideas become decisions.<br>Decisions become context.</p><span>YOUR PROJECT, IN PERSPECTIVE</span></div></section>
+    <section id="stats" class="stats" aria-label="Collection overview"></section>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <section class="collection" aria-label="Decisions">
+      <div class="collection-heading"><div><h2 id="collection-title">All decisions</h2><p id="result-count" class="muted" aria-live="polite">Reading your collection…</p></div><div class="view-switch" role="group" aria-label="View"><button id="cards-view" aria-pressed="true"><span aria-hidden="true">▤</span> Records</button><button id="graph-view" aria-pressed="false"><span aria-hidden="true">⌘</span> Map</button></div></div>
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search titles, reasoning, tags, or IDs…" aria-label="Search decisions"><kbd>/</kbd></label>
+      <div id="active-filters" class="active-filters"></div>
+      <div id="records" class="records"></div>
+      <section id="graph-panel" class="graph-panel" aria-label="Decision relationship map" hidden><div class="graph-toolbar"><p>Connections, made visible.</p><span>Follow an arrow from a decision to its reference.</span></div><div class="edge-legend"><span class="line-key supersedes">Supersedes</span><span class="line-key depends_on">Depends on</span><span class="line-key related_to">Related to</span></div><div id="graph-scroll" class="graph-scroll"><div id="graph" class="graph"></div></div><div id="status-legend" class="status-legend"></div></section>
+      <div id="empty" class="empty" hidden></div>
+    </section>
+    <footer class="main-footer"><span>Plain text. Lasting context.</span><span>vrdx · Decision records</span></footer>
+  </main>
+  <dialog id="detail" aria-labelledby="detail-title"><div class="detail-topbar"><span>DECISION RECORD</span><button id="close-detail" class="icon-button" aria-label="Close decision">×</button></div><div id="detail-content"></div></dialog>
+  <noscript><p class="notice">Enable JavaScript to explore this collection, or use <code>vrdx list</code> in your terminal.</p></noscript>
+</body>
+</html>

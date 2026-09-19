@@ -1,0 +1,67 @@
+"""
+Reproducible Linux verification for the Rust decision CLI.
+"""
+type VrdxCi {
+  pub source: Directory! @defaultPath("/") @ignorePatterns([
+    "*",
+    "!Cargo.toml",
+    "!Cargo.lock",
+    "!rust-toolchain.toml",
+    "!clippy.toml",
+    "!mise.toml",
+    "!mise.lock",
+    "!README.md",
+    "!LICENSE",
+    "!.config",
+    "!src",
+    "!web",
+    "!assets",
+    "!docs",
+    "!tests",
+    "!scripts",
+  ])
+
+  """
+  Run formatting, strict lints, tests, release installation and CLI journeys.
+  """
+  pub ci: String! {
+    container
+      .from("ghcr.io/jdx/mise:2026.9.5@sha256:d549958171c177f113e62ddba5afdfb9e245d699ac457148e4b7b0da7af3b0b7")
+      .withoutFile("/mise/config.toml")
+      .withWorkdir("/src")
+      .withEnvVariable("MISE_TRUSTED_CONFIG_PATHS", "/src")
+      .withFile("mise.toml", source.file("mise.toml"))
+      .withFile("mise.lock", source.file("mise.lock"))
+      .withFile("rust-toolchain.toml", source.file("rust-toolchain.toml"))
+      .withExec(["mise", "install", "rust", "github:nextest-rs/nextest"])
+      .withEnvVariable("MISE_AUTO_INSTALL", "false")
+      .withDirectory("/src", source)
+      .withMountedCache("/usr/local/cargo/registry", cacheVolume("vrdx-cargo-registry"))
+      .withMountedCache("/usr/local/cargo/git", cacheVolume("vrdx-cargo-git"))
+      .withMountedCache("/src/target", cacheVolume("vrdx-rust-1.97.1-target"), sharing: CacheSharingMode.LOCKED)
+      .withExec(["mise", "run", "ci-native"])
+      .stdout
+  }
+
+  """
+  Build and package a native Linux release archive for the requested target.
+  """
+  pub release(target: String!): Directory! {
+    container
+      .from("ghcr.io/jdx/mise:2026.9.5@sha256:d549958171c177f113e62ddba5afdfb9e245d699ac457148e4b7b0da7af3b0b7")
+      .withoutFile("/mise/config.toml")
+      .withWorkdir("/src")
+      .withEnvVariable("MISE_TRUSTED_CONFIG_PATHS", "/src")
+      .withFile("mise.toml", source.file("mise.toml"))
+      .withFile("mise.lock", source.file("mise.lock"))
+      .withFile("rust-toolchain.toml", source.file("rust-toolchain.toml"))
+      .withExec(["mise", "install", "rust"])
+      .withEnvVariable("MISE_AUTO_INSTALL", "false")
+      .withDirectory("/src", source)
+      .withMountedCache("/usr/local/cargo/registry", cacheVolume("vrdx-cargo-registry"))
+      .withMountedCache("/usr/local/cargo/git", cacheVolume("vrdx-cargo-git"))
+      .withExec(["cargo", "build", "--locked", "--release", "--target", target])
+      .withExec(["mise", "run", "package-release", "--", target])
+      .directory("/src/dist")
+  }
+}
