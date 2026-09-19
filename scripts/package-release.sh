@@ -56,12 +56,15 @@ if "$smoke_dir/$archive_name/vrdx" --dir "$smoke_dir/missing" list >error.txt 2>
   exit 1
 fi
 test -s error.txt
+# Serialize this cargo-test harness: a concurrent fork can briefly inherit the
+# relocation fixture's writable executable handle and cause Linux ETXTBSY.
+# Native CI uses nextest's separate processes for parallel test isolation.
 VRDX_TEST_BINARY="$smoke_dir/$archive_name/vrdx" cargo test \
   --locked \
   --manifest-path "$project_dir/Cargo.toml" \
   --test authoring --test cli \
   --test ai \
   --test dashboard \
-  --test simulation
+  --test simulation -- --test-threads=1
 
 printf 'Packaged and verified %s\n' "$dist_dir/$archive_name.tar.gz"
