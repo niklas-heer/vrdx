@@ -23,6 +23,27 @@ No database, account or external AI service. One native Rust binary.
 
 ## Start here
 
+Download the archive for your operating system and processor from
+[GitHub Releases](https://github.com/niklas-heer/vrdx/releases/latest), together
+with `SHA256SUMS`. Each archive contains the executable, this README and the MIT
+license. No Rust toolchain is needed to run it.
+
+| System | Archive target |
+| --- | --- |
+| Linux, Intel/AMD 64-bit | `x86_64-unknown-linux-gnu` |
+| Linux, ARM 64-bit | `aarch64-unknown-linux-gnu` |
+| macOS, Apple Silicon | `aarch64-apple-darwin` |
+| macOS, Intel | `x86_64-apple-darwin` |
+
+Verify the downloaded archive against its entry in `SHA256SUMS` using
+`sha256sum` on Linux or `shasum -a 256` on macOS. Extract it, then put `vrdx` in
+a directory on your `PATH`, such as `~/.local/bin`. Run `vrdx --version` and
+`vrdx guide` to check the installation. Linux releases are tested on Ubuntu
+24.04 and macOS releases on macOS 15; other systems can build from source.
+Checksums detect corrupted downloads; they are not code signatures.
+
+To build from source instead:
+
 Install [mise](https://mise.jdx.dev/installing-mise.html) and native Rust build prerequisites: Xcode Command Line Tools on macOS, or a C compiler/linker on Linux.
 
 ```sh
@@ -199,8 +220,29 @@ Mise installs project tools; mise itself and the container engine are host prere
 
 Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). Tests exercise the CLI, Markdown parsing, identity preservation, lifecycle validation, replacement chains and deterministic retrieval. The [OpenSpec specifications](openspec/specs/) document the behavioral contract.
 
+The simulation suite runs a 221-record, 12-topic CLI/HTTP journey and three
+replayable seeds with 48 edits each. It checks renames, status/tag changes,
+relationships, invalid edits, repairs, retrieval and preservation of source files.
+It also runs against installed and extracted release binaries. This measures
+modeled workflow behavior; it does not establish real adoption or semantic
+retrieval quality. To retain the narrative fixture for browser inspection, run
+`VRDX_SIMULATION_KEEP_DIR=/tmp/vrdx-example mise exec -- cargo test --test simulation mixed_project_history`
+with a new or empty target directory, then use `vrdx --dir /tmp/vrdx-example dashboard`.
+
+Release PR checks build native archives for all four supported targets. To
+package a local build, first run `mise exec -- cargo build --locked --release --target TARGET`,
+then `mise run package-release -- TARGET` with your host's target from the table
+above. Packaging extracts the archive and exercises its binary outside the
+checkout. A matching `vVERSION` tag publishes the verified archives and checksums
+only after all four platform jobs pass.
+
 ## Scope
 
 One flat collection per command. No automatic legacy migration, Git automation, semantic search or web editing. Existing Markdown is never rewritten by the CLI. The local dashboard is a viewer, not a hosted collaboration service.
 
 The former terminal editor and `vrdx agent` interface have been replaced. Their history remains in Git. See [format details and portability limits](docs/format.md#portability-and-boundaries) before integrating another tool.
+
+## License
+
+vrdx is distributed under the [MIT license](LICENSE). Your decision records
+remain your own content; the software license does not assign a license to them.

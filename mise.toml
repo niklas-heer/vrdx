@@ -79,3 +79,7 @@ run = "sh scripts/verify-install.sh"
 [tasks.package]
 description = "Verify the distributable Cargo package without publishing"
 run = "cargo package --locked"
+
+[tasks."package-release"]
+description = "Package and verify an already-built native release binary; pass its Rust target after --"
+run = "sh scripts/package-release.sh"
