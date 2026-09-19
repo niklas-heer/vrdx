@@ -263,6 +263,31 @@ fn supersession_inverse_dependencies_and_context_are_explicit() {
 }
 
 #[test]
+fn human_context_reports_no_matches_only_when_no_decisions_match() {
+    let root = TempDir::new().unwrap();
+    fixture(
+        root.path(),
+        "accepted.md",
+        &metadata(A, Status::Accepted),
+        "A focused choice about caching.",
+    );
+    let matched = raw(root.path(), &["--dir", ".", "context", "caching"]);
+    assert!(matched.status.success());
+    assert!(matched.stderr.is_empty());
+    let output = String::from_utf8(matched.stdout).unwrap();
+    assert!(output.contains(A));
+    assert!(output.contains("A focused choice about caching."));
+    assert!(!output.contains("No decisions matched."));
+
+    let unmatched = raw(root.path(), &["--dir", ".", "context", "unrelated"]);
+    assert!(unmatched.status.success());
+    assert!(unmatched.stderr.is_empty());
+    let output = String::from_utf8(unmatched.stdout).unwrap();
+    assert_eq!(output.matches("No decisions matched.").count(), 1);
+    assert!(!output.contains(A));
+}
+
+#[test]
 fn validation_aggregates_missing_self_duplicate_and_lifecycle_errors() {
     let root = TempDir::new().unwrap();
     let mut a = metadata(A, Status::Accepted);

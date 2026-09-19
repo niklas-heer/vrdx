@@ -466,7 +466,7 @@ fn human(data: &Value) -> String {
     }
     for key in ["decisions", "chain", "boundary_decisions"] {
         if let Some(records) = data.get(key).and_then(Value::as_array) {
-            if records.is_empty() {
+            if records.is_empty() && key == "decisions" {
                 output.push_str("No decisions matched.\n");
             }
             for decision in records {
