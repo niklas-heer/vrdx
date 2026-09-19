@@ -59,7 +59,7 @@ test -s error.txt
 VRDX_TEST_BINARY="$smoke_dir/$archive_name/vrdx" cargo test \
   --locked \
   --manifest-path "$project_dir/Cargo.toml" \
-  --test cli \
+  --test authoring --test cli \
   --test ai \
   --test dashboard \
   --test simulation

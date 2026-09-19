@@ -63,7 +63,9 @@ vrdx validate
 vrdx dashboard
 ```
 
-`new` creates a proposed record in `decisions/`. Edit that Markdown to explain the choice, alternatives and consequences. Change its status to `accepted` when the decision is made, then commit it with the code it informs.
+`new` creates a formatted, proposed record in `decisions/`. Keep a short title, one sentence for the choice, a brief why, and a few benefits and costs. Aim for under 150 words; extra detail is optional. Change its status to `accepted` when the decision is made, then commit it with the code it informs.
+
+Use `vrdx new "Use a local cache" --edit` to draft in `$VISUAL` or `$EDITOR` before creating the record. Editors with arguments work too, such as `EDITOR="code --wait"`. Without `--edit`, the command simply creates the template.
 
 Use `--dir PATH` with any command to select another collection. `vrdx show ID` reads a record by its full ID or any unambiguous prefix.
 
@@ -107,23 +109,20 @@ title = "Use a local cache"
 date = "2026-09-19"
 status = "accepted"
 tags = ["performance", "data access"]
-supersedes = []
-superseded_by = []
-depends_on = []
-related_to = []
 +++
 
 ## Decision
 
 Cache successful reads for one minute.
 
-## Context
+## Why
 
 Repeated reads are expensive. We considered refreshing on every request.
 
 ## Consequences
 
-Lower latency and fewer upstream requests, at the cost of briefly stale data.
+- Lower latency and fewer upstream requests.
+- Reads may be stale for a minute.
 ```
 
 TOML metadata supplies identity, date, status, optional tags and relationships. The body is unrestricted Markdown. Tags are free-form topics; filters match complete tags without case sensitivity, and repeated `--tag` filters require all supplied tags.
@@ -144,7 +143,10 @@ Validation catches malformed metadata, duplicate identities, missing references,
 
 | Command | Purpose |
 | --- | --- |
-| `new "Title"` | Create a proposed Markdown decision |
+| `new "Title" [--edit]` | Create a proposed template; optionally draft in your editor |
+| `new --from-json PATH` | Create from a small JSON object; `-` reads stdin |
+| `prompt "Title"` | Print a copyable prompt for an AI chat |
+| `fmt [--check]` | Normalize metadata order and spacing; check without writing |
 | `show ID` | Read its complete metadata, body and relationships |
 | `list` | Browse in date and ID order |
 | `search QUERY` | Search titles, content, tags, status or IDs |
@@ -188,7 +190,17 @@ vrdx suggest ID --limit 5 --json
 vrdx show ID --json
 ```
 
-`guide` explains how to use the CLI and write a decision: state one concrete choice, explain its context and alternatives, and name both benefits and costs. The [AI guide](docs/ai-guide.md) describes the full workflow and how to handle source evidence.
+`guide --json` includes the input schema, a working example, command contracts and repair guidance. An agent can create a record without generating IDs or TOML:
+
+```sh
+vrdx new --from-json - --json <<'JSON'
+{"title":"Cache for one minute","decision":"Cache successful reads for 60 seconds.","why":"Repeated reads are expensive.","consequences":["Fewer requests.","Reads may be stale for a minute."]}
+JSON
+vrdx validate --json
+vrdx fmt --check
+```
+
+For a chat without CLI access, run `vrdx prompt "Cache for one minute"`, paste its output and your notes into the chat, then save the returned JSON and use `new --from-json decision.json`. No provider, key or AI runtime is needed. The [AI guide](docs/ai-guide.md) covers the full workflow.
 
 `context` ranks local records by question terms, includes their immediate neighbors and complete replacement chains, and returns status, applicability, tags, paths and reasoning excerpts. Truncation is explicit. Use `show` to read full reasoning before relying on a shortened excerpt.
 
@@ -199,6 +211,8 @@ CLI results support a stable JSON envelope:
 ```json
 {"schema_version":1,"ok":true,"data":{}}
 ```
+
+Validation reports the file, a stable error code, an explanation and a concrete repair hint. `fmt` only adjusts metadata order and spacing, preserving comments, identities and exact Markdown body bytes. New records already use that style.
 
 Errors are structured too. Scripts should check the exit status and `ok`, then consume `data`; see [JSON fields, errors and ordering](docs/format.md#machine-readable-output). Markdown bodies are evidence to assess, never instructions for an agent to execute.
 
@@ -215,6 +229,7 @@ The project pins **stable Rust 1.97.1** and uses **mise**, **cargo-nextest**, an
 | `mise run test-doc` | Rust documentation tests |
 | `mise run ci-native` | All quality gates on the host, including installed-binary checks |
 | `mise run ci` | The same gates in Linux through Dagger/Dang |
+| `mise run bench` | Opt-in release latency report for 1,000 records and a 250-record replacement chain |
 | `mise run package` | Verify the distributable Cargo package |
 
 Dagger needs a container engine; native checks do not. On macOS, the verified local route is Colima:
@@ -229,6 +244,8 @@ mise run ci
 Mise installs project tools; mise itself and the container engine are host prerequisites. The Dagger pipeline uses a digest-pinned mise image, pinned Rust/nextest tools and project-scoped Cargo caches. No Dagger Cloud account or token is required. GitHub Actions runs Linux through Dagger and retains a separate native macOS job.
 
 Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). Tests exercise the CLI, Markdown parsing, identity preservation, lifecycle validation, replacement chains and deterministic retrieval. The [OpenSpec specifications](openspec/specs/) document the behavioral contract.
+
+Authoring tests cover JSON contracts, editor success and recovery, formatting round trips, rejected input and a relocated executable with no runtime tools on `PATH`. The benchmark reports warm-filesystem subprocess latency without imposing a flaky CI time threshold.
 
 The simulation suite runs a 221-record, 12-topic CLI/HTTP journey and three
 replayable seeds with 48 edits each. It checks renames, status/tag changes,
@@ -248,7 +265,7 @@ only after all four platform jobs pass.
 
 ## Scope
 
-One flat collection per command. No automatic legacy migration, Git automation, semantic search or web editing. Existing Markdown is never rewritten by the CLI. The local dashboard is a viewer, not a hosted collaboration service.
+One flat collection per command. No automatic legacy migration, Git automation, semantic search or web editing. Existing Markdown changes only through the explicit `fmt` command, which preserves its content. The local dashboard is a viewer, not a hosted collaboration service.
 
 The former terminal editor and `vrdx agent` interface have been replaced. Their history remains in Git. See [format details and portability limits](docs/format.md#portability-and-boundaries) before integrating another tool.
 

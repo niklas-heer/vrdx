@@ -12,10 +12,10 @@ vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files
 - src/records/mod.rs: metadata, parsing, no-clobber creation, graph and validation.
 - src/records/ai.rs: embedded authoring guide and deterministic lexical/tag suggestions.
 - src/records/dashboard.rs: tiny_http loopback server; web/ contains dependency-free browser assets.
-- serde/serde_json, toml, ulid, minimal jiff, tempfile, clap and tiny_http are runtime dependencies.
+- serde/serde_json, toml, ulid, minimal jiff, tempfile, clap, tiny_http, toml_edit and shlex are runtime dependencies.
 - Full 26-character uppercase ULIDs live in metadata. Filenames use date, UTC time and title, without IDs.
 - TOML +++ metadata carries schema version, title, ID, date, status, optional tags and relationship arrays; body Markdown is unrestricted.
-- One flat collection per command. No existing-file mutation, database, cache, remote service, terminal UI or automatic Git commands.
+- One flat collection per command. Only explicit metadata formatting mutates existing files; no database, cache, remote service, terminal UI or automatic Git commands.
 
 ## Quality and Workflow
 

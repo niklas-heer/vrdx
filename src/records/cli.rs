@@ -34,6 +34,8 @@ struct Cli {
 enum Command {
     /// Explain the CLI, record format, and writing conventions for people and AIs
     Guide,
+    /// Print a copyable AI prompt; does not write files or contact a model
+    Prompt { title: String },
     /// Suggest unlinked decisions using shared tags and words (never edits records)
     Suggest {
         id: String,
@@ -65,6 +67,12 @@ enum Command {
     Chain { id: String },
     /// Report every parse and graph finding (exit 1 if invalid)
     Validate,
+    /// Format metadata ordering/spacing; preserve comments and the Markdown body
+    Fmt {
+        /// Report files needing formatting without changing them (exit 1)
+        #[arg(long)]
+        check: bool,
+    },
     /// Rebuild and export the graph from Markdown; writes no cache
     Rebuild,
     /// Concise evidence for an AI; optionally rank by question terms
@@ -83,18 +91,25 @@ enum Command {
 
 #[derive(Args)]
 struct New {
-    title: String,
+    #[arg(required_unless_present = "from_json", conflicts_with = "from_json")]
+    title: Option<String>,
     /// Decision date, YYYY-MM-DD; defaults to today in UTC
-    #[arg(long)]
+    #[arg(long, conflicts_with = "from_json")]
     date: Option<String>,
-    #[arg(long, value_enum, default_value = "proposed")]
-    status: Status,
+    #[arg(long, value_enum, conflicts_with = "from_json")]
+    status: Option<Status>,
     /// Repeat for multiple free-form tags
-    #[arg(long = "tag")]
+    #[arg(long = "tag", conflicts_with = "from_json")]
     tags: Vec<String>,
     /// Read an unrestricted Markdown body from a UTF-8 file
-    #[arg(long)]
+    #[arg(long, conflicts_with = "from_json")]
     body_file: Option<PathBuf>,
+    /// Create from one JSON object in PATH; use - for stdin (see guide --json)
+    #[arg(long, value_name = "PATH")]
+    from_json: Option<PathBuf>,
+    /// Edit a staged template using VISUAL or EDITOR before publishing
+    #[arg(long, conflicts_with_all = ["from_json", "json"])]
+    edit: bool,
 }
 
 #[derive(Args, Default)]
@@ -187,31 +202,59 @@ fn related(graph: &Graph, id: &str) -> Vec<Value> {
         .collect()
 }
 
+fn create_new(cli: &Cli, options: &New) -> Result<(Value, bool), Error> {
+    // Global flags supplied before the subcommand need the same conflict check.
+    if options.edit && cli.json {
+        return Err(Error::new(
+            "usage",
+            "--edit cannot be combined with --json.",
+        ));
+    }
+    if let Some(path) = &options.from_json {
+        let decision = super::authoring::from_json(&cli.dir, path)?;
+        return Ok((json!({"decision":decision}), true));
+    }
+    let id = ulid::Ulid::generate().to_string();
+    let date = options
+        .date
+        .clone()
+        .unwrap_or_else(|| jiff::Timestamp::now().strftime("%Y-%m-%d").to_string());
+    let body = options
+        .body_file
+        .as_ref()
+        .map_or_else(|| Ok(super::authoring::TEMPLATE.into()), fs::read_to_string)?;
+    let metadata = Metadata {
+        schema_version: 1,
+        id,
+        title: options.title.clone().unwrap_or_default(),
+        date,
+        status: options.status.unwrap_or(Status::Proposed),
+        tags: options.tags.clone(),
+        supersedes: vec![],
+        superseded_by: vec![],
+        depends_on: vec![],
+        related_to: vec![],
+    };
+    let decision = if options.edit {
+        super::authoring::edit_new(&cli.dir, &metadata, &body)?
+    } else {
+        super::create(&cli.dir, metadata, &body)?
+    };
+    Ok((json!({"decision":decision}), true))
+}
+
 fn execute(cli: &Cli) -> Result<(Value, bool), Error> {
     if matches!(cli.command, Command::Guide) {
         return Ok((super::ai::guide(), true));
     }
+    if let Command::Prompt { title } = &cli.command {
+        return Ok((super::authoring::prompt(title)?, true));
+    }
+    if let Command::Fmt { check } = cli.command {
+        return super::formatting::format_collection(&cli.dir, check);
+    }
     if let Command::New(options) = &cli.command {
-        let id = ulid::Ulid::generate().to_string();
-        let date = options
-            .date
-            .clone()
-            .unwrap_or_else(|| jiff::Timestamp::now().strftime("%Y-%m-%d").to_string());
-        let body = options.body_file.as_ref().map_or_else(|| Ok("\n## Decision\n\nDescribe the choice.\n\n## Context\n\nExplain the problem and alternatives.\n\n## Consequences\n\nDescribe benefits, costs and trade-offs.\n".into()), fs::read_to_string)?;
-        let metadata = Metadata {
-            schema_version: 1,
-            id,
-            title: options.title.clone(),
-            date,
-            status: options.status,
-            tags: options.tags.clone(),
-            supersedes: vec![],
-            superseded_by: vec![],
-            depends_on: vec![],
-            related_to: vec![],
-        };
-        let decision = super::create(&cli.dir, metadata, &body)?;
-        return Ok((json!({"decision":decision}), true));
+        return create_new(cli, options);
     }
     let graph = Graph::load(&cli.dir)?;
     let valid = graph.findings.is_empty();
@@ -267,6 +310,8 @@ fn execute(cli: &Cli) -> Result<(Value, bool), Error> {
             usize::from(*body_chars),
         )?,
         Command::New(_)
+        | Command::Prompt { .. }
+        | Command::Fmt { .. }
         | Command::Validate
         | Command::Rebuild
         | Command::Guide
@@ -440,8 +485,35 @@ fn human_decision(value: &Value) -> String {
     output
 }
 
+fn human_formatting(data: &Value, output: &mut String) {
+    if let Some(files) = data.get("files").and_then(Value::as_array) {
+        let check = data.get("check") == Some(&Value::Bool(true));
+        if files.is_empty() {
+            output.push_str("All records are formatted.\n");
+        }
+        for file in files.iter().filter_map(Value::as_str) {
+            let _ = writeln!(
+                output,
+                "{}: {file}",
+                if check {
+                    "Needs formatting"
+                } else {
+                    "Formatted"
+                }
+            );
+        }
+        if check && !files.is_empty() {
+            output.push_str("Run vrdx fmt with the same --dir to apply formatting.\n");
+        }
+    }
+}
+
 fn human(data: &Value) -> String {
     let mut output = String::new();
+    if let Some(prompt) = data.get("prompt").and_then(Value::as_str) {
+        return prompt.to_owned();
+    }
+    human_formatting(data, &mut output);
     if let Some(guidance) = data.get("guidance").and_then(Value::as_str) {
         output.push_str(guidance);
         output.push_str("\n\n");
@@ -522,6 +594,7 @@ fn human(data: &Value) -> String {
                 text(finding, "code"),
                 text(finding, "message")
             );
+            let _ = writeln!(output, "  Fix: {}", text(finding, "hint"));
         }
     }
     if let Some(graph) = data.get("graph") {
@@ -553,7 +626,7 @@ pub fn run(arguments: impl Iterator<Item = OsString>) -> ExitCode {
                     json!({"schema_version":1,"ok":true,"data":{"help":error.to_string()}})
                         .to_string()
                 } else {
-                    json!({"schema_version":1,"ok":false,"error":{"code":"usage","message":error.to_string()}}).to_string()
+                    json!({"schema_version":1,"ok":false,"error":{"code":"usage","message":error.to_string(),"hint":super::repair_hint("usage")}}).to_string()
                 }
             } else {
                 error.to_string()
@@ -580,9 +653,9 @@ pub fn run(arguments: impl Iterator<Item = OsString>) -> ExitCode {
         }
         Err(error) => {
             let output = if cli.json {
-                json!({"schema_version":1,"ok":false,"error":{"code":error.code,"message":error.message}}).to_string()
+                json!({"schema_version":1,"ok":false,"error":{"code":error.code,"message":error.message,"hint":error.hint}}).to_string()
             } else {
-                format!("{}: {}", error.code, error.message)
+                format!("{}: {}\n  Fix: {}", error.code, error.message, error.hint)
             };
             emit(&output, error.exit_code(), !cli.json)
         }
