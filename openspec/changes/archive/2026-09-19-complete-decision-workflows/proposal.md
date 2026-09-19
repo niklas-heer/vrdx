@@ -1,5 +1,12 @@
 # Complete decision workflows and agent interface
 
+## Historical disposition
+
+Archived on 2026-09-19 during release completion. This work was implemented in
+the intermediate editor branch, then superseded by the accepted standalone
+Markdown CLI direction. Its historical deltas were intentionally not reapplied;
+the current decision-collections and implementation specifications are authoritative.
+
 ## Why
 The Rust migration omitted original delete/reorder requirements and left the stated agent-facing vision incomplete. The user explicitly approved completing all identified gaps, with no deferrals.
 

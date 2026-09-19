@@ -1,5 +1,12 @@
 # Change: Migrate vrdx to Rust, Ratatui, and Premise with reliable terminal editing
 
+## Historical disposition
+
+Archived on 2026-09-19 during release completion. The Rust migration was
+implemented, then its terminal interface and nightly tooling were superseded by
+the accepted standalone Markdown CLI and stable build decisions. Historical
+deltas were intentionally not reapplied to the current specifications.
+
 ## Why
 
 The existing Python editor has demonstrated save, draft, parser, and installation failures. The user approved implementation and explicitly selected Rust, Ratatui, nightly Rust, mise, Premise as the core pattern library, and end-to-end tests that send characters through a real terminal.
