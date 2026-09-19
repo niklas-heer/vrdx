@@ -23,6 +23,18 @@ No database, account or external AI service. One native Rust binary.
 
 ## Start here
 
+With Homebrew on macOS or Linux:
+
+```sh
+brew install niklas-heer/tap/vrdx
+```
+
+This installs the native executable; no Rust toolchain is needed. On macOS,
+use macOS 15 or newer. Linux binaries target Ubuntu 24.04 or compatible systems
+with glibc 2.39 or newer. Both Apple/ARM and Intel/AMD processors are supported.
+
+Or download a standalone binary:
+
 Download the archive for your operating system and processor from
 [GitHub Releases](https://github.com/niklas-heer/vrdx/releases/latest), together
 with `SHA256SUMS`. Each archive contains the executable, this README and the MIT
@@ -261,7 +273,8 @@ package a local build, first run `mise exec -- cargo build --locked --release --
 then `mise run package-release -- TARGET` with your host's target from the table
 above. Packaging extracts the archive and exercises its binary outside the
 checkout. A matching `vVERSION` tag publishes the verified archives and checksums
-only after all four platform jobs pass.
+only after the full quality workflow and all four platform jobs pass. See
+[Releasing vrdx](docs/releasing.md) for the release and Homebrew update procedure.
 
 ## Scope
 

@@ -1,6 +1,6 @@
 [package]
 name = "vrdx"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.97.1"
 description = "Capture and manage engineering decisions in repository Markdown files"
