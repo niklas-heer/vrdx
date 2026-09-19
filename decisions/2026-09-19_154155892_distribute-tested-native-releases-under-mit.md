@@ -40,3 +40,11 @@ Deterministic scenarios test decision history, discovery, edits and recovery at
 larger collection sizes. They provide repeatable evidence about modeled behavior,
 not a claim of real adoption or universal retrieval quality. Semantic search,
 web editing and hosted collaboration remain outside the accepted scope.
+
+## Homebrew — 2026-09-19
+
+Niklas requested Homebrew distribution and publication readiness. Use the existing
+`niklas-heer/tap` and preserve its PR-required main branch. Under that delegated
+scope, test updates on all four native platforms before opening a formula PR;
+require full quality gates before publishing release archives. See
+[the release procedure](../docs/releasing.md).
