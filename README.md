@@ -76,8 +76,9 @@ vrdx dashboard --port 7878
 Open **http://127.0.0.1:7878** to explore the current collection. The dashboard presents decisions, lifecycle states, tags and relationships from your Markdown files. It is a local, read-only view; edit the files to change the source.
 
 The map opens by default. Hover over a decision or focus it with the keyboard to
-highlight its direct connections. Select it to explore its neighborhood, follow
-named relationships and open its full reasoning with **Read decision**. Connected
+highlight its direct connections. Select it to explore its neighborhood and read
+its full reasoning alongside the graph. Following a connection updates both the
+map and reading pane. **Expand record** opens metadata and suggestions. Connected
 records outside your filters are labeled as context. **All matches** (or Escape)
 returns to the filtered overview; **Records** switches to the card view.
 

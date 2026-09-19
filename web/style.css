@@ -1340,3 +1340,40 @@ select:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
 .intro h1 { font-size: 36px; }
 .stat-number { font-size: 26px; }
 .stat-label small { display: none; }
+
+/* Keep the selected reasoning and its neighborhood in the same workspace. */
+.graph-workspace.has-selection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 40%);
+  align-items: stretch;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.has-selection .graph-scroll { border: 0; }
+.has-selection .graph-selection {
+  min-width: 0;
+  min-height: 360px;
+  max-height: 670px;
+  overflow: auto;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 24px;
+  scrollbar-gutter: stable;
+}
+.graph-selection:focus-visible { outline: 2px solid var(--green); outline-offset: -3px; }
+.reader-title { font: 28px/1.2 Georgia,serif; margin: 22px 0 12px; overflow-wrap: anywhere; }
+.graph-selection .reader-source { font-size: 10px; color: var(--muted); overflow-wrap: anywhere; margin: 0 0 24px; }
+.graph-selection .markdown { font-size: 13px; }
+.graph-selection .markdown p { font-size: inherit; line-height: 1.9; }
+.graph-selection .markdown > :first-child { margin-top: 0; }
+.graph-selection .relation { flex-wrap: wrap; }
+.graph-selection .context-label { margin-left: 0; }
+@media(max-width:1100px) {
+  .graph-workspace.has-selection { grid-template-columns: minmax(0, 1fr); }
+  .has-selection .graph-scroll { max-height: 330px; }
+  .has-selection .graph-selection { border-left: 0; border-top: 1px solid var(--line); max-height: 560px; }
+}
+@media(max-width:500px) {
+  .has-selection .graph-selection { padding: 20px; }
+  .reader-title { font-size: 25px; }
+}

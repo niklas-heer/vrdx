@@ -143,6 +143,7 @@ function selectDecision(id) {
   renderCollection();
   $("graph-scroll").scrollTop = 0;
   $("graph-scroll").scrollLeft = 0;
+  $("graph-selection").scrollTop = 0;
   const selected = [...$("graph").querySelectorAll(".graph-node")].find((node) => node.dataset.id === id);
   if (selected) selected.focus({ preventScroll: true });
   else $("graph-view").focus();
@@ -167,27 +168,35 @@ function renderGraph(matches) {
   const neighborIds = new Set(links.map((link) => link.id));
   const neighbors = decisions().filter((record) => neighborIds.has(record.id) && record.id !== selected?.id);
   const records = selected ? [selected, ...neighbors] : matches;
+  $("graph-workspace").classList.toggle("has-selection", !!selected);
   $("clear-selection").hidden = !selected;
   $("graph-title").textContent = selected ? selected.title : "Connections, made visible.";
   $("graph-hint").textContent = selected
     ? `${links.length} direct ${links.length === 1 ? "connection" : "connections"} · Select a neighbor to follow the story.`
-    : "Hover or focus to trace connections. Select a decision to explore.";
+    : "Hover to trace connections. Select a decision to read its story alongside the map.";
   const summary = $("graph-selection");
   summary.hidden = !selected;
   summary.replaceChildren();
   if (selected) {
     const heading = element("div", "selection-heading");
-    heading.append(badge(selected.status), button("read-decision", "Read decision ↗", () => openRecord(selected.id)));
-    summary.append(heading);
-    if (!links.length) summary.append(element("p", "muted", "No explicit connections yet. This decision stands on its own."));
+    heading.append(badge(selected.status), button("read-decision", "Expand record ↗", () => openRecord(selected.id)));
+    const title = element("h2", "reader-title", selected.title);
+    const metadata = element("p", "reader-source", `${dateLabel(selected.date)} · ${selected.file}`);
+    summary.append(heading, title, metadata);
+    if (!state.valid) summary.append(element("p", "detail-warning", "This collection has validation findings. Review them before relying on lifecycle or replacement relationships."));
+    summary.append(selected.body.trim() ? markdown(selected.body) : element("p", "muted", "This record has no written reasoning yet."));
+    const connections = element("section", "detail-section");
+    connections.append(element("h3", "", "Connected decisions"));
+    if (!links.length) connections.append(element("p", "muted", "No explicit connections yet. This decision stands on its own."));
     for (const link of links) {
       const target = state.graph.decisions[link.id];
       const node = button("relation", "", () => selectDecision(link.id));
       node.disabled = !target;
       node.append(element("span", "relation-kind", link.kind), element("span", "relation-title", target ? target.title : `Missing: ${link.id}`));
       if (target && !matchIds.has(link.id)) node.append(element("span", "context-label", "Outside filters"));
-      summary.append(node);
+      connections.append(node);
     }
+    summary.append(connections);
   }
   const available = Math.min($("graph-scroll").clientWidth || 750, 1000);
   const narrow = available < 590;

@@ -39,3 +39,7 @@ the reasoning drawer. Neighbors outside active filters are explicitly labeled as
 context. Appearance follows the system by default, with locally remembered light
 and dark choices. These presentation choices preserve the read-only architecture
 and require no additional runtime dependency.
+
+After trying this view, Niklas also requested visible decision contents. Selecting
+a node therefore shows its full reasoning alongside the graph (below it on narrow
+screens), while the expanded drawer remains available for metadata and suggestions.
