@@ -34,17 +34,9 @@ run = "cargo nextest run --locked --all-features"
 description = "Run documentation tests (separate from nextest)"
 run = "cargo test --locked --doc --all-features"
 
-[tasks.contracts]
-description = "Verify Premise representation and identity contracts"
-run = "cargo nextest run --locked --test contracts"
-
 [tasks."test-e2e"]
-description = "Run the real terminal interaction tests"
-run = "cargo nextest run --locked --test terminal"
-
-[tasks.bench]
-description = "Measure parser throughput with Criterion"
-run = "cargo bench --locked --bench parser"
+description = "Run complete CLI journeys through a subprocess"
+run = "cargo nextest run --locked --test cli"
 
 [tasks.dev]
 description = "Watch Clippy diagnostics with bacon; run the app separately"
@@ -52,12 +44,12 @@ run = "bacon clippy"
 raw = true
 
 [tasks.run]
-description = "Launch the TUI; pass a directory after --"
+description = "Run the CLI; pass a command after --"
 run = "cargo run --locked --"
 raw = true
 
 [tasks.watch]
-description = "Rerun checks and tests on changes without taking over the terminal"
+description = "Rerun checks and tests on changes for the CLI"
 run = "watchexec --restart --exts rs,toml --ignore target -- mise run check ::: test"
 
 [tasks.ci]
