@@ -17,7 +17,7 @@ mise exec -- cargo install --locked --path .
 vrdx --help
 ```
 
-Put Cargo's binary directory (normally `~/.cargo/bin`) on PATH. The historical Python distribution is a different program. This repository retains its pinned Rust nightly-2026-09-06 toolchain; the CLI uses no nightly language features. The installed binary needs neither Python nor a runtime service.
+Put Cargo's binary directory (normally `~/.cargo/bin`) on PATH. The project pins stable Rust **1.97.1** in Cargo, rust-toolchain.toml and mise.toml. The installed CLI is a standalone native binary with no interpreter or runtime service.
 
 ## Start a collection
 
@@ -140,10 +140,18 @@ mise run check
 mise run clippy
 mise run test
 mise run test-doc
+mise run ci-native
 mise run ci
+mise run build
 ```
 
-`mise run ci` checks formatting, all targets/features, strict Clippy, nextest, doctests and a separately installed binary outside the checkout. CLI tests cover creation, rename-safe IDs, UTF-8/CRLF body preservation, tag filtering, malformed input, graph validation, replacement traversal, deterministic context, no-clobber writes, symlinks and a 128-record history. `mise run test-e2e` runs just the CLI subprocess suite. Existing Bacon/watchexec tasks support development without launching an interactive editor.
+`mise run ci-native` checks formatting, all targets/features, strict Clippy, nextest, doctests and a separately installed binary outside the checkout. CLI tests cover creation, rename-safe IDs, UTF-8/CRLF body preservation, tag filtering, malformed input, graph validation, replacement traversal, deterministic context, no-clobber writes, symlinks and a 128-record history. `mise run test-e2e` runs just the CLI subprocess suite. Bacon and watchexec support quick local feedback; rust-analyzer and rust-src support editors. `mise run build` produces `target/release/vrdx` with overflow checks enabled.
+
+`mise run ci` runs those same gates in Linux using **Dagger 0.21.9 and its Dang SDK**. The pipeline in `.dagger/main.dang` uses a digest-pinned mise image and installs only the pinned Rust and nextest tools. It excludes Git metadata, local build output and unrelated files from its source input, uses project-scoped Cargo caches, and evaluates the result so failures propagate. No Dagger Cloud account or token is required. GitHub Actions is a thin Dagger launcher for Linux and runs `ci-native` separately on macOS; a Linux container does not replace native macOS coverage.
+
+For local Dagger runs, start a supported container engine. On macOS, the verified path is **Colima** with the Docker runtime: `colima start --runtime docker`, then `docker context use colima` and `docker info`. Apple's `container` runtime is an alternative that requires its own Dagger compatibility setup; it is not required by this project. The engine and mise are host prerequisites; `mise install` supplies the project tools. Contributors can run all native Rust gates without a container engine.
+
+The application and build pipeline contain no Python code or package configuration. Old virtual environments, interpreter caches and Textual checkout remnants have been removed. Historical OpenSpec records and read-only reference documents are retained as history. New work belongs in the Rust CLI, its tests, or the small Dang orchestration module. Keep development choices beside the code in `decisions/`, preserve Markdown authority, and use Conventional Commits. Prefer existing crates and focused end-to-end tests; introduce dependencies or infrastructure only for a concrete need.
 
 Runtime dependencies are clap (argument grammar/help), serde/serde_json (typed metadata and JSON), toml (standard metadata parsing), ulid (standard ID generation/encoding), minimal-feature jiff (calendar validation and UTC timestamps), and tempfile (atomic no-clobber publication). The previous TUI, terminal testing, Premise, hashing and benchmarking dependencies have been removed. No graph framework, database, daemon, async runtime, model SDK or web framework is needed.
 

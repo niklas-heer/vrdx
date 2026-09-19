@@ -27,8 +27,13 @@ fn readme_record_is_accepted_by_the_collection_parser() {
 fn mise_and_cargo_pin_the_same_toolchain() {
     let mise: toml::Value = toml::from_str(include_str!("../mise.toml")).unwrap();
     let rust: toml::Value = toml::from_str(include_str!("../rust-toolchain.toml")).unwrap();
+    let cargo: toml::Value = toml::from_str(include_str!("../Cargo.toml")).unwrap();
     assert_eq!(
         mise["tools"]["rust"]["version"],
+        rust["toolchain"]["channel"]
+    );
+    assert_eq!(
+        cargo["package"]["rust-version"],
         rust["toolchain"]["channel"]
     );
 }

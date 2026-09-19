@@ -4,6 +4,30 @@
 version = "3.25.0"
 backend = "cargo:bacon"
 
+[[tools.dagger]]
+version = "0.21.9"
+backend = "aqua:dagger/dagger"
+
+[tools.dagger."platforms.linux-arm64"]
+checksum = "sha256:3bc8334ccde404f66f0a8e29807e4327c7893990c3211691680c5f07f8273f3a"
+url = "https://github.com/dagger/dagger/releases/download/v0.21.9/dagger_v0.21.9_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/dagger/dagger/releases/assets/530870098"
+
+[tools.dagger."platforms.linux-x64"]
+checksum = "sha256:33eea0b08d6be444bada18e64b2216459100d6070abcb4b5345cee40c9fff982"
+url = "https://github.com/dagger/dagger/releases/download/v0.21.9/dagger_v0.21.9_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/dagger/dagger/releases/assets/530870096"
+
+[tools.dagger."platforms.macos-arm64"]
+checksum = "sha256:551a4d5432860547bf4f088181cbd0902668289171959de97568ea0f0ecb35ee"
+url = "https://github.com/dagger/dagger/releases/download/v0.21.9/dagger_v0.21.9_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/dagger/dagger/releases/assets/530870101"
+
+[tools.dagger."platforms.macos-x64"]
+checksum = "sha256:2ed6e998d820bfb4800ed5644e1b9586f03078b14243c7fdf3bdd9e0eb0d5bfe"
+url = "https://github.com/dagger/dagger/releases/download/v0.21.9/dagger_v0.21.9_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/dagger/dagger/releases/assets/530870097"
+
 [[tools."github:cargo-bins/cargo-binstall"]]
 version = "1.23.0"
 backend = "github:cargo-bins/cargo-binstall"
@@ -51,6 +75,12 @@ backend = "github:nextest-rs/nextest"
 
 [tools."github:nextest-rs/nextest".options]
 version_prefix = "cargo-nextest-"
+
+[tools."github:nextest-rs/nextest"."platforms.linux-arm64"]
+checksum = "sha256:7fecfd431b810c05c589d800524286b8f80ce2fe9fb1fef05caf16d095cea407"
+url = "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.144/cargo-nextest-0.9.144-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/nextest-rs/nextest/releases/assets/555799802"
+provenance = "github-attestations"
 
 [tools."github:nextest-rs/nextest"."platforms.linux-x64"]
 checksum = "sha256:8a4f726272b0a1c499bd87ca3978bfbb1a8c20bb08ccf075b9996e2081bd1e1e"
@@ -109,9 +139,9 @@ url = "https://github.com/watchexec/watchexec/releases/download/v2.7.2/watchexec
 url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/546730396"
 
 [[tools.rust]]
-version = "nightly-2026-09-06"
+version = "1.97.1"
 backend = "core:rust"
 
 [tools.rust.options]
-components = "clippy,rust-analyzer,rustfmt"
+components = "clippy,rust-analyzer,rust-src,rustfmt"
 profile = "minimal"

@@ -1,8 +1,9 @@
 min_version = "2026.7.7"
 
 [tools]
-# Keep this date aligned with rust-toolchain.toml for direct Cargo users.
-rust = { version = "nightly-2026-09-06", profile = "minimal", components = ["rustfmt", "clippy", "rust-analyzer"] }
+# Keep this version aligned with rust-toolchain.toml and Cargo.toml.
+rust = { version = "1.97.1", profile = "minimal", components = ["rustfmt", "clippy", "rust-analyzer", "rust-src"] }
+dagger = "0.21.9"
 "github:cargo-bins/cargo-binstall" = "1.23.0"
 "github:nextest-rs/nextest" = { version = "0.9.144", version_prefix = "cargo-nextest-" }
 "cargo:bacon" = "3.25.0"
@@ -53,7 +54,11 @@ description = "Rerun checks and tests on changes for the CLI"
 run = "watchexec --restart --exts rs,toml --ignore target -- mise run check ::: test"
 
 [tasks.ci]
-description = "Run the same quality gates used in CI"
+description = "Run reproducible Linux CI through Dagger and Dang (requires a container engine)"
+run = "dagger call ci"
+
+[tasks."ci-native"]
+description = "Run all quality gates on the host; also used inside Dagger"
 run = [
   "mise run fmt",
   "mise run check",
@@ -62,6 +67,10 @@ run = [
   "mise run test-doc",
   "mise run verify-install",
 ]
+
+[tasks.build]
+description = "Build the optimized Rust CLI with overflow checks"
+run = "cargo build --locked --release"
 
 [tasks."verify-install"]
 description = "Install and smoke-test the binary outside the checkout"

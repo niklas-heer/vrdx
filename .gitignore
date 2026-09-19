@@ -11,11 +11,3 @@
 .idea/
 .vscode/*
 !.vscode/settings.json
-
-# Local leftovers from the Python implementation; not part of the Rust build.
-.venv/
-__pycache__/
-.pytest_cache/
-.ruff_cache/
-*.egg-info/
-textual/

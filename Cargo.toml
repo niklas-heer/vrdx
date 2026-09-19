@@ -2,6 +2,7 @@
 name = "vrdx"
 version = "0.2.0"
 edition = "2024"
+rust-version = "1.97.1"
 description = "Capture and manage engineering decisions in repository Markdown files"
 repository = "https://github.com/niklas-heer/vrdx"
 include = ["/src/**/*.rs", "/tests/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/rust-toolchain.toml", "/mise.toml", "/clippy.toml"]

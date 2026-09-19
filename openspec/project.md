@@ -6,7 +6,8 @@ vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files
 
 ## Stack and Architecture
 
-- Rust 2024, preserving nightly-2026-09-06 in rust-toolchain.toml and mise.toml.
+- Rust 2024, stable 1.97.1 pinned in Cargo.toml, rust-toolchain.toml and mise.toml.
+- Dagger 0.21.9 with Dang orchestrates Linux checks; mise manages tools/tasks and nextest runs tests. Native macOS checks remain separate.
 - src/main.rs: CLI entry point; src/records/cli.rs: clap workflows and human/versioned JSON transport.
 - src/records/mod.rs: metadata, parsing, no-clobber creation, graph and validation.
 - serde/serde_json, toml, ulid, minimal jiff, tempfile and clap are runtime dependencies.
@@ -18,7 +19,7 @@ vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files
 
 Use a topic branch and Conventional Commits. OpenSpec tracks changes; the user's explicit design-and-implement request authorizes implementation. Preserve unrelated local changes. references/ remains read-only historical context.
 
-Run mise run ci for formatting, compilation, strict Clippy, nextest, doctests and separately installed CLI checks. Production unsafe code, unwrap/panic/indexing/unchecked arithmetic restrictions remain. Test fixtures may fail immediately on invalid setup or unexpected response shapes. CI covers macOS and Linux.
+Run mise run ci for containerized Linux verification through Dagger/Dang, or mise run ci-native for formatting, compilation, strict Clippy, nextest, doctests and separately installed CLI checks on the host. Production unsafe code, unwrap/panic/indexing/unchecked arithmetic restrictions remain. Test fixtures may fail immediately on invalid setup or unexpected response shapes. CI covers macOS natively and Linux through the same Dagger pipeline used locally. No Python code, interpreter or package manager is required.
 
 ## Data and Limits
 
