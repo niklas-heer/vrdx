@@ -13,6 +13,9 @@ type VrdxCi {
     "!README.md",
     "!.config",
     "!src",
+    "!web",
+    "!assets",
+    "!docs",
     "!tests",
     "!scripts",
   ])

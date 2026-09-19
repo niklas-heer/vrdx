@@ -32,6 +32,19 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Explain the CLI, record format, and writing conventions for people and AIs
+    Guide,
+    /// Suggest unlinked decisions using shared tags and words (never edits records)
+    Suggest {
+        id: String,
+        #[arg(long, default_value = "10", value_parser = clap::value_parser!(u16).range(1..))]
+        limit: u16,
+    },
+    /// Browse current Markdown in a read-only local web dashboard
+    Dashboard {
+        #[arg(long, default_value_t = 7878)]
+        port: u16,
+    },
     /// Create a proposed decision (edit the Markdown to develop or accept it)
     New(New),
     /// Read a decision by full ID or unique prefix
@@ -175,6 +188,9 @@ fn related(graph: &Graph, id: &str) -> Vec<Value> {
 }
 
 fn execute(cli: &Cli) -> Result<(Value, bool), Error> {
+    if matches!(cli.command, Command::Guide) {
+        return Ok((super::ai::guide(), true));
+    }
     if let Command::New(options) = &cli.command {
         let id = ulid::Ulid::generate().to_string();
         let date = options
@@ -210,6 +226,7 @@ fn execute(cli: &Cli) -> Result<(Value, bool), Error> {
     }
     graph.require_valid()?;
     let data = match &cli.command {
+        Command::Suggest { id, limit } => super::ai::suggest(&graph, id, usize::from(*limit))?,
         Command::Show { id } => {
             let decision = graph.resolve(id)?;
             json!({"decision":decision,"relationships":related(&graph, &decision.metadata.id)})
@@ -249,7 +266,11 @@ fn execute(cli: &Cli) -> Result<(Value, bool), Error> {
             usize::from(*limit),
             usize::from(*body_chars),
         )?,
-        Command::New(_) | Command::Validate | Command::Rebuild => {
+        Command::New(_)
+        | Command::Validate
+        | Command::Rebuild
+        | Command::Guide
+        | Command::Dashboard { .. } => {
             return Err(Error::new("usage", "Command was already handled"));
         }
     };
@@ -428,6 +449,21 @@ fn human(data: &Value) -> String {
     if let Some(decision) = data.get("decision") {
         output.push_str(&human_decision(decision));
     }
+    if let Some(suggestions) = data.get("suggestions").and_then(Value::as_array) {
+        if suggestions.is_empty() {
+            output.push_str("No unlinked decisions share tags or significant words.\n");
+        }
+        for suggestion in suggestions {
+            if let Some(decision) = suggestion.get("decision") {
+                output.push_str(&human_decision(decision));
+            }
+            if let Some(reasons) = suggestion.get("reasons").and_then(Value::as_array) {
+                for reason in reasons.iter().filter_map(Value::as_str) {
+                    let _ = writeln!(output, "  {reason}");
+                }
+            }
+        }
+    }
     for key in ["decisions", "chain", "boundary_decisions"] {
         if let Some(records) = data.get(key).and_then(Value::as_array) {
             if records.is_empty() {
@@ -525,11 +561,18 @@ pub fn run(arguments: impl Iterator<Item = OsString>) -> ExitCode {
             return emit(&output, if help { 0 } else { 2 }, !json_output && !help);
         }
     };
-    match execute(&cli) {
+    let result = if let Command::Dashboard { port } = cli.command {
+        super::dashboard::serve(&cli.dir, port, cli.json).map(|()| (Value::Null, true))
+    } else {
+        execute(&cli)
+    };
+    match result {
         Ok((data, valid)) => {
             let status = u8::from(!valid);
             let output = if cli.json {
                 json!({"schema_version":1,"ok":valid,"data":data}).to_string()
+            } else if matches!(cli.command, Command::Guide) {
+                super::ai::guide_text().to_owned()
             } else {
                 human(&data)
             };

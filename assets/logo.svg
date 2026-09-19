@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">vrdx</title>
+  <desc id="desc">A branching V connects three decision nodes. An emerald path carries the chosen direction forward.</desc>
+  <rect width="128" height="128" rx="30" fill="#F6F5EF"/>
+  <path d="M32 33 64 94" fill="none" stroke="#202A26" stroke-width="12" stroke-linecap="round"/>
+  <path d="M64 94 96 33" fill="none" stroke="#187D61" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="32" cy="33" r="11" fill="#F6F5EF" stroke="#202A26" stroke-width="6"/>
+  <circle cx="96" cy="33" r="11" fill="#187D61"/>
+  <circle cx="64" cy="94" r="11" fill="#187D61"/>
+  <circle cx="96" cy="33" r="3" fill="#F6F5EF"/>
+</svg>

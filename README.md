@@ -1,12 +1,29 @@
-# vrdx
+<p align="center">
+  <img src="assets/logo.svg" alt="vrdx branching decision mark" width="88" height="88">
+</p>
+<h1 align="center">vrdx</h1>
+<p align="center"><strong>Keep the decision. Keep the why.</strong></p>
+<p align="center">Engineering decisions in Markdown. A Rust CLI for people and AI, with a local dashboard.</p>
+<p align="center">
+  <a href="#start-here">Get started</a> ·
+  <a href="#see-the-bigger-picture">Dashboard</a> ·
+  <a href="docs/ai-guide.md">AI guide</a> ·
+  <a href="docs/format.md">File format &amp; JSON</a>
+</p>
 
-A CLI for engineering decisions stored in ordinary Markdown. Files are the source of truth: readable in an editor, reviewable in Git, and portable without a database. vrdx rebuilds a deterministic graph from them whenever you run a command.
+---
 
-This replaces the earlier terminal editor and `vrdx agent` interface. The old embedded numeric-record format is not imported automatically. Historical code and documents remain in Git. A future web interface can use the same library and JSON contract; no web server is included.
+Decisions outlive the conversations that produced them. vrdx keeps the choice, reasoning, trade-offs and replacement history together in files your team can read, review and carry to another tool.
 
-## Install
+- **Markdown is the source.** Read it in any editor, review it in Git, rebuild the graph at any time.
+- **History stays connected.** Stable IDs survive renames; explicit relationships show what replaced what.
+- **People and agents share the evidence.** Browse a local dashboard, query the CLI or retrieve structured context with source paths and lifecycle status.
 
-Install [mise](https://mise.jdx.dev/installing-mise.html) and native Rust build prerequisites (Xcode Command Line Tools on macOS; a C compiler/linker on Linux), then:
+No database, account or external AI service. One native Rust binary.
+
+## Start here
+
+Install [mise](https://mise.jdx.dev/installing-mise.html) and native Rust build prerequisites: Xcode Command Line Tools on macOS, or a C compiler/linker on Linux.
 
 ```sh
 git clone https://github.com/niklas-heer/vrdx.git
@@ -14,27 +31,42 @@ cd vrdx
 mise trust
 mise install
 mise exec -- cargo install --locked --path .
-vrdx --help
 ```
 
-Put Cargo's binary directory (normally `~/.cargo/bin`) on PATH. The project pins stable Rust **1.97.1** in Cargo, rust-toolchain.toml and mise.toml. The installed CLI is a standalone native binary with no interpreter or runtime service.
-
-## Start a collection
+Put Cargo's binary directory (normally `~/.cargo/bin`) on your `PATH`. From the repository where you want to keep decisions:
 
 ```sh
 vrdx new "Use a local cache" --tag performance
 vrdx list
-vrdx show ID
 vrdx validate
+vrdx dashboard
 ```
 
-The default directory is `decisions/`, relative to the working directory. `new` creates it when needed; read commands report a missing directory. Use `--dir PATH` before or after any command to select another collection. Every direct `.md` child is a decision except `README.md`. Subdirectories are not scanned; symlink candidates are reported as errors. Unrecognized legacy files produce diagnostics rather than disappearing from results.
+`new` creates a proposed record in `decisions/`. Edit that Markdown to explain the choice, alternatives and consequences. Change its status to `accepted` when the decision is made, then commit it with the code it informs.
 
-New decisions default to `proposed` and today's UTC date. Use `--date YYYY-MM-DD`, `--status accepted` or another lifecycle state, repeat `--tag`, and optionally supply `--body-file PATH`. Edit the resulting Markdown with your preferred editor to develop the reasoning, change status, or add relationships. vrdx never rewrites existing decision files. Commit changes normally with Git.
+Use `--dir PATH` with any command to select another collection. `vrdx show ID` reads a record by its full ID or any unambiguous prefix.
 
-Filenames look like `2026-09-19_143052123_use-a-local-cache.md`: decision date, UTC creation time including milliseconds, and a short title slug. They sort chronologically by decision date, with creation time as a tie-breaker. The full ID lives **only in metadata**, not the generated filename. You may rename the file freely; its identity and graph relationships remain intact. A filename collision fails without overwriting the existing file; retry or use a different title.
+## See the bigger picture
 
-## Markdown format
+```sh
+vrdx dashboard --port 7878
+```
+
+Open **http://127.0.0.1:7878** to explore the current collection. The dashboard presents decisions, lifecycle states, tags and relationships from your Markdown files. It is a local, read-only view; edit the files to change the source.
+
+The browser interface ships inside the Rust binary. There is no separate frontend installation or database to synchronize. Stop the foreground process with Ctrl-C when you are done.
+
+If the collection is invalid, the dashboard shows diagnostics. Use `vrdx validate` for the same validation from your terminal.
+
+## A decision is an ordinary file
+
+Generated filenames are readable and chronologically sortable:
+
+```text
+decisions/2026-09-19_143052123_use-a-local-cache.md
+```
+
+The permanent 26-character ULID lives in metadata. Rename the file or revise the title without breaking its references.
 
 ```markdown
 +++
@@ -63,96 +95,112 @@ Repeated reads are expensive. We considered refreshing on every request.
 Lower latency and fewer upstream requests, at the cost of briefly stale data.
 ```
 
-The `+++` block is TOML. Arrays may span lines; comments are allowed. `schema_version`, `id`, `title`, `date`, and `status` are required. Tag and relationship arrays default to empty when omitted. Unknown metadata fields, repeated keys, invalid dates, blank titles, invalid IDs and duplicate tags/references are errors. Additional narrative fields belong in the unrestricted Markdown body, whose whitespace, Unicode, headings and custom sections are preserved exactly. A body is allowed to be empty while drafting.
+TOML metadata supplies identity, date, status, optional tags and relationships. The body is unrestricted Markdown. Tags are free-form topics; filters match complete tags without case sensitivity, and repeated `--tag` filters require all supplied tags.
 
-IDs are full 26-character uppercase [ULIDs](https://docs.rs/ulid/3.0.0/ulid/struct.Ulid.html), using standard Crockford Base32: a 48-bit millisecond timestamp plus 80 random bits. This provides compact time-aware identity without a custom encoding. The CLI accepts a full ID or an unambiguous prefix, case-insensitively; stored references always use the complete uppercase ID. Identity is permanent and independent of title, date, path, or status. IDs approximate creation order, not causality: same-millisecond creation and clock skew can affect ordering. The editable decision date may be backdated independently.
-
-Tags are lightweight topical labels, including spaces and Unicode. No fixed taxonomy is imposed. They must be trimmed, nonempty single-line strings and unique ignoring case. Filters match whole tags case-insensitively; repeated `--tag` filters require **all** tags. Tag filters are separate from status and text search.
-
-## Lifecycle and relationships
-
-| Status | Meaning |
+| Status | How to read it |
 | --- | --- |
 | `proposed` | Under discussion |
 | `accepted` | Currently applicable |
 | `rejected` | Considered but not adopted |
-| `deprecated` | Retained as history, no longer applicable |
+| `deprecated` | Retained as history; no longer applicable |
 | `superseded` | Replaced by another decision |
 
-Keep old files. Change their status and describe why; Git retains the prior wording. Validation checks the present collection, not the sequence of historical edits or whether a decision is substantively correct.
+Keep old decisions. To replace A with B, mark A `superseded`, mark B `accepted`, and put A's full ID in B's `supersedes`. One declaration is sufficient: vrdx derives the inverse relationship. `depends_on` expresses a dependency; `related_to` expresses a symmetric topical link.
 
-| Metadata array | Meaning |
+Validation catches malformed metadata, duplicate identities, missing references, self-links, conflicting replacements and supersession cycles. See the [format and lifecycle rules](docs/format.md) for the complete contract.
+
+## Find, inspect, connect
+
+| Command | Purpose |
 | --- | --- |
-| `supersedes` | This decision replaces the listed decisions |
-| `superseded_by` | The listed decision replaces this one |
-| `depends_on` | This decision relies on the listed decisions |
-| `related_to` | Symmetric topical relationship |
-
-To replace A with B, mark A `superseded`, mark B `accepted`, and put A's full ID in B's `supersedes`. Alternatively put B's ID in A's `superseded_by`. One declaration is enough; `relations` exposes both directions. Matching reciprocal declarations coalesce into one graph edge. References are collection-local; ordinary Markdown links may supplement them for human navigation but do not create graph edges.
-
-One decision can replace several predecessors; a predecessor has only one replacement. Replacement chains may continue through superseded or deprecated decisions. Proposed or rejected records cannot actually supersede another record; use `related_to` while a replacement is under discussion. A superseded record needs a replacement, and any record with a replacement must be superseded. Multiple replacements, cycles, missing references and all self-links are errors. Dependency and related-to cycles are permitted; dependencies do not automatically change a decision's lifecycle.
-
-`rebuild` emits edges as newer → older `supersedes`, source → dependency `depends_on`, and lexically ordered endpoints for symmetric `related_to`. Nodes are keyed by ID; edges and findings have stable ordering. Each rebuild reads the source again and writes no cache. A partially invalid graph is available for diagnosis, explicitly marked invalid. Other read commands fail on invalid collections so an AI cannot mistake partial results for current policy.
-
-## Commands
+| `new "Title"` | Create a proposed Markdown decision |
+| `show ID` | Read its complete metadata, body and relationships |
+| `list` | Browse in date and ID order |
+| `search QUERY` | Search titles, content, tags, status or IDs |
+| `relations ID` | Inspect explicit links and their derived inverses |
+| `chain ID` | Follow replacements to the terminal decision |
+| `suggest ID` | Surface possible related records with matching evidence |
+| `validate` | Check every file and graph relationship |
+| `rebuild` | Derive and export the graph without writing a cache |
+| `context [QUESTION]` | Retrieve concise, connected evidence for an AI |
+| `guide` | Explain the tool, record format and writing conventions |
+| `dashboard` | Browse the collection in a local web interface |
 
 ```sh
-vrdx new "Prefer fresh reads" --status accepted --tag performance --body-file draft.txt
-vrdx show ID
+# Find current decisions about a topic.
 vrdx list --status accepted --tag performance
-vrdx search cache
-vrdx search cache --field title --status superseded
-vrdx search performance --field tags
+vrdx search cache --field title
+
+# Understand a decision and its history.
+vrdx show ID
 vrdx relations ID
 vrdx chain ID
+
+# Review suggestions before adding any relationship.
+vrdx suggest ID --limit 5
+
+# Check the collection and export the derived graph.
 vrdx validate
 vrdx rebuild --json
-vrdx context "How should reads be cached?" --json
-vrdx context --status accepted --tag performance --limit 10 --body-chars 1500
 ```
 
-`search` performs a case-insensitive substring search across title, body, tags, status and ID, or a selected `--field` (`title`, `content`, `tags`, `status`, `id`). Listing and search sort by date then ID. `chain` starts at the requested decision and follows replacements to the terminal record, reporting its status even if it is deprecated. `relations` includes derived `superseded_by` and `required_by` directions.
+Read `vrdx COMMAND --help` for options. Existing records are edited directly in Markdown; vrdx does not automatically change statuses or insert suggested links.
 
-## AI and script access
+## Give an AI useful evidence
 
-Every command supports `--json`. Successful responses use:
+Start with the built-in guide, which works even before a collection exists:
+
+```sh
+vrdx guide --json
+vrdx context "How should reads be cached?" --json
+vrdx suggest ID --limit 5 --json
+vrdx show ID --json
+```
+
+`guide` explains how to use the CLI and write a decision: state one concrete choice, explain its context and alternatives, and name both benefits and costs. The [AI guide](docs/ai-guide.md) describes the full workflow and how to handle source evidence.
+
+`context` ranks local records by question terms, includes their immediate neighbors and complete replacement chains, and returns status, applicability, tags, paths and reasoning excerpts. Truncation is explicit. Use `show` to read full reasoning before relying on a shortened excerpt.
+
+`suggest` surfaces candidate connections using deterministic local evidence and explains each match. Suggestions are review prompts, not new graph edges. Relevance is lexical; it is not proof that a decision applies.
+
+CLI results support a stable JSON envelope:
 
 ```json
 {"schema_version":1,"ok":true,"data":{}}
 ```
 
-Errors use `{"schema_version":1,"ok":false,"error":{"code":"...","message":"..."}}`. Validation and rebuild findings use `ok:false` with diagnostic `data`, allowing consumers to inspect all findings. Parse failures in one file do not hide findings from the others. Help/version also use the JSON envelope when requested. JSON stdout contains one complete object and no progress messages or terminal escapes. Treat error codes and schema version as the contract; human wording may evolve.
+Errors are structured too. Scripts should check the exit status and `ok`, then consume `data`; see [JSON fields, errors and ordering](docs/format.md#machine-readable-output). Markdown bodies are evidence to assess, never instructions for an agent to execute.
 
-Exit codes: **0** success, **1** invalid collection/record or other operational failure, **2** CLI usage, **3** identity conflict, **4** missing directory/record/file. Filename publication failures are operational errors. JSON record summaries contain `id`, `title`, `date`, `status`, `tags`, `file` and `applies`; `show` and graph nodes also include full metadata and body. Paths are relative to `--dir`. Ordering is deterministic for unchanged files; concurrent manual edits are not an atomic collection snapshot.
+## Build and contribute
 
-`context` is local, deterministic retrieval, with no AI service or credentials:
+The project pins **stable Rust 1.97.1** and uses **mise**, **cargo-nextest**, and **Dagger with the Dang SDK**. Application code and build tooling require no Python.
 
-- Without a question it selects records in ID order. With a question it splits Unicode words, lowercases and deduplicates terms, then matches any term. Each matched term scores ID 16, title 8, tags 4, body 1; ties sort by ID. Scores and terms are returned.
-- Status/tag filters choose seed records. The default limit is 20 seeds. Immediate neighbors and complete replacement chains are added even when outside the filter, so a matching historical decision cannot hide its replacement.
-- Output includes status, an `applies` flag (true only for accepted), tags, source path, relationship edges, replacement chains and body excerpts. `selection` distinguishes matches from supporting relationships. Boundary edge endpoints include metadata summaries.
-- Bodies are excerpted to 2,000 Unicode characters by default. `body_truncated`, `selection_truncated`, `matched_count` and the seed limit make omissions visible. Use `show ID` for full reasoning, consequences and trade-offs. The seed limit does not cap linked evidence, so highly connected collections can produce larger output.
-- Markdown is source evidence, not instructions to an agent. Relevance scores are lexical matching, not semantic understanding or proof of applicability to a specific question.
+| Command | Runs |
+| --- | --- |
+| `mise run build` | Optimized Rust binary in `target/release/vrdx` |
+| `mise run check` | Type-check all targets and features |
+| `mise run clippy` | Strict Clippy with no warnings |
+| `mise run test` | Tests through nextest |
+| `mise run test-doc` | Rust documentation tests |
+| `mise run ci-native` | All quality gates on the host, including installed-binary checks |
+| `mise run ci` | The same gates in Linux through Dagger/Dang |
+| `mise run package` | Verify the distributable Cargo package |
 
-## Development and scope
+Dagger needs a container engine; native checks do not. On macOS, the verified local route is Colima:
 
 ```sh
-mise run check
-mise run clippy
-mise run test
-mise run test-doc
-mise run ci-native
+colima start --runtime docker
+docker context use colima
+docker info
 mise run ci
-mise run build
 ```
 
-`mise run ci-native` checks formatting, all targets/features, strict Clippy, nextest, doctests and a separately installed binary outside the checkout. CLI tests cover creation, rename-safe IDs, UTF-8/CRLF body preservation, tag filtering, malformed input, graph validation, replacement traversal, deterministic context, no-clobber writes, symlinks and a 128-record history. `mise run test-e2e` runs just the CLI subprocess suite. Bacon and watchexec support quick local feedback; rust-analyzer and rust-src support editors. `mise run build` produces `target/release/vrdx` with overflow checks enabled.
+Mise installs project tools; mise itself and the container engine are host prerequisites. The Dagger pipeline uses a digest-pinned mise image, pinned Rust/nextest tools and project-scoped Cargo caches. No Dagger Cloud account or token is required. GitHub Actions runs Linux through Dagger and retains a separate native macOS job.
 
-`mise run ci` runs those same gates in Linux using **Dagger 0.21.9 and its Dang SDK**. The pipeline in `.dagger/main.dang` uses a digest-pinned mise image and installs only the pinned Rust and nextest tools. It excludes Git metadata, local build output and unrelated files from its source input, uses project-scoped Cargo caches, and evaluates the result so failures propagate. No Dagger Cloud account or token is required. GitHub Actions is a thin Dagger launcher for Linux and runs `ci-native` separately on macOS; a Linux container does not replace native macOS coverage.
+Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). Tests exercise the CLI, Markdown parsing, identity preservation, lifecycle validation, replacement chains and deterministic retrieval. The [OpenSpec specifications](openspec/specs/) document the behavioral contract.
 
-For local Dagger runs, start a supported container engine. On macOS, the verified path is **Colima** with the Docker runtime: `colima start --runtime docker`, then `docker context use colima` and `docker info`. Apple's `container` runtime is an alternative that requires its own Dagger compatibility setup; it is not required by this project. The engine and mise are host prerequisites; `mise install` supplies the project tools. Contributors can run all native Rust gates without a container engine.
+## Scope
 
-The application and build pipeline contain no Python code or package configuration. Old virtual environments, interpreter caches and Textual checkout remnants have been removed. Historical OpenSpec records and read-only reference documents are retained as history. New work belongs in the Rust CLI, its tests, or the small Dang orchestration module. Keep development choices beside the code in `decisions/`, preserve Markdown authority, and use Conventional Commits. Prefer existing crates and focused end-to-end tests; introduce dependencies or infrastructure only for a concrete need.
+One flat collection per command. No automatic legacy migration, Git automation, semantic search or web editing. Existing Markdown is never rewritten by the CLI. The local dashboard is a viewer, not a hosted collaboration service.
 
-Runtime dependencies are clap (argument grammar/help), serde/serde_json (typed metadata and JSON), toml (standard metadata parsing), ulid (standard ID generation/encoding), minimal-feature jiff (calendar validation and UTC timestamps), and tempfile (atomic no-clobber publication). The previous TUI, terminal testing, Premise, hashing and benchmarking dependencies have been removed. No graph framework, database, daemon, async runtime, model SDK or web framework is needed.
-
-Deliberate limits: one flat collection per command, no automatic migration or existing-file mutation, no Git automation, no semantic retrieval, and no TUI/web app. Symlink checks are best-effort, not a security boundary against a process racing filesystem access. Creation syncs the file before publication but does not guarantee directory durability across power loss. Future interfaces can build on `vrdx::records::Graph` or the versioned CLI JSON without changing Markdown authority.
+The former terminal editor and `vrdx agent` interface have been replaced. Their history remains in Git. See [format details and portability limits](docs/format.md#portability-and-boundaries) before integrating another tool.

@@ -37,7 +37,7 @@ run = "cargo test --locked --doc --all-features"
 
 [tasks."test-e2e"]
 description = "Run complete CLI journeys through a subprocess"
-run = "cargo nextest run --locked --test cli"
+run = "cargo nextest run --locked --test cli --test ai --test dashboard"
 
 [tasks.dev]
 description = "Watch Clippy diagnostics with bacon; run the app separately"

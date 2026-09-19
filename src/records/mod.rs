@@ -1,6 +1,8 @@
 //! Standalone Markdown collections. Disk is authoritative; graphs are disposable.
 
+mod ai;
 pub mod cli;
+mod dashboard;
 
 use serde::{Deserialize, Serialize};
 use std::{

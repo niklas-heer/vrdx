@@ -2,7 +2,7 @@
 
 ## Purpose
 
-vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files. The user explicitly replaced the earlier terminal editor on 2026-09-19. Markdown and Git are authoritative; the graph is rebuilt in memory. A future web interface may consume the same library or JSON contract, but is not implemented.
+vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files. The user explicitly replaced the earlier terminal editor on 2026-09-19. Markdown and Git are authoritative; the graph is rebuilt in memory. A bundled read-only loopback dashboard visualizes current files; CLI guide, context and explained suggestions provide a versioned AI interface.
 
 ## Stack and Architecture
 
@@ -10,10 +10,12 @@ vrdx is a Rust CLI for engineering decisions stored as standalone Markdown files
 - Dagger 0.21.9 with Dang orchestrates Linux checks; mise manages tools/tasks and nextest runs tests. Native macOS checks remain separate.
 - src/main.rs: CLI entry point; src/records/cli.rs: clap workflows and human/versioned JSON transport.
 - src/records/mod.rs: metadata, parsing, no-clobber creation, graph and validation.
-- serde/serde_json, toml, ulid, minimal jiff, tempfile and clap are runtime dependencies.
+- src/records/ai.rs: embedded authoring guide and deterministic lexical/tag suggestions.
+- src/records/dashboard.rs: tiny_http loopback server; web/ contains dependency-free browser assets.
+- serde/serde_json, toml, ulid, minimal jiff, tempfile, clap and tiny_http are runtime dependencies.
 - Full 26-character uppercase ULIDs live in metadata. Filenames use date, UTC time and title, without IDs.
 - TOML +++ metadata carries schema version, title, ID, date, status, optional tags and relationship arrays; body Markdown is unrestricted.
-- One flat collection per command. No existing-file mutation, database, cache, web service, terminal UI or automatic Git commands.
+- One flat collection per command. No existing-file mutation, database, cache, remote service, terminal UI or automatic Git commands.
 
 ## Quality and Workflow
 
