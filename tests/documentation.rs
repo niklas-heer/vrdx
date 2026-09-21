@@ -37,3 +37,22 @@ fn mise_and_cargo_pin_the_same_toolchain() {
         rust["toolchain"]["channel"]
     );
 }
+
+#[test]
+fn repository_skill_files_match_the_embedded_copies() {
+    let binary =
+        std::env::var_os("VRDX_TEST_BINARY").unwrap_or_else(|| env!("CARGO_BIN_EXE_vrdx").into());
+    let output = std::process::Command::new(binary)
+        .args(["init", "--dry-run", "--json"])
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .output()
+        .unwrap();
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert!(output.status.success(), "{response}");
+    let paths = response["data"]["paths"].as_array().unwrap();
+    assert_eq!(paths.len(), 4);
+    assert!(
+        paths.iter().all(|path| path["status"] == "unchanged"),
+        "run vrdx init in the repository root: {response}"
+    );
+}

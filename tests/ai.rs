@@ -228,3 +228,28 @@ fn existing_links_in_both_directions_are_excluded_and_invalid_data_fails() {
         "invalid_collection"
     );
 }
+
+#[test]
+fn context_ignores_common_words_unless_nothing_else_remains() {
+    let root = TempDir::new().unwrap();
+    write(
+        root.path(),
+        "cache.md",
+        &record(A, "Cache reads briefly", Status::Accepted, &["performance"]),
+        "## Decision\n\nCache successful reads for a minute.\n",
+    );
+    write(
+        root.path(),
+        "logging.md",
+        &record(B, "Log to stderr", Status::Accepted, &["observability"]),
+        "## Decision\n\nWe should log to stderr so the output stays clean.\n",
+    );
+    let result = success(root.path(), &["context", "How should reads be cached?"]);
+    assert_eq!(result["terms"], json!(["cached", "reads"]));
+    assert_eq!(result["matched_count"], 1);
+    assert_eq!(result["matches"][0]["id"], A);
+    let fallback = success(root.path(), &["context", "What should we?"]);
+    assert_eq!(fallback["terms"], json!(["should", "we", "what"]));
+    assert_eq!(fallback["matched_count"], 1);
+    assert_eq!(fallback["matches"][0]["id"], B);
+}

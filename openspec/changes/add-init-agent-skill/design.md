@@ -3,7 +3,7 @@
 ## Managed paths
 
 `init` operates on the current working directory as the project root and manages
-exactly three paths:
+exactly four paths:
 
 | Path | Action |
 | --- | --- |

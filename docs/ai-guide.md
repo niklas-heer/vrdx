@@ -8,6 +8,10 @@ alternative only when it helps explain the choice; link detail instead of repeat
 
 ## Find the evidence
 
+`vrdx init` installs this workflow as an agent skill in `.agents/skills/vrdx/`,
+links it for Claude Code and adds a managed block to `AGENTS.md`, so agents
+consult records before a consequential choice and record the agreed one afterwards.
+
 ```sh
 vrdx guide --json
 vrdx context "How should reads be cached?" --json
@@ -56,8 +60,8 @@ vrdx prompt "Cache for one minute"
 are supported; shell expansion is not. It stages the template before publication.
 A failed editor or invalid draft is retained at the path in the error. Repair it,
 copy the draft into your collection, then validate. `--edit` cannot use `--json`.
-Without `--edit`, `new TITLE` writes the small template immediately. Existing
-`--body-file PATH` remains available and preserves your supplied Markdown exactly.
+Without `--edit`, `new TITLE` writes the small template immediately, and
+`--body-file PATH` uses your own Markdown body exactly as supplied.
 
 `prompt TITLE` prints instructions you can paste into any AI chat with your notes.
 Save its JSON answer, then create with `--from-json`. It never calls a model or

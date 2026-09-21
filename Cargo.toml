@@ -6,7 +6,7 @@ rust-version = "1.97.1"
 description = "Capture and manage engineering decisions in repository Markdown files"
 license = "MIT"
 repository = "https://github.com/niklas-heer/vrdx"
-include = ["/src/**/*.rs", "/web/**", "/assets/**", "/docs/**", "/tests/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE", "/rust-toolchain.toml", "/mise.toml", "/clippy.toml"]
+include = ["/src/**/*.rs", "/.agents/**", "/web/**", "/assets/**", "/docs/**", "/tests/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE", "/rust-toolchain.toml", "/mise.toml", "/clippy.toml"]
 
 [dependencies]
 clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }

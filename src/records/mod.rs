@@ -5,6 +5,8 @@ mod authoring;
 pub mod cli;
 mod dashboard;
 mod formatting;
+mod init;
+mod render;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -106,6 +108,13 @@ pub struct Decision {
     pub metadata: Metadata,
     pub file: String,
     pub body: String,
+}
+impl Decision {
+    /// Metadata summary shared by list, search, context and relationship output.
+    #[must_use]
+    pub fn summary(&self) -> serde_json::Value {
+        serde_json::json!({"id":self.metadata.id,"title":self.metadata.title,"date":self.metadata.date,"status":self.metadata.status,"tags":self.metadata.tags,"file":self.file,"applies":self.metadata.status == Status::Accepted})
+    }
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq, PartialOrd, Ord)]
