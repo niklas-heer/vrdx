@@ -19,5 +19,5 @@ test -s "$smoke_dir/error.txt"
 # The harness launches this installed binary in isolated temporary projects.
 VRDX_TEST_BINARY="$smoke_dir/install/bin/vrdx" cargo nextest run \
   --locked --manifest-path "$project_dir/Cargo.toml" \
-  --test authoring --test cli --test ai --test dashboard --test simulation
+  --test authoring --test cli --test ai --test dashboard --test init --test simulation
 printf '%s\n' 'Installed binary smoke test passed outside the source checkout.'
