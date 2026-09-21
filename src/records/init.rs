@@ -96,7 +96,8 @@ fn block(collection: &str) -> String {
     let scope = if collection == "decisions" {
         String::new()
     } else {
-        format!(" Pass `--dir {collection}` to every vrdx command.")
+        let quoted = shlex::try_quote(collection).unwrap_or(std::borrow::Cow::Borrowed(collection));
+        format!(" Pass `--dir {quoted}` to every vrdx command.")
     };
     format!(
         "{START}\n## Decisions\n\nConsequential engineering decisions live in `{collection}/` as vrdx records.{scope} \
@@ -121,6 +122,9 @@ fn agents_step(root: &Path, collection: &str) -> Result<Step, Error> {
         }
         Err(error) => return Err(error.into()),
     };
+    if current.matches(START).count() > 1 || current.matches(END).count() > 1 {
+        return Err(conflict(AGENTS, "has more than one vrdx block"));
+    }
     let next = match (current.find(START), current.find(END)) {
         (Some(start), Some(end)) if start < end => {
             let (before, rest) = current.split_at(start);

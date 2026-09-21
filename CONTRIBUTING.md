@@ -13,7 +13,8 @@ the larger fixtures.
   with no runtime tools on `PATH`.
 - `tests/documentation.rs` checks the README example, the toolchain pins and
   that the checked-in skill files match the copies embedded in the binary.
-  After editing `.agents/skills/vrdx/`, run `vrdx init` in the repository root.
+  After editing `.agents/skills/vrdx/`, run `mise run run -- init` in the
+  repository root so the copies come from the checkout, not an older binary.
 - `mise run bench` reports warm-filesystem subprocess latency for 1,000 records
   and a 250-record replacement chain. It does not impose a CI time threshold.
 

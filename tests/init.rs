@@ -156,6 +156,10 @@ fn custom_collection_directory_is_named_in_the_block() {
     let block = agents_block(root.path());
     assert!(block.contains("`docs/decisions/`"));
     assert!(block.contains("--dir docs/decisions"));
+
+    let spaced = TempDir::new().unwrap();
+    init(spaced.path(), &["--dir", "docs/architecture decisions"]);
+    assert!(agents_block(spaced.path()).contains("--dir 'docs/architecture decisions'"));
 }
 
 #[test]
@@ -214,10 +218,15 @@ fn conflicts_abort_before_any_write() {
     assert!(!root.path().join("AGENTS.md").exists());
 
     fs::remove_file(root.path().join(LINK)).unwrap();
-    fs::write(root.path().join("AGENTS.md"), "<!-- vrdx:end -->\n").unwrap();
-    let (code, response) = run(root.path(), &["init"]);
-    assert_eq!(code, 3, "{response}");
-    assert!(!root.path().join(".agents").exists());
+    for agents in [
+        "<!-- vrdx:end -->\n",
+        "<!-- vrdx:start -->\na\n<!-- vrdx:end -->\n<!-- vrdx:start -->\nb\n<!-- vrdx:end -->\n",
+    ] {
+        fs::write(root.path().join("AGENTS.md"), agents).unwrap();
+        let (code, response) = run(root.path(), &["init"]);
+        assert_eq!(code, 3, "{response}");
+        assert!(!root.path().join(".agents").exists());
+    }
 }
 
 #[test]

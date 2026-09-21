@@ -253,3 +253,29 @@ fn context_ignores_common_words_unless_nothing_else_remains() {
     assert_eq!(fallback["matched_count"], 1);
     assert_eq!(fallback["matches"][0]["id"], B);
 }
+
+#[test]
+fn human_context_lists_the_best_match_first() {
+    let root = TempDir::new().unwrap();
+    write(
+        root.path(),
+        "a.md",
+        &record(A, "Log format", Status::Accepted, &[]),
+        "## Decision\n\nLogs mention caching once: cache.\n",
+    );
+    write(
+        root.path(),
+        "b.md",
+        &record(B, "Cache reads", Status::Accepted, &["cache"]),
+        "## Decision\n\nCache reads.\n",
+    );
+    let binary =
+        std::env::var_os("VRDX_TEST_BINARY").unwrap_or_else(|| env!("CARGO_BIN_EXE_vrdx").into());
+    let output = Command::new(binary)
+        .args(["--dir", ".", "context", "cache"])
+        .current_dir(root.path())
+        .output()
+        .unwrap();
+    let text = String::from_utf8(output.stdout).unwrap();
+    assert!(text.find(B).unwrap() < text.find(A).unwrap(), "{text}");
+}

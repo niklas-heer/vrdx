@@ -263,7 +263,7 @@ mise run ci
 
 Mise installs project tools; mise itself and the container engine are host prerequisites. The Dagger pipeline uses a digest-pinned mise image, pinned Rust/nextest tools and project-scoped Cargo caches. No Dagger Cloud account or token is required. GitHub Actions runs Linux through Dagger and retains a separate native macOS job.
 
-Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). The [OpenSpec specifications](openspec/specs/) document the behavioral contract; [Contributing](docs/contributing.md) covers the test suites, simulation fixtures and local packaging, and [Releasing vrdx](docs/releasing.md) the release procedure.
+Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). The [OpenSpec specifications](openspec/specs/) document the behavioral contract; [Contributing](CONTRIBUTING.md) covers the test suites, simulation fixtures and local packaging, and [Releasing vrdx](docs/releasing.md) the release procedure.
 
 ## Scope
 

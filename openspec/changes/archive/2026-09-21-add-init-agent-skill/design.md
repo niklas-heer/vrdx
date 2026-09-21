@@ -58,7 +58,9 @@ executable scenario covers `init` with no repository assets present.
   text, dry run writes nothing, symlink resolves, conflict aborts cleanly,
   frontmatter name matches the directory and description length limit.
 - `tests/documentation.rs`: `vrdx init --dry-run` in the repository root reports
-  every path unchanged, so the checked-in dogfood copies match the binary.
+  the two embedded skill files unchanged, so the checked-in copies match the
+  binary. The symlink and AGENTS.md are not checked because CI containers
+  receive a filtered source tree.
 - Manual agent evaluation in disposable projects with the installed skill:
   a consequential choice triggers consult and, after agreement, one record; a
   typo fix does not trigger; a question covered by an accepted record cites it.

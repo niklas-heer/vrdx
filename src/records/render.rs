@@ -45,6 +45,28 @@ fn decision(value: &Value) -> String {
     output
 }
 
+/// Context matches come first in score order; relationship-only records keep their ID order.
+fn ranked<'a>(data: &'a Value, records: &'a [Value]) -> Vec<&'a Value> {
+    let Some(matches) = data.get("matches").and_then(Value::as_array) else {
+        return records.iter().collect();
+    };
+    let mut ordered: Vec<_> = matches
+        .iter()
+        .filter_map(|entry| entry.get("id"))
+        .filter_map(|id| records.iter().find(|record| record.get("id") == Some(id)))
+        .collect();
+    let rest: Vec<_> = records
+        .iter()
+        .filter(|record| {
+            !ordered
+                .iter()
+                .any(|seen| seen.get("id") == record.get("id"))
+        })
+        .collect();
+    ordered.extend(rest);
+    ordered
+}
+
 fn formatting(data: &Value, output: &mut String) {
     if let Some(files) = data.get("files").and_then(Value::as_array) {
         let check = data.get("check") == Some(&Value::Bool(true));
@@ -140,7 +162,7 @@ pub(super) fn human(data: &Value) -> String {
             if records.is_empty() && key == "decisions" {
                 output.push_str("No decisions matched.\n");
             }
-            for record in records {
+            for record in ranked(data, records) {
                 output.push_str(&decision(record));
                 output.push('\n');
             }
