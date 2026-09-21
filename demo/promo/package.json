@@ -5,8 +5,8 @@
   "description": "Remotion promotional video for vrdx",
   "scripts": {
     "preview": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts Promo out/vrdx-promo.mp4",
-    "still": "remotion still src/index.ts Promo out/vrdx-poster.png --frame=60"
+    "render": "remotion render src/index.ts Promo ../../assets/promo.mp4 --crf 26",
+    "poster": "remotion still src/index.ts Promo ../../assets/promo-poster.png --frame=110"
   },
   "dependencies": {
     "@remotion/cli": "4.0.526",

@@ -17,6 +17,11 @@
   <img src="assets/demo.gif" alt="Terminal recording: listing decisions, creating one, following a replacement chain, querying evidence as JSON, creating a record from JSON, validating, installing the agent skill and starting the dashboard" width="900">
 </p>
 
+<p align="center">
+  <a href="assets/promo.mp4"><img src="assets/promo-poster.png" alt="Poster frame of the vrdx promo video: the logo with the tagline Keep the decision. Keep the why." width="600"></a><br>
+  <a href="assets/promo.mp4">Watch the 50-second promo</a>
+</p>
+
 Decisions outlive the conversations that produced them. vrdx keeps the choice, reasoning, trade-offs and replacement history together in files your team can read, review and carry to another tool.
 
 - **Markdown is the source.** Read it in any editor, review it in Git, rebuild the graph at any time.

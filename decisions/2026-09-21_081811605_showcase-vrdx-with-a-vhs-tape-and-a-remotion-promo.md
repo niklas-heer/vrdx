@@ -19,5 +19,5 @@ A terminal recording shows developers the real CLI in under a minute, and VHS ke
 
 - assets/demo.gif is committed and embedded in the README; rerender it with mise run demo when shown output changes.
 - VHS, ttyd, ffmpeg, bat and jq (for the tape) and Node.js (for the promo) are host prerequisites, not project-pinned tools.
-- Rendered promo videos are not committed; demo/promo has its own npm lockfile and .gitignore.
+- The rendered promo and its poster frame are committed under assets/ so the README and other places can link to them; each rerender adds a few megabytes of history. demo/promo has its own npm lockfile and .gitignore.
 - The demo collection uses fixed IDs so the tape can reference prefixes deterministically.

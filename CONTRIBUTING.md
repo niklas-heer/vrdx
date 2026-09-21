@@ -77,8 +77,10 @@ and CI do not depend on them.
   output that the tape shows.
 - `demo/promo/` is a [Remotion](https://www.remotion.dev) project for the
   promotional video. `mise run promo` installs its pinned npm dependencies and
-  renders `demo/promo/out/vrdx-promo.mp4`; `npm run preview` in that directory
-  opens the Remotion studio. Node.js is a host prerequisite for this project
+  renders `assets/promo.mp4` plus the `assets/promo-poster.png` frame that the
+  README links to the video; `npm run preview` in that directory opens the
+  Remotion studio. Node.js is a host prerequisite for this project
   only. The dashboard screenshot in `demo/promo/public/` was captured from the
-  demo collection; retake it after visible dashboard changes. Rendered videos
-  are not committed.
+  demo collection; retake it after visible dashboard changes. The rendered video is
+  committed so the README and other places can link to it; rerender it only
+  when the scenes change, since each render adds a few megabytes of history.
