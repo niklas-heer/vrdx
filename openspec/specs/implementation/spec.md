@@ -49,11 +49,11 @@ The project SHALL distribute versioned Linux and macOS native executable archive
 - **THEN** the executable SHALL provide guide, creation, validation and retrieval workflows without a source checkout, database, Python or Rust toolchain
 
 ### Requirement: Measured standalone CLI workflows
-The application SHALL remain one native executable with bundled dashboard and guidance assets, requiring no runtime interpreter or external AI service. Verification SHALL cover structured and human workflows through the executable outside the checkout. A reproducible opt-in latency benchmark SHALL report release-command timings and workload size without treating machine-specific measurements as universal guarantees.
+The application SHALL remain one native executable with bundled dashboard, guidance and agent skill assets, requiring no runtime interpreter or external AI service. Verification SHALL cover structured and human workflows through the executable outside the checkout. A reproducible opt-in latency benchmark SHALL report release-command timings and workload size without treating machine-specific measurements as universal guarantees.
 
 #### Scenario: Relocated executable
 - **WHEN** only the executable is copied into an otherwise empty working directory
-- **THEN** guide, prompt, JSON creation, validation and formatting SHALL work without accessing repository assets or invoking a runtime interpreter
+- **THEN** guide, prompt, JSON creation, validation, formatting and skill installation SHALL work without accessing repository assets or invoking a runtime interpreter
 
 ### Requirement: Tested Homebrew distribution
 The release SHALL be installable through the existing niklas-heer/tap/vrdx formula using checksummed native archives. Automated formula updates SHALL select a published stable release, require all supported archives and valid checksums, and pass native installation tests before updating the tap. Tag publication SHALL require the full quality workflow and all native archive checks.
@@ -65,3 +65,4 @@ The release SHALL be installable through the existing niklas-heer/tap/vrdx formu
 #### Scenario: Failed release or formula checks
 - **WHEN** a quality, packaging or native formula test fails
 - **THEN** the corresponding publication SHALL not proceed
+
