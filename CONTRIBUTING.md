@@ -60,3 +60,25 @@ workflow and all four platform jobs pass; see [Releasing vrdx](releasing.md).
 with `include_str!` and installed by `vrdx init`. Keep the skill short, keep the
 trigger in its `description`, and defer format rules to `vrdx guide`. Changing
 the skill is a release: users receive it by upgrading and rerunning `init`.
+
+## Demo recordings
+
+`demo/` holds the showcase sources. They are optional tooling; the CLI, tests
+and CI do not depend on them.
+
+- `demo/collection/` is a small fictional decision collection with fixed IDs
+  and every relationship type. The tape and the promo both use it, and
+  `vrdx --dir demo/collection validate` keeps it honest.
+- `demo/vrdx.tape` is a [VHS](https://github.com/charmbracelet/vhs) script.
+  `mise run demo` builds the release binary and renders `assets/demo.gif`, the
+  recording embedded in the README. It needs `vhs`, `ttyd`, `ffmpeg`, `bat` and
+  `jq` on the host, and it runs each command in a scratch copy of the
+  collection under `/tmp/orders-api`. Rerender the GIF after changing CLI
+  output that the tape shows.
+- `demo/promo/` is a [Remotion](https://www.remotion.dev) project for the
+  promotional video. `mise run promo` installs its pinned npm dependencies and
+  renders `demo/promo/out/vrdx-promo.mp4`; `npm run preview` in that directory
+  opens the Remotion studio. Node.js is a host prerequisite for this project
+  only. The dashboard screenshot in `demo/promo/public/` was captured from the
+  demo collection; retake it after visible dashboard changes. Rendered videos
+  are not committed.

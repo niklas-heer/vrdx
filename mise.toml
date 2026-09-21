@@ -87,3 +87,18 @@ run = "cargo package --locked"
 [tasks."package-release"]
 description = "Package and verify an already-built native release binary; pass its Rust target after --"
 run = "sh scripts/package-release.sh"
+
+[tasks.demo]
+description = "Render assets/demo.gif from demo/vrdx.tape (needs vhs, ttyd, ffmpeg, bat and jq on the host)"
+run = [
+  "mise run build",
+  "PATH=\"$PWD/target/release:$PATH\" vhs demo/vrdx.tape",
+]
+
+[tasks.promo]
+description = "Render the Remotion promo to demo/promo/out/vrdx-promo.mp4 (needs Node.js on the host)"
+dir = "demo/promo"
+run = [
+  "npm ci --no-fund --no-audit",
+  "npm run render",
+]

@@ -1,0 +1,21 @@
+{
+  "name": "vrdx-promo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Remotion promotional video for vrdx",
+  "scripts": {
+    "preview": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Promo out/vrdx-promo.mp4",
+    "still": "remotion still src/index.ts Promo out/vrdx-poster.png --frame=60"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.526",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.526"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.0",
+    "typescript": "5.9.2"
+  }
+}
