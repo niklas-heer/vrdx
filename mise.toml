@@ -96,9 +96,10 @@ run = [
 ]
 
 [tasks.promo]
-description = "Render the Remotion promo to demo/promo/out/vrdx-promo.mp4 (needs Node.js on the host)"
+description = "Render the Remotion promo and its poster into assets/ (needs Node.js on the host)"
 dir = "demo/promo"
 run = [
   "npm ci --no-fund --no-audit",
   "npm run render",
+  "npm run poster",
 ]
