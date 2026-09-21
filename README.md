@@ -193,7 +193,15 @@ Read `vrdx COMMAND --help` for options. Existing records are edited directly in 
 
 ## Give an AI useful evidence
 
-Start with the built-in guide, which works even before a collection exists:
+Install the bundled agent skill once per repository:
+
+```sh
+vrdx init
+```
+
+This writes `.agents/skills/vrdx/`, which Codex, Cursor and other agents read, links it from `.claude/skills/vrdx` for Claude Code, and adds a managed block to `AGENTS.md`. The skill makes an agent consult existing records before a consequential choice, record the agreed choice afterwards, and import existing ADRs on request. It only touches those paths, reports what changed, and is safe to rerun after upgrading vrdx; `--dry-run` previews. Use `--dir` if your collection is not `decisions/`.
+
+The built-in guide works even before a collection exists:
 
 ```sh
 vrdx guide --json
@@ -255,32 +263,13 @@ mise run ci
 
 Mise installs project tools; mise itself and the container engine are host prerequisites. The Dagger pipeline uses a digest-pinned mise image, pinned Rust/nextest tools and project-scoped Cargo caches. No Dagger Cloud account or token is required. GitHub Actions runs Linux through Dagger and retains a separate native macOS job.
 
-Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). Tests exercise the CLI, Markdown parsing, identity preservation, lifecycle validation, replacement chains and deterministic retrieval. The [OpenSpec specifications](openspec/specs/) document the behavioral contract.
-
-Authoring tests cover JSON contracts, editor success and recovery, formatting round trips, rejected input and a relocated executable with no runtime tools on `PATH`. The benchmark reports warm-filesystem subprocess latency without imposing a flaky CI time threshold.
-
-The simulation suite runs a 221-record, 12-topic CLI/HTTP journey and three
-replayable seeds with 48 edits each. It checks renames, status/tag changes,
-relationships, invalid edits, repairs, retrieval and preservation of source files.
-It also runs against installed and extracted release binaries. This measures
-modeled workflow behavior; it does not establish real adoption or semantic
-retrieval quality. To retain the narrative fixture for browser inspection, run
-`VRDX_SIMULATION_KEEP_DIR=/tmp/vrdx-example mise exec -- cargo test --test simulation mixed_project_history`
-with a new or empty target directory, then use `vrdx --dir /tmp/vrdx-example dashboard`.
-
-Release PR checks build native archives for all four supported targets. To
-package a local build, first run `mise exec -- cargo build --locked --release --target TARGET`,
-then `mise run package-release -- TARGET` with your host's target from the table
-above. Packaging extracts the archive and exercises its binary outside the
-checkout. A matching `vVERSION` tag publishes the verified archives and checksums
-only after the full quality workflow and all four platform jobs pass. See
-[Releasing vrdx](docs/releasing.md) for the release and Homebrew update procedure.
+Keep changes focused, use Conventional Commits, and record lasting choices in [`decisions/`](decisions/). The [OpenSpec specifications](openspec/specs/) document the behavioral contract; [Contributing](docs/contributing.md) covers the test suites, simulation fixtures and local packaging, and [Releasing vrdx](docs/releasing.md) the release procedure.
 
 ## Scope
 
 One flat collection per command. No automatic legacy migration, Git automation, semantic search or web editing. Existing Markdown changes only through the explicit `fmt` command, which preserves its content. The local dashboard is a viewer, not a hosted collaboration service.
 
-The former terminal editor and `vrdx agent` interface have been replaced. Their history remains in Git. See [format details and portability limits](docs/format.md#portability-and-boundaries) before integrating another tool.
+See [format details and portability limits](docs/format.md#portability-and-boundaries) before integrating another tool.
 
 ## License
 
