@@ -49,10 +49,20 @@ fn repository_skill_files_match_the_embedded_copies() {
         .unwrap();
     let response: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert!(output.status.success(), "{response}");
-    let paths = response["data"]["paths"].as_array().unwrap();
-    assert_eq!(paths.len(), 4);
+    // Only the embedded files are checked: CI containers receive a filtered source tree.
+    let skill_paths: Vec<_> = response["data"]["paths"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|path| {
+            path["path"]
+                .as_str()
+                .is_some_and(|path| path.starts_with(".agents/skills/vrdx/"))
+        })
+        .collect();
+    assert_eq!(skill_paths.len(), 2, "{response}");
     assert!(
-        paths.iter().all(|path| path["status"] == "unchanged"),
+        skill_paths.iter().all(|path| path["status"] == "unchanged"),
         "run vrdx init in the repository root: {response}"
     );
 }
