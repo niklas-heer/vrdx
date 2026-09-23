@@ -42,6 +42,13 @@ This installs the native executable; no Rust toolchain is needed. On macOS,
 use macOS 15 or newer. Linux binaries target Ubuntu 24.04 or compatible systems
 with glibc 2.39 or newer. Both Apple/ARM and Intel/AMD processors are supported.
 
+With [Nix](https://nixos.org) flakes on Linux or Apple Silicon macOS, build and
+install the latest `main` from source:
+
+```sh
+nix profile add github:niklas-heer/vrdx
+```
+
 Or download a standalone binary:
 
 Download the archive for your operating system and processor from
