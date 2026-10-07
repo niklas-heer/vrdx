@@ -11,3 +11,4 @@
 .idea/
 .vscode/*
 !.vscode/settings.json
+/result
