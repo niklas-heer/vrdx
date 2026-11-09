@@ -17,6 +17,10 @@ if "$smoke_dir/install/bin/vrdx" --dir "$smoke_dir/missing" list > "$smoke_dir/e
 fi
 test -s "$smoke_dir/error.txt"
 # The harness launches this installed binary in isolated temporary projects.
+# Run nextest from the checkout so mise resolves its pinned version; a shim has
+# no version outside the project (the macOS CI job failed with "No version is
+# set for shim: cargo-nextest").
+cd "$project_dir"
 VRDX_TEST_BINARY="$smoke_dir/install/bin/vrdx" cargo nextest run \
   --locked --manifest-path "$project_dir/Cargo.toml" \
   --test authoring --test cli --test ai --test dashboard --test init --test simulation
